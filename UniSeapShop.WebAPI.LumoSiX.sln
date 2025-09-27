@@ -5,6 +5,8 @@ VisualStudioVersion = 17.14.36310.24 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniSeapShop.WebAPI", "UniSeapShop.WebAPI\UniSeapShop.WebAPI.csproj", "{98DF2AFF-D757-477F-AFA0-CE727B627C08}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniSeapShop.Domain", "UniSeapShop.Domain\UniSeapShop.Domain.csproj", "{392839C0-E225-4BC4-8014-032B0AD69D2A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{98DF2AFF-D757-477F-AFA0-CE727B627C08}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{98DF2AFF-D757-477F-AFA0-CE727B627C08}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{98DF2AFF-D757-477F-AFA0-CE727B627C08}.Release|Any CPU.Build.0 = Release|Any CPU
+		{392839C0-E225-4BC4-8014-032B0AD69D2A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{392839C0-E225-4BC4-8014-032B0AD69D2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{392839C0-E225-4BC4-8014-032B0AD69D2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{392839C0-E225-4BC4-8014-032B0AD69D2A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
