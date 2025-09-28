@@ -9,5 +9,6 @@ namespace UniSeapShop.Infrastructure.Interfaces
         Task<TEntity?> FirstOrDefaultAsync(
        Expression<Func<TEntity, bool>> predicate = null,
        params Expression<Func<TEntity, object>>[] includes);
+        Task<TEntity> AddAsync(TEntity entity);
     }
 }

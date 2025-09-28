@@ -30,5 +30,19 @@ namespace UniSeapShop.WebAPI.Controllers
                 return BadRequest();
             }
         }
+
+        [HttpPost("register")]
+        public async Task<IActionResult> RegisterCustomer([FromBody] UserRegistrationDto dto)
+        {
+            try
+            {
+                var result = await _authService.RegisterCustomerAsync(dto);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest();
+            }
+        }
     }
 }
