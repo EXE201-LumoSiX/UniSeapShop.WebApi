@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using UniSeapShop.Domain.Entities;
 
 namespace UniSeapShop.Infrastructure.Interfaces
 {
-    public interface IUnitOfWork
+    public interface IUnitOfWork : IDisposable
     {
+        Task<int> SaveChangesAsync();
+        IGenericRepository<User> Users { get; }
     }
 }

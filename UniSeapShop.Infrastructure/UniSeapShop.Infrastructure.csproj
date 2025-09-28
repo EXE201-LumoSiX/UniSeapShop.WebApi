@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\UniSeapShop.Domain\UniSeapShop.Domain.csproj" />
+  </ItemGroup>
+
 </Project>

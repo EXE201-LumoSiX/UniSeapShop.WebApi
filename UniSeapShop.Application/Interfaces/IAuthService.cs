@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Microsoft.Extensions.Configuration;
+using UniSeapShop.Domain.DTOs.AuthenDTOs;
 
 namespace UniSeapShop.Application.Interfaces
 {
-    internal interface IAuthService
+    public interface IAuthService
     {
+        Task<LoginResponseDto?> LoginAsync(LoginRequestDto loginDto, IConfiguration configuration);
     }
 }

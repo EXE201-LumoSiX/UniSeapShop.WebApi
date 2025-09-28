@@ -4,9 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace UniSeapShop.Infrastructure.Utils
+namespace UniSeapShop.Domain.Entities
 {
-    public class HashHelper
+    public class BaseEntity
     {
+        public Guid Id { get; set; }
     }
 }
