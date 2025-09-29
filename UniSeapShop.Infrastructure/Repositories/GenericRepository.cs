@@ -1,5 +1,5 @@
-﻿using System.Linq.Expressions;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 using UniSeapShop.Domain;
 using UniSeapShop.Domain.Entities;
 using UniSeapShop.Infrastructure.Interfaces;
@@ -21,6 +21,11 @@ public class GenericRepository<TEntity> : IGenericRepository<TEntity> where TEnt
     {
         _dbSet.Update(entity);
         return Task.FromResult(true);
+    }
+
+    public async Task<int> SaveChangesAsync()
+    {
+        return await _dbContext.SaveChangesAsync();
     }
 
     public async Task<TEntity?> FirstOrDefaultAsync(

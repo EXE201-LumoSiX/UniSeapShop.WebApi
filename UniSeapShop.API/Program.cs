@@ -5,7 +5,6 @@ using SwaggerThemes;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json.Serialization;
 using UniSeapShop.Domain;
-using UniSeapShop.Infrastructure;
 using UniSeapShop.Infrastructure.Interfaces;
 using UniSeapShop.Infrastructure.Repositories;
 using JsonSerializer = System.Text.Json.JsonSerializer;
@@ -77,7 +76,7 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "BlindTreasureAPI API v1");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "UniSeapShopAPI API v1");
         c.RoutePrefix = string.Empty;
         c.HeadContent = $"<style>{SwaggerTheme.GetSwaggerThemeCss(Theme.OneDark)}</style>";
         c.ConfigObject.AdditionalItems.Add("persistAuthorization", "true");

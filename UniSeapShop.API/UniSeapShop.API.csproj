@@ -24,8 +24,4 @@
     <ProjectReference Include="..\UniSeapShop.Application\UniSeapShop.Application.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Controllers\" />
-  </ItemGroup>
-
 </Project>

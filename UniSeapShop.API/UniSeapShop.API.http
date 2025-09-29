@@ -1,6 +1,6 @@
 @UniSeapShop.API_HostAddress = http://localhost:5150
 
-GET {{UniSeapShop.API_HostAddress}}/weatherforecast/
+GET {{UniSeapShop.API_HostAddress}}
 Accept: application/json
 
 ###

@@ -1,10 +1,11 @@
-﻿using System.Security.Claims;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
+using UniSeapShop.Infrastructure.Interfaces;
 using UniSeapShop.Infrastructure.Utils;
 
 namespace UniSeapShop.Infrastructure.Commons;
 
-public class ClaimsService
+public class ClaimsService : IClaimsService
 {
     public ClaimsService(IHttpContextAccessor httpContextAccessor)
     {
