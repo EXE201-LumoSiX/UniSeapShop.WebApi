@@ -15,6 +15,7 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="oqo0.SwaggerThemes" Version="1.4.3" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.4" />
+    <PackageReference Include="Swashbuckle.AspNetCore.ReDoc" Version="9.0.4" />
   </ItemGroup>
 
   <ItemGroup>

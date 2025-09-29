@@ -11,6 +11,18 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers()
     .AddJsonOptions(options => { options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()); });
 builder.Services.AddEndpointsApiExplorer();
+
+// Add Swagger services
+builder.Services.AddSwaggerGen(c => 
+{
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "UniSeapShop API",
+        Version = "v1",
+        Description = "API for UniSeapShop e-commerce platform"
+    });
+});
+
 //builder.Services.SetupIocContainer();
 builder.Configuration
     .SetBasePath(Directory.GetCurrentDirectory())

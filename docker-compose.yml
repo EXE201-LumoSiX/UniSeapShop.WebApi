@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   uniseapshop.webapi:
     image: ${DOCKER_REGISTRY-}uniseapshopwebapi
@@ -24,6 +22,7 @@ services:
   uniseapshop.database:
     image: mcr.microsoft.com/mssql/server:2022-latest
     restart: always
+    mem_limit: 2g
     environment:
       ACCEPT_EULA: Y
       SA_PASSWORD: UniSeap@123
@@ -33,10 +32,10 @@ services:
     volumes:
       - mssqldata:/var/opt/mssql
     healthcheck:
-      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "UniSeap@123" -Q "SELECT 1" || exit 1
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "UniSeap@123" -Q "SELECT 1" -C || exit 1
       interval: 10s
-      timeout: 5s
-      retries: 5
+      timeout: 10s
+      retries: 10
 
   redis:
     image: redis:6.2
