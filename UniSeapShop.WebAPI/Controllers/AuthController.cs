@@ -2,47 +2,46 @@
 using UniSeapShop.Application.Interfaces;
 using UniSeapShop.Domain.DTOs.AuthenDTOs;
 
-namespace UniSeapShop.WebAPI.Controllers
+namespace UniSeapShop.WebAPI.Controllers;
+
+[Route("api/[controller]")]
+[ApiController]
+public class AuthController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class AuthController : ControllerBase
+    private readonly IAuthService _authService;
+    private readonly IConfiguration _configuration;
+
+    public AuthController(IAuthService authService, IConfiguration configuration)
     {
-        private readonly IAuthService _authService;
-        private readonly IConfiguration _configuration;
+        _authService = authService;
+        _configuration = configuration;
+    }
 
-        public AuthController(IAuthService authService, IConfiguration configuration)
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginRequestDto dto)
+    {
+        try
         {
-            _authService = authService;
-            _configuration = configuration;
+            var result = await _authService.LoginAsync(dto, _configuration);
+            return Ok();
         }
-
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequestDto dto)
+        catch (Exception ex)
         {
-            try
-            {
-                var result = await _authService.LoginAsync(dto, _configuration);
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest();
-            }
+            return BadRequest();
         }
+    }
 
-        [HttpPost("register")]
-        public async Task<IActionResult> RegisterCustomer([FromBody] UserRegistrationDto dto)
+    [HttpPost("register")]
+    public async Task<IActionResult> RegisterCustomer([FromBody] UserRegistrationDto dto)
+    {
+        try
         {
-            try
-            {
-                var result = await _authService.RegisterCustomerAsync(dto);
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest();
-            }
+            var result = await _authService.RegisterCustomerAsync(dto);
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return BadRequest();
         }
     }
 }

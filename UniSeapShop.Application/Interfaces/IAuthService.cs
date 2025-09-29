@@ -2,11 +2,10 @@
 using UniSeapShop.Domain.DTOs.AuthenDTOs;
 using UniSeapShop.Domain.DTOs.UserDTOs;
 
-namespace UniSeapShop.Application.Interfaces
+namespace UniSeapShop.Application.Interfaces;
+
+public interface IAuthService
 {
-    public interface IAuthService
-    {
-        Task<LoginResponseDto?> LoginAsync(LoginRequestDto loginDto, IConfiguration configuration);
-        Task<UserDto?> RegisterCustomerAsync(UserRegistrationDto registrationDto);
-    }
+    Task<LoginResponseDto?> LoginAsync(LoginRequestDto loginDto, IConfiguration configuration);
+    Task<UserDto?> RegisterCustomerAsync(UserRegistrationDto registrationDto);
 }

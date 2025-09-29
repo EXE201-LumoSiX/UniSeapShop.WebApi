@@ -1,12 +1,9 @@
-﻿
+﻿namespace UniSeapShop.Domain.Enums;
 
-namespace UniSeapShop.Domain.Enums
+public enum RoleType
 {
-    public enum RoleType
-    {
-        Seller,
-        Customer,
-        Staff,
-        Admin
-    }
+    Seller,
+    Customer,
+    Staff,
+    Admin
 }

@@ -1,27 +1,26 @@
 ﻿using System.Security.Claims;
-using UniSeapShop.Infrastructure.Utils;
 using Microsoft.AspNetCore.Http;
+using UniSeapShop.Infrastructure.Utils;
 
-namespace UniSeapShop.Infrastructure.Commons
+namespace UniSeapShop.Infrastructure.Commons;
+
+public class ClaimsService
 {
-    public class ClaimsService
+    public ClaimsService(IHttpContextAccessor httpContextAccessor)
     {
-        public ClaimsService(IHttpContextAccessor httpContextAccessor)
-        {
-            // Lấy ClaimsIdentity
-            var identity = httpContextAccessor.HttpContext?.User?.Identity as ClaimsIdentity;
+        // Lấy ClaimsIdentity
+        var identity = httpContextAccessor.HttpContext?.User?.Identity as ClaimsIdentity;
 
-            var extractedId = AuthenTools.GetCurrentUserId(identity);
-            if (Guid.TryParse(extractedId, out var parsedId))
-                CurrentUserId = parsedId;
-            else
-                CurrentUserId = Guid.Empty;
+        var extractedId = AuthenTools.GetCurrentUserId(identity);
+        if (Guid.TryParse(extractedId, out var parsedId))
+            CurrentUserId = parsedId;
+        else
+            CurrentUserId = Guid.Empty;
 
-            IpAddress = httpContextAccessor?.HttpContext?.Connection?.RemoteIpAddress?.ToString();
-        }
-
-        public Guid CurrentUserId { get; }
-
-        public string? IpAddress { get; }
+        IpAddress = httpContextAccessor?.HttpContext?.Connection?.RemoteIpAddress?.ToString();
     }
+
+    public Guid CurrentUserId { get; }
+
+    public string? IpAddress { get; }
 }

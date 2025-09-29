@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.Diagnostics;
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using SwaggerThemes;
 using JsonSerializer = System.Text.Json.JsonSerializer;
@@ -13,9 +14,9 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 
 // Add Swagger services
-builder.Services.AddSwaggerGen(c => 
+builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    c.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "UniSeapShop API",
         Version = "v1",
@@ -37,8 +38,8 @@ builder.Services.AddCors(hehe =>
         {
             builder
                 .WithOrigins(
-                //"http://localhost:4040",
-                //"https://blindtreasure.vercel.app"
+                    //"http://localhost:4040",
+                    //"https://blindtreasure.vercel.app"
                 )
                 .AllowAnyMethod()
                 .AllowAnyHeader()
