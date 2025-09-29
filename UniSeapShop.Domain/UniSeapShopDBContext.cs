@@ -105,7 +105,7 @@ public class UniSeapShopDBContext : DbContext
             entity.HasMany(s => s.Products)
                 .WithOne(p => p.Supplier)
                 .HasForeignKey(p => p.SupplierId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict); // Prevent cascade delete to avoid multiple cascade paths
         });
 
         // Category configuration
@@ -118,7 +118,7 @@ public class UniSeapShopDBContext : DbContext
             entity.HasMany(c => c.Products)
                 .WithOne(p => p.Category)
                 .HasForeignKey(p => p.CategoryId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict); // Prevent cascade delete to avoid multiple cascade paths
         });
 
         // Product configuration
@@ -144,7 +144,7 @@ public class UniSeapShopDBContext : DbContext
             entity.HasMany(p => p.CartItems)
                 .WithOne(ci => ci.Product)
                 .HasForeignKey(ci => ci.ProductId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict); // Prevent cascade delete to avoid multiple cascade paths
 
             // One-to-Many relationship with ProductImages
             entity.HasMany(p => p.Images)

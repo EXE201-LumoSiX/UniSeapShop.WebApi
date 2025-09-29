@@ -12,7 +12,7 @@ using UniSeapShop.Domain;
 namespace UniSeapShop.Domain.Migrations
 {
     [DbContext(typeof(UniSeapShopDBContext))]
-    [Migration("20250929165831_Initial")]
+    [Migration("20250929170450_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -643,7 +643,7 @@ namespace UniSeapShop.Domain.Migrations
                     b.HasOne("UniSeapShop.Domain.Entities.Product", "Product")
                         .WithMany("CartItems")
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Cart");
@@ -736,13 +736,13 @@ namespace UniSeapShop.Domain.Migrations
                     b.HasOne("UniSeapShop.Domain.Entities.Category", "Category")
                         .WithMany("Products")
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("UniSeapShop.Domain.Entities.Supplier", "Supplier")
                         .WithMany("Products")
                         .HasForeignKey("SupplierId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Category");
