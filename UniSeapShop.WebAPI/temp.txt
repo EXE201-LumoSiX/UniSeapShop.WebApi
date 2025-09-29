@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  blindtreasure.api:
+    image: phuctran362003/blindtreasureapi:latest
+    build:
+      context: .
+      dockerfile: BlindTreasure.API/Dockerfile
+    depends_on:
+      blindtreasure.database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=103.211.201.162;Port=5433;Database=BlindTreasureDB;Username=postgres;Password=postgres;Timeout=300;CommandTimeout=300
+      - ConnectionStrings__Redis=redis:6379,abortConnect=false
+      - JWT__SecretKey=BlindTreasure_SECRETKEY_SIEUCAPBAOMAT_VAYMACHUADU16KYTU
+      - GEMINI_API_KEY=AIzaSyBAibjXO6OkvcPO_GdvflPXtZR1q3ABMyA
+      - JWT__Issuer=BlindTreasure_Issuer
+      - JWT__Audience=BlindTreasure_Audience
+      - RESEND_APITOKEN=re_gQNBXJvY_ANFdgQphKQBxdW5DNf2UG6Zk
+      - RESEND_FROM=noreply@fpt-devteam.fun
+      - MINIO_ENDPOINT=103.211.201.162:9000
+      - MINIO_HOST=https://minio.fpt-devteam.fun
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+      - STRIPE__LocalWebhookSecret=whsec_1922024ed268f46c73bfac2bd2bab31e490189a882ec21e458c387b0f8ed8b13
+      - STRIPE__DeployWebhookSecret=whsec_uWjfI4fkQ7zbwE8VrWMcu2Ysyqm8heUh
+      - STRIPE__SuccessRedirectUrl=http://localhost:4040/thankyou
+      - STRIPE__FailRedirectUrl=http://localhost:4040/fail
+      - STRIPE__CreatedRedirectUrl=http://localhost:4040/seller/dashboard
+
+    ports:
+      - "5000:5000"
+
+  blindtreasure.database:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: BlindTreasureDB
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:6.2
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  pgdata:
+  redisdata:

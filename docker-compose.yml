@@ -1,6 +1,56 @@
+version: '3.8'
+
 services:
   uniseapshop.webapi:
     image: ${DOCKER_REGISTRY-}uniseapshopwebapi
     build:
       context: .
       dockerfile: UniSeapShop.WebAPI/Dockerfile
+    depends_on:
+      uniseapshop.database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=uniseapshop.database;Database=UniSeapShopDB;User Id=sa;Password=UniSeap@123;TrustServerCertificate=True
+      - ConnectionStrings__Redis=redis:6379,abortConnect=false
+      - JWT__SecretKey=UniSeapShop_SECRETKEY_SIEUCAPBAOMAT_VAYMACHUADU16KYTU
+      - JWT__Issuer=UniSeapShop_Issuer
+      - JWT__Audience=UniSeapShop_Audience
+    ports:
+      - "5000:5000"
+
+  uniseapshop.database:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    restart: always
+    environment:
+      ACCEPT_EULA: Y
+      SA_PASSWORD: UniSeap@123
+      MSSQL_PID: Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssqldata:/var/opt/mssql
+    healthcheck:
+      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "UniSeap@123" -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:6.2
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  mssqldata:
+  redisdata:
