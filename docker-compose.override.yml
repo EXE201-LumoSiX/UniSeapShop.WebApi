@@ -1,5 +1,5 @@
 services:
-  uniseapshop.api:
+  uniseapshop.webapi:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=8080

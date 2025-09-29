@@ -3,7 +3,7 @@ services:
     image: ${DOCKER_REGISTRY-}uniseapshopwebapi
     build:
       context: .
-      dockerfile: UniSeapShop.WebAPI/Dockerfile
+      dockerfile: UniSeapShop.API/Dockerfile
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Server=uniseapshop.database;Database=UniSeapShopDB;User Id=sa;Password=UniSeap@123;TrustServerCertificate=True

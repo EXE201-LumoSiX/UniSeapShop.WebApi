@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using Newtonsoft.Json;
 using SwaggerThemes;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json.Serialization;
@@ -19,7 +18,7 @@ builder.Services.AddDbContext<UniSeapShopDBContext>(options =>
 
 // Register repositories and UnitOfWork
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+// builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 
 builder.Services.AddControllers()
@@ -61,12 +60,6 @@ builder.Services.AddCors(hehe =>
         });
 });
 
-builder.Services.AddControllers()
-    .AddNewtonsoftJson(options =>
-    {
-        options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
-        options.SerializerSettings.NullValueHandling = NullValueHandling.Include;
-    });
 
 
 // Tắt việc map claim mặc định
