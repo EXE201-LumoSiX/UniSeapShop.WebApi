@@ -5,6 +5,14 @@ VisualStudioVersion = 17.14.36518.9 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniSeapShop.API", "UniSeapShop.API\UniSeapShop.API.csproj", "{0CF8CA09-6CEC-42A6-84EA-0D58930DCACC}"
 EndProject
+Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{81DDED9D-158B-E303-5F62-77A2896D2A5A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniSeapShop.Domain", "UniSeapShop.Domain\UniSeapShop.Domain.csproj", "{4DB7EE7C-F8E5-4531-A78D-CD1A8E07DDA9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniSeapShop.Application", "UniSeapShop.Application\UniSeapShop.Application.csproj", "{BEA9F369-90E3-41F0-8C50-AED5B4632F5B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniSeapShop.Infrastructure", "UniSeapShop.Infrastructure\UniSeapShop.Infrastructure.csproj", "{DF895219-D1F2-4DD5-B1C2-763A9F85444B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +23,22 @@ Global
 		{0CF8CA09-6CEC-42A6-84EA-0D58930DCACC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0CF8CA09-6CEC-42A6-84EA-0D58930DCACC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0CF8CA09-6CEC-42A6-84EA-0D58930DCACC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4DB7EE7C-F8E5-4531-A78D-CD1A8E07DDA9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4DB7EE7C-F8E5-4531-A78D-CD1A8E07DDA9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4DB7EE7C-F8E5-4531-A78D-CD1A8E07DDA9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4DB7EE7C-F8E5-4531-A78D-CD1A8E07DDA9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BEA9F369-90E3-41F0-8C50-AED5B4632F5B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BEA9F369-90E3-41F0-8C50-AED5B4632F5B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BEA9F369-90E3-41F0-8C50-AED5B4632F5B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BEA9F369-90E3-41F0-8C50-AED5B4632F5B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DF895219-D1F2-4DD5-B1C2-763A9F85444B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DF895219-D1F2-4DD5-B1C2-763A9F85444B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DF895219-D1F2-4DD5-B1C2-763A9F85444B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DF895219-D1F2-4DD5-B1C2-763A9F85444B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
