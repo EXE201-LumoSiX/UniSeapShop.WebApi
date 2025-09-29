@@ -1,69 +1,150 @@
-version: '3.8'
-
-services:
-  blindtreasure.api:
-    image: phuctran362003/blindtreasureapi:latest
-    build:
-      context: .
-      dockerfile: BlindTreasure.API/Dockerfile
-    depends_on:
-      blindtreasure.database:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Host=103.211.201.162;Port=5433;Database=BlindTreasureDB;Username=postgres;Password=postgres;Timeout=300;CommandTimeout=300
-      - ConnectionStrings__Redis=redis:6379,abortConnect=false
-      - JWT__SecretKey=BlindTreasure_SECRETKEY_SIEUCAPBAOMAT_VAYMACHUADU16KYTU
-      - GEMINI_API_KEY=AIzaSyBAibjXO6OkvcPO_GdvflPXtZR1q3ABMyA
-      - JWT__Issuer=BlindTreasure_Issuer
-      - JWT__Audience=BlindTreasure_Audience
-      - RESEND_APITOKEN=re_gQNBXJvY_ANFdgQphKQBxdW5DNf2UG6Zk
-      - RESEND_FROM=noreply@fpt-devteam.fun
-      - MINIO_ENDPOINT=103.211.201.162:9000
-      - MINIO_HOST=https://minio.fpt-devteam.fun
-      - MINIO_ACCESS_KEY=minioadmin
-      - MINIO_SECRET_KEY=minioadmin
-      - STRIPE__LocalWebhookSecret=whsec_1922024ed268f46c73bfac2bd2bab31e490189a882ec21e458c387b0f8ed8b13
-      - STRIPE__DeployWebhookSecret=whsec_uWjfI4fkQ7zbwE8VrWMcu2Ysyqm8heUh
-      - STRIPE__SuccessRedirectUrl=http://localhost:4040/thankyou
-      - STRIPE__FailRedirectUrl=http://localhost:4040/fail
-      - STRIPE__CreatedRedirectUrl=http://localhost:4040/seller/dashboard
-
-    ports:
-      - "5000:5000"
-
-  blindtreasure.database:
-    image: postgres:15
-    restart: always
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: BlindTreasureDB
-    ports:
-      - "5433:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  redis:
-    image: redis:6.2
-    restart: always
-    ports:
-      - "6379:6379"
-    volumes:
-      - redisdata:/data
-    healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-
-volumes:
-  pgdata:
-  redisdata:
+CREATE TABLE "User"(
+    "UserId" NVARCHAR(255) NOT NULL,
+    "FullName" NVARCHAR(255) NOT NULL,
+    "Email" NVARCHAR(255) NOT NULL,
+    "Password" NVARCHAR(255) NOT NULL,
+    "PhoneNumber" NVARCHAR(255) NOT NULL,
+    "UserImage" NVARCHAR(255) NOT NULL,
+    "Location" NVARCHAR(255) NOT NULL,
+    "IsEmailVerify" BIT NOT NULL,
+    "IsActive" BIT NOT NULL,
+    "Role" NVARCHAR(255) NOT NULL,
+    "CurrentMode" NVARCHAR(255) NOT NULL,
+    "CreatedAt" DATETIME NOT NULL
+);
+ALTER TABLE
+    "User" ADD CONSTRAINT "user_userid_primary" PRIMARY KEY("UserId");
+CREATE TABLE "Product"(
+    "ProductId" NVARCHAR(255) NOT NULL,
+    "ProductName" NVARCHAR(255) NOT NULL,
+    "ProductImage" NVARCHAR(255) NOT NULL,
+    "CategoryId" NVARCHAR(255) NOT NULL,
+    "Description" NVARCHAR(255) NOT NULL,
+    "Price" FLOAT(53) NOT NULL,
+    "Quantity" INT NOT NULL,
+    "CreatedAt" DATETIME NOT NULL,
+    "SupplierId" NVARCHAR(255) NOT NULL
+);
+ALTER TABLE
+    "Product" ADD CONSTRAINT "product_productid_primary" PRIMARY KEY("ProductId");
+CREATE TABLE "Category"(
+    "CategoryId" NVARCHAR(255) NOT NULL,
+    "CategoryName" NVARCHAR(255) NOT NULL
+);
+ALTER TABLE
+    "Category" ADD CONSTRAINT "category_categoryid_primary" PRIMARY KEY("CategoryId");
+CREATE TABLE "Order"(
+    "OrderId" NVARCHAR(255) NOT NULL,
+    "CustomerId" NVARCHAR(255) NOT NULL,
+    "OrderDate" DATETIME NOT NULL,
+    "ShipAddress" NVARCHAR(255) NOT NULL,
+    "PaymentMethod" NVARCHAR(255) NOT NULL
+);
+ALTER TABLE
+    "Order" ADD CONSTRAINT "order_orderid_primary" PRIMARY KEY("OrderId");
+CREATE TABLE "Cart"(
+    "CartId" NVARCHAR(255) NOT NULL,
+    "UserId" NVARCHAR(255) NOT NULL
+);
+ALTER TABLE
+    "Cart" ADD CONSTRAINT "cart_cartid_primary" PRIMARY KEY("CartId");
+CREATE TABLE "Feedback"(
+    "FeedbackId" NVARCHAR(255) NOT NULL,
+    "OrderDetailId" NVARCHAR(255) NOT NULL,
+    "Content" NVARCHAR(255) NOT NULL,
+    "Rating" INT NOT NULL,
+    "FeedbackImage" NVARCHAR(255) NOT NULL,
+    "CreatedAt" DATETIME NOT NULL
+);
+ALTER TABLE
+    "Feedback" ADD CONSTRAINT "feedback_feedbackid_primary" PRIMARY KEY("FeedbackId");
+CREATE TABLE "Payment"(
+    "PaymentId" NVARCHAR(255) NOT NULL,
+    "OrderId" NVARCHAR(255) NOT NULL,
+    "Status" NVARCHAR(255) NOT NULL,
+    "Provider" NVARCHAR(255) NOT NULL,
+    "TransactionCode" NVARCHAR(255) NOT NULL,
+    "CreateAt" DATETIME NOT NULL
+);
+ALTER TABLE
+    "Payment" ADD CONSTRAINT "payment_paymentid_primary" PRIMARY KEY("PaymentId");
+CREATE TABLE "PayoutDetail"(
+    "PayoutId" NVARCHAR(255) NOT NULL,
+    "ReceiverId" NVARCHAR(255) NOT NULL,
+    "TotalPrice" FLOAT(53) NOT NULL,
+    "OrderId" NVARCHAR(255) NOT NULL,
+    "Status" NVARCHAR(255) NOT NULL,
+    "ActualReceipt" FLOAT(53) NOT NULL
+);
+ALTER TABLE
+    "PayoutDetail" ADD CONSTRAINT "payoutdetail_payoutid_primary" PRIMARY KEY("PayoutId");
+CREATE TABLE "OrderDetail"(
+    "OrderDetailId" NVARCHAR(255) NOT NULL,
+    "OrdeId" NVARCHAR(255) NOT NULL,
+    "ProductId" NVARCHAR(255) NOT NULL,
+    "Quantity" INT NOT NULL,
+    "UnitPrice" FLOAT(53) NOT NULL,
+    "TotalPrice" FLOAT(53) NOT NULL,
+    "VoucherId" NVARCHAR(255) NOT NULL
+);
+ALTER TABLE
+    "OrderDetail" ADD CONSTRAINT "orderdetail_orderdetailid_primary" PRIMARY KEY("OrderDetailId");
+CREATE TABLE "Voucher"(
+    "VoucherId" NVARCHAR(255) NOT NULL,
+    "Code" NVARCHAR(255) NOT NULL,
+    "DiscountPercent" FLOAT(53) NOT NULL,
+    "ExpiryDate" DATETIME NOT NULL,
+    "IsActive" BIT NOT NULL
+);
+ALTER TABLE
+    "Voucher" ADD CONSTRAINT "voucher_voucherid_primary" PRIMARY KEY("VoucherId");
+CREATE TABLE "CartItem"(
+    "CartItemId" NVARCHAR(255) NOT NULL,
+    "ProductId" NVARCHAR(255) NOT NULL,
+    "Quantity" INT NOT NULL,
+    "CartId" NVARCHAR(255) NOT NULL,
+    "IsCheck" BIT NOT NULL
+);
+ALTER TABLE
+    "CartItem" ADD CONSTRAINT "cartitem_cartitemid_primary" PRIMARY KEY("CartItemId");
+CREATE TABLE "Supplier"(
+    "UserId" NVARCHAR(255) NOT NULL,
+    "Description" NVARCHAR(255) NOT NULL,
+    "Rating" FLOAT(53) NOT NULL,
+    "IsActive" BIT NOT NULL
+);
+ALTER TABLE
+    "Supplier" ADD CONSTRAINT "supplier_userid_primary" PRIMARY KEY("UserId");
+CREATE TABLE "Customer"(
+    "UserId" NVARCHAR(255) NOT NULL,
+    "LoyaltyPoint" INT NOT NULL,
+    "MembershipLevel" NVARCHAR(255) NOT NULL
+);
+ALTER TABLE
+    "Customer" ADD CONSTRAINT "customer_userid_primary" PRIMARY KEY("UserId");
+ALTER TABLE
+    "Supplier" ADD CONSTRAINT "supplier_userid_foreign" FOREIGN KEY("UserId") REFERENCES "User"("UserId");
+ALTER TABLE
+    "OrderDetail" ADD CONSTRAINT "orderdetail_ordeid_foreign" FOREIGN KEY("OrdeId") REFERENCES "Order"("OrderId");
+ALTER TABLE
+    "Payment" ADD CONSTRAINT "payment_orderid_foreign" FOREIGN KEY("OrderId") REFERENCES "Order"("OrderId");
+ALTER TABLE
+    "Cart" ADD CONSTRAINT "cart_userid_foreign" FOREIGN KEY("UserId") REFERENCES "Customer"("UserId");
+ALTER TABLE
+    "CartItem" ADD CONSTRAINT "cartitem_productid_foreign" FOREIGN KEY("ProductId") REFERENCES "Product"("ProductId");
+ALTER TABLE
+    "Product" ADD CONSTRAINT "product_supplierid_foreign" FOREIGN KEY("SupplierId") REFERENCES "Supplier"("UserId");
+ALTER TABLE
+    "PayoutDetail" ADD CONSTRAINT "payoutdetail_orderid_foreign" FOREIGN KEY("OrderId") REFERENCES "Order"("OrderId");
+ALTER TABLE
+    "Customer" ADD CONSTRAINT "customer_userid_foreign" FOREIGN KEY("UserId") REFERENCES "User"("UserId");
+ALTER TABLE
+    "Feedback" ADD CONSTRAINT "feedback_orderdetailid_foreign" FOREIGN KEY("OrderDetailId") REFERENCES "OrderDetail"("OrderDetailId");
+ALTER TABLE
+    "OrderDetail" ADD CONSTRAINT "orderdetail_productid_foreign" FOREIGN KEY("ProductId") REFERENCES "Product"("ProductId");
+ALTER TABLE
+    "Product" ADD CONSTRAINT "product_categoryid_foreign" FOREIGN KEY("CategoryId") REFERENCES "Category"("CategoryId");
+ALTER TABLE
+    "CartItem" ADD CONSTRAINT "cartitem_cartid_foreign" FOREIGN KEY("CartId") REFERENCES "Cart"("CartId");
+ALTER TABLE
+    "Order" ADD CONSTRAINT "order_customerid_foreign" FOREIGN KEY("CustomerId") REFERENCES "Customer"("UserId");

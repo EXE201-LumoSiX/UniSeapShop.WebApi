@@ -2,8 +2,9 @@
 
 public enum RoleType
 {
-    Seller,
-    Customer,
-    Staff,
-    Admin
+    Admin,     // Full system access
+    Staff,     // Support and customer service
+    Seller,    // Second-hand item sellers
+    Customer,  // Regular buyers
+    Guest      // Unregistered visitors
 }

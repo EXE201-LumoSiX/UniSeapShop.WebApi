@@ -40,11 +40,26 @@ public class AuthenService : IAuthService
 
         _logger.Success($"[LoginAsync] User {loginDto.Email} authenticated successfully.");
 
+        // Load the role if it's not loaded yet
+        if (user.Role == null)
+        {
+            var role = await _unitOfWork.Roles.FirstOrDefaultAsync(r => r.Id == user.RoleId);
+            if (role != null)
+            {
+                user.Role = role;
+            }
+            else
+            {
+                _logger.Error($"[LoginAsync] Role with ID {user.RoleId} not found for user {user.Email}");
+                throw new InvalidOperationException("User role not found");
+            }
+        }
+
         // Generate JWT & RefreshToken
         var accessToken = JwtUtils.GenerateJwtToken(
             user.Id,
             user.Email,
-            user.RoleName.ToString(),
+            user.Role.RoleType.ToString(),
             configuration,
             TimeSpan.FromMinutes(30)
         );
@@ -78,15 +93,31 @@ public class AuthenService : IAuthService
             throw new Exception();
         }
 
-        var hashedPassword = new PasswordHasher().HashPassword(registrationDto.Password);
+        var hashedPassword = new PasswordHasher().HashPassword(registrationDto.Password ?? throw new ArgumentNullException(nameof(registrationDto.Password)));
+
+        // Get the Customer role from database
+        var customerRole = await _unitOfWork.Roles.FirstOrDefaultAsync(r => r.RoleType == RoleType.Customer);
+        if (customerRole == null)
+        {
+            // If role doesn't exist, create it
+            customerRole = new Role 
+            { 
+                Name = "Customer", 
+                RoleType = RoleType.Customer,
+                Description = "Regular customer role"
+            };
+            await _unitOfWork.Roles.AddAsync(customerRole);
+            await _unitOfWork.SaveChangesAsync();
+        }
 
         var user = new User
         {
             Email = registrationDto.Email,
-            Password = hashedPassword,
-            Username = registrationDto.FullName,
+            Password = hashedPassword!, // Non-null assertion as we've verified this above
+            FullName = registrationDto.FullName,
             PhoneNumber = registrationDto.PhoneNumber,
-            RoleName = RoleType.Customer
+            RoleId = customerRole.Id,
+            Role = customerRole
         };
 
         await _unitOfWork.Users.AddAsync(user);
@@ -186,27 +217,14 @@ public class AuthenService : IAuthService
 
     private static UserDto ToUserDto(User user)
     {
-        //if (user.RoleName.Equals(RoleType.Seller))
-        //    return new UserDto
-        //    {
-        //        UserId = user.Id,
-        //        Username = user.Username,
-        //        Email = user.Email,
-        //        DateOfBirth = user.DateOfBirth,
-        //        AvatarUrl = user.AvatarUrl,
-        //        Status = user.Status,
-        //        PhoneNumber = user.PhoneNumber,
-        //        RoleName = user.RoleName
-        //    };
-
-
         return new UserDto
         {
             UserId = user.Id,
-            Username = user.Username,
+            Username = user.FullName,
             Email = user.Email,
             PhoneNumber = user.PhoneNumber,
-            RoleName = user.RoleName
+            RoleName = user.Role?.RoleType,
+            RoleId = user.RoleId
         };
     }
 }

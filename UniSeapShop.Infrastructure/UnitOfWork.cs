@@ -12,11 +12,13 @@ public class UnitOfWork : IUnitOfWork
 
     public UnitOfWork(
         UniSeapShopDBContext context,
-        IGenericRepository<User> userRepository
+        IGenericRepository<User> userRepository,
+        IGenericRepository<Role> roleRepository
     )
     {
         _context = context;
         Users = userRepository;
+        Roles = roleRepository;
     }
 
     public void Dispose()
@@ -30,6 +32,7 @@ public class UnitOfWork : IUnitOfWork
     }
 
     public IGenericRepository<User> Users { get; }
+    public IGenericRepository<Role> Roles { get; }
 
     // Transaction support
     public async Task BeginTransactionAsync()
