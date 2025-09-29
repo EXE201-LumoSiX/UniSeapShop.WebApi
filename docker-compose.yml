@@ -1,0 +1,6 @@
+services:
+  uniseapshop.webapi:
+    image: ${DOCKER_REGISTRY-}uniseapshopwebapi
+    build:
+      context: .
+      dockerfile: UniSeapShop.WebAPI/Dockerfile
