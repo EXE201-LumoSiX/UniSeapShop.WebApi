@@ -11,22 +11,20 @@ public class GenericRepository<TEntity> : IGenericRepository<TEntity> where TEnt
     private readonly UniSeapShopDBContext _dbContext;
     private readonly DbSet<TEntity> _dbSet;
 
-    public GenericRepository(UniSeapShopDBContext dBContext, DbSet<TEntity> dbSet)
+    public GenericRepository(UniSeapShopDBContext dBContext)
     {
         _dbContext = dBContext;
         _dbSet = _dbContext.Set<TEntity>();
-        _dbSet = dbSet;
     }
 
-    public async Task<bool> Update(TEntity entity)
+    public Task<bool> Update(TEntity entity)
     {
         _dbSet.Update(entity);
-        //   await _dbContext.SaveChangesAsync();
-        return true;
+        return Task.FromResult(true);
     }
 
     public async Task<TEntity?> FirstOrDefaultAsync(
-        Expression<Func<TEntity, bool>> predicate = null,
+        Expression<Func<TEntity, bool>>? predicate = null,
         params Expression<Func<TEntity, object>>[] includes)
     {
         IQueryable<TEntity> query = _dbSet;

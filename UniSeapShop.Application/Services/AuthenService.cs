@@ -150,7 +150,6 @@ public class AuthenService : IAuthService
 
         var user = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email == email);
 
-        // ✅ Bắt buộc throw NotFound nếu null
         if (user == null)
             throw new Exception();
 

@@ -9,6 +9,8 @@ public class UnitOfWork : IUnitOfWork
 {
     private readonly UniSeapShopDBContext _context;
     private IDbContextTransaction? _transaction;
+    private readonly IGenericRepository<User> _userRepository;
+    private readonly IGenericRepository<Role> _roleRepository;
 
     public UnitOfWork(
         UniSeapShopDBContext context,
@@ -17,8 +19,8 @@ public class UnitOfWork : IUnitOfWork
     )
     {
         _context = context;
-        Users = userRepository;
-        Roles = roleRepository;
+        _userRepository = userRepository;
+        _roleRepository = roleRepository;
     }
 
     public void Dispose()
@@ -31,8 +33,8 @@ public class UnitOfWork : IUnitOfWork
         return await _context.SaveChangesAsync();
     }
 
-    public IGenericRepository<User> Users { get; }
-    public IGenericRepository<Role> Roles { get; }
+    public IGenericRepository<User> Users => _userRepository;
+    public IGenericRepository<Role> Roles => _roleRepository;
 
     // Transaction support
     public async Task BeginTransactionAsync()

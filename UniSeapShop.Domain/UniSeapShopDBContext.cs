@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using System.IO;
 using UniSeapShop.Domain.Entities;
 
 namespace UniSeapShop.Domain;
@@ -11,6 +13,16 @@ public class UniSeapShopDBContext : DbContext
 
     public UniSeapShopDBContext(DbContextOptions<UniSeapShopDBContext> options) : base(options)
     {
+    }
+    
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        if (!optionsBuilder.IsConfigured)
+        {
+            // For design-time tools like migrations, if no configuration is provided
+            // This will be used as fallback
+            optionsBuilder.UseSqlServer("Server=uniseapshop.database;Database=UniSeapShopDB;User Id=sa;Password=UniSeap@123;TrustServerCertificate=True");
+        }
     }
 
     public DbSet<User> Users { get; set; }

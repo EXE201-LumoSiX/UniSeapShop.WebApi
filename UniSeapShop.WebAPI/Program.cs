@@ -1,12 +1,25 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.Diagnostics;
+﻿using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using SwaggerThemes;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text.Json.Serialization;
+using UniSeapShop.Domain;
+using UniSeapShop.Infrastructure;
+using UniSeapShop.Infrastructure.Interfaces;
+using UniSeapShop.Infrastructure.Repositories;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Add DbContext registration
+builder.Services.AddDbContext<UniSeapShopDBContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Register repositories and UnitOfWork
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 
 builder.Services.AddControllers()
@@ -38,8 +51,8 @@ builder.Services.AddCors(hehe =>
         {
             builder
                 .WithOrigins(
-                    //"http://localhost:4040",
-                    //"https://blindtreasure.vercel.app"
+                //"http://localhost:4040",
+                //"https://blindtreasure.vercel.app"
                 )
                 .AllowAnyMethod()
                 .AllowAnyHeader()
