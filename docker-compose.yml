@@ -4,11 +4,6 @@ services:
     build:
       context: .
       dockerfile: UniSeapShop.WebAPI/Dockerfile
-    depends_on:
-      uniseapshop.database:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Server=uniseapshop.database;Database=UniSeapShopDB;User Id=sa;Password=UniSeap@123;TrustServerCertificate=True
@@ -22,7 +17,6 @@ services:
   uniseapshop.database:
     image: mcr.microsoft.com/mssql/server:2022-latest
     restart: always
-    mem_limit: 2g
     environment:
       ACCEPT_EULA: Y
       SA_PASSWORD: UniSeap@123
@@ -31,24 +25,7 @@ services:
       - "1433:1433"
     volumes:
       - mssqldata:/var/opt/mssql
-    healthcheck:
-      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "UniSeap@123" -Q "SELECT 1" -C || exit 1
-      interval: 10s
-      timeout: 10s
-      retries: 10
 
-  redis:
-    image: redis:6.2
-    restart: always
-    ports:
-      - "6379:6379"
-    volumes:
-      - redisdata:/data
-    healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-      interval: 5s
-      timeout: 3s
-      retries: 5
 
 volumes:
   mssqldata:

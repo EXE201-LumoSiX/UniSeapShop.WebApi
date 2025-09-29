@@ -5,7 +5,6 @@
       "commandVersion": "1.0",
       "serviceActions": {
         "uniseapshop.webapi": "StartDebugging",
-        "redis": "StartWithoutDebugging",
         "uniseapshop.database": "StartWithoutDebugging"
       }
     }
