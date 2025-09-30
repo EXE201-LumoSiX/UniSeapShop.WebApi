@@ -1,55 +1,105 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using UniSeapShop.Application.Interfaces;
+using UniSeapShop.Application.Utils;
+using UniSeapShop.Domain.DTOs.UserDTOs;
+using UniSeapShop.Domain.DTOs.AuthenDTOs;
+using Microsoft.AspNetCore.Authorization;
 
-namespace UniSeapShop.API.Controllers
+namespace UniSeapShop.API.Controllers;
+
+[Route("api/[controller]")]
+[ApiController]
+public class UserController : ControllerBase
 {
-    [ApiController]
-    [Route("api/user")]
-    public class UserController : ControllerBase
+    private readonly IUserService _userService;
+
+    public UserController(IUserService userService)
     {
-        [HttpGet("profile")]
-        [Authorize]
-        public IActionResult GetProfile()
-        {
-            // Trả về thông tin user hiện tại (demo)
-            return Ok(new
-            {
-                Message = "Bạn đã đăng nhập thành công và có thể truy cập API này!",
-                User = User.Identity?.Name ?? "Unknown"
-            });
-        }
+        _userService = userService;
+    }
 
-        [HttpGet("admin")]
-        [Authorize(Policy = "AdminPolicy")]
-        public IActionResult GetAdmin()
+    [HttpGet("profile")]
+    [Authorize]
+    public async Task<IActionResult> GetProfile()
+    {
+        try
         {
-            return Ok(new
-            {
-                Message = "Bạn có quyền Admin!",
-                User = User.Identity?.Name ?? "Unknown"
-            });
+            var result = await _userService.GetCurrentUserProfileAsync();
+            return Ok(ApiResult<UserDto>.Success(result!, "200", "Get profile successful"));
         }
-
-        [HttpGet("supplier")]
-        [Authorize(Policy = "SupplierPolicy")]
-        public IActionResult GetSupplier()
+        catch (Exception ex)
         {
-            return Ok(new
-            {
-                Message = "Bạn có quyền Supplier!",
-                User = User.Identity?.Name ?? "Unknown"
-            });
+            var statusCode = ExceptionUtils.ExtractStatusCode(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<UserDto>(ex);
+            return StatusCode(statusCode, errorResponse);
         }
+    }
 
-        [HttpGet("customer")]
-        [Authorize(Policy = "CustomerPolicy")]
-        public IActionResult GetCustomer()
+    [HttpGet("{id}")]
+    [Authorize]
+    public async Task<IActionResult> GetUserById(Guid id)
+    {
+        try
         {
-            return Ok(new
-            {
-                Message = "Bạn có quyền Customer!",
-                User = User.Identity?.Name ?? "Unknown"
-            });
+            var result = await _userService.GetUserByIdAsync(id);
+            return Ok(ApiResult<UserDto>.Success(result!, "200", "Get user by id successful"));
+        }
+        catch (Exception ex)
+        {
+            var statusCode = ExceptionUtils.ExtractStatusCode(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<UserDto>(ex);
+            return StatusCode(statusCode, errorResponse);
+        }
+    }
+
+    [HttpGet]
+    [Authorize]
+    public async Task<IActionResult> GetAllUsers()
+    {
+        try
+        {
+            var result = await _userService.GetAllUsersAsync();
+            return Ok(ApiResult<List<UserDto>>.Success(result!, "200", "Get all users successful"));
+        }
+        catch (Exception ex)
+        {
+            var statusCode = ExceptionUtils.ExtractStatusCode(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<List<UserDto>>(ex);
+            return StatusCode(statusCode, errorResponse);
+        }
+    }
+
+    [HttpPut("{id}")]
+    [Authorize]
+    public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UserUpdateDto updateDto)
+    {
+        try
+        {
+            var result = await _userService.UpdateUserAsync(id, updateDto);
+            return Ok(ApiResult<UserDto>.Success(result!, "200", "Update user successful"));
+        }
+        catch (Exception ex)
+        {
+            var statusCode = ExceptionUtils.ExtractStatusCode(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<UserDto>(ex);
+            return StatusCode(statusCode, errorResponse);
+        }
+    }
+
+    [HttpDelete("{id}")]
+    [Authorize]
+    public async Task<IActionResult> DeleteUser(Guid id)
+    {
+        try
+        {
+            var result = await _userService.DeleteUserAsync(id);
+            return Ok(ApiResult<bool>.Success(result, "200", "Delete user successful"));
+        }
+        catch (Exception ex)
+        {
+            var statusCode = ExceptionUtils.ExtractStatusCode(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<bool>(ex);
+            return StatusCode(statusCode, errorResponse);
         }
     }
 }

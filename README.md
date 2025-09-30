@@ -21,7 +21,7 @@ Nền tảng mua bán đồ second-hand. Người dùng có thể đăng ký/đ�
 - Mã giảm giá/Voucher & khuyến mãi (Promotions)
 
 
-## Chạy bằng Docker Compose (dành cho FE dev)
+## Chạy bằng Docker Compose
 - API expose trên cổng 5000 (ứng dụng cấu hình `UseUrls("http://0.0.0.0:5000")`).
 - SQL Server sẽ chạy trong container kèm theo.
 

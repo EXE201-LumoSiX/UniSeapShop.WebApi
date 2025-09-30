@@ -8,12 +8,12 @@ namespace UniSeapShop.API.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class AuthenController : ControllerBase
+public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
     private readonly IConfiguration _configuration;
 
-    public AuthenController(IAuthService authService, IConfiguration configuration)
+    public AuthController(IAuthService authService, IConfiguration configuration)
     {
         _authService = authService;
         _configuration = configuration;

@@ -96,7 +96,24 @@ public class SystemController : ControllerBase
         });
     }
 
-    private async Task SeedRolesAndUsers()
+    [HttpPost("seed-roles-users")]
+    public async Task<IActionResult> SeedRolesAndUsersEndpoint()
+    {
+        try
+        {
+            var seededUsers = await SeedRolesAndUsers();
+            return Ok(ApiResult<List<object>>.Success(seededUsers, "200", "Seeded roles and users successfully"));
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"SeedRolesAndUsersEndpoint error: {ex.Message}");
+            var statusCode = ExceptionUtils.ExtractStatusCode(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<List<object>>(ex);
+            return StatusCode(statusCode, errorResponse);
+        }
+    }
+
+    private async Task<List<object>> SeedRolesAndUsers()
     {
         // Định nghĩa các role dựa trên README.md
         var roles = new List<Role>
@@ -167,9 +184,21 @@ public class SystemController : ControllerBase
             }
         };
 
+        var seededUserList = new List<object>();
         foreach (var user in users)
+        {
             if (!await _context.Users.AnyAsync(u => u.Email == user.Email))
                 await _context.Users.AddAsync(user);
+            seededUserList.Add(new
+            {
+                user.FullName,
+                user.Email,
+                user.PhoneNumber,
+                Role = user.Role.Name,
+                Password = user.Password // hash, chỉ để test, không show ra FE thực tế
+            });
+        }
         await _context.SaveChangesAsync();
+        return seededUserList;
     }
 }
