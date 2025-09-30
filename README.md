@@ -20,24 +20,6 @@ Nền tảng mua bán đồ second-hand. Người dùng có thể đăng ký/đ�
 - Hệ thống đánh giá/feedback
 - Mã giảm giá/Voucher & khuyến mãi (Promotions)
 
-## Kiến trúc & Công nghệ
-- ASP.NET Core 8 Web API, Swagger UI tích hợp
-- Entity Framework Core + SQL Server
-- Xác thực JWT
-- Dockerfile + docker-compose cho phát triển nhanh
-
-Cấu trúc solution (rút gọn):
-- `UniSeapShop.API/` – Web API (Controllers, Program, Dockerfile)
-- `UniSeapShop.Application/` – Application layer (Services, Interfaces)
-- `UniSeapShop.Domain/` – Domain layer (Entities, DTOs, DbContext, Migrations)
-- `UniSeapShop.Infrastructure/` – Infrastructure (Repositories, UoW, tích hợp ngoài)
-
-Swagger: được bật ở Development/Production, truy cập ngay trang chủ.
-
-## Yêu cầu môi trường
-- .NET SDK 8.0+
-- SQL Server (local hoặc trong Docker)
-- PowerShell (Windows) hoặc Bash (Linux/macOS)
 
 ## Chạy bằng Docker Compose (dành cho FE dev)
 - API expose trên cổng 5000 (ứng dụng cấu hình `UseUrls("http://0.0.0.0:5000")`).
