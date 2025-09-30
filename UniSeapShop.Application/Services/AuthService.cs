@@ -50,12 +50,14 @@ public class AuthService : IAuthService
             throw ErrorHelper.Forbidden(ErrorMessages.AccountNotVerified);
 
         _logger.Success($"[LoginAsync] User {loginDto.Email} authenticated successfully.");
+        // Get role
+        string roleName = GetUserRole(user.RoleId);
 
         // Generate JWT & RefreshToken
         var accessToken = JwtUtils.GenerateJwtToken(
             user.Id,
             user.Email,
-            user.Role.RoleType.ToString(),
+            roleName,
             configuration,
             TimeSpan.FromMinutes(30)
         );
@@ -111,6 +113,7 @@ public class AuthService : IAuthService
         return ToUserDto(user);
     }
 
+
     private static UserDto ToUserDto(User user)
     {
         return new UserDto
@@ -119,9 +122,18 @@ public class AuthService : IAuthService
             Username = user.FullName,
             Email = user.Email,
             UserImage = user.UserImage,
-            PhoneNumber = user.PhoneNumber,
-            RoleName = user.Role.RoleType
+            PhoneNumber = user.PhoneNumber
         };
+    }
+
+    private string GetUserRole(Guid id)
+    {
+        var roleName = _unitOfWork
+            .Where<Role>(u => u.Id == id)
+            .Select(u => u.Name) // hoặc cột Role trực tiếp
+            .FirstOrDefault();
+
+        return roleName ?? string.Empty;
     }
 
     private async Task<User?> GetUserByEmailAsync(string email)

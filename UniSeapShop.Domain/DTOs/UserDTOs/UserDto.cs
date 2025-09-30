@@ -1,6 +1,4 @@
-﻿using UniSeapShop.Domain.Enums;
-
-namespace UniSeapShop.Domain.DTOs.UserDTOs;
+﻿namespace UniSeapShop.Domain.DTOs.UserDTOs;
 
 public class UserDto
 {
@@ -9,7 +7,7 @@ public class UserDto
     public string? Email { get; set; }
     public string? PhoneNumber { get; set; }
     public string UserImage { get; set; }
-    public RoleType? RoleName { get; set; }
+    public string? RoleName { get; set; }
     public Guid RoleId { get; set; }
     public Guid? SupplierId { get; set; }
 }
