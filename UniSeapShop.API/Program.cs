@@ -1,9 +1,10 @@
-﻿using Microsoft.AspNetCore.Diagnostics;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using SwaggerThemes;
-using System.IdentityModel.Tokens.Jwt;
-using System.Text.Json.Serialization;
+using UniSeapShop.API.Architecture;
 using UniSeapShop.Domain;
 using UniSeapShop.Infrastructure.Interfaces;
 using UniSeapShop.Infrastructure.Repositories;
@@ -49,8 +50,8 @@ builder.Services.AddCors(hehe =>
         {
             builder
                 .WithOrigins(
-                //"http://localhost:4040",
-                //"https://blindtreasure.vercel.app"
+                    //"http://localhost:4040",
+                    //"https://blindtreasure.vercel.app"
                 )
                 .AllowAnyMethod()
                 .AllowAnyHeader()
@@ -58,7 +59,6 @@ builder.Services.AddCors(hehe =>
                 .SetIsOriginAllowed(_ => true); // Allow WebSocket
         });
 });
-
 
 
 // Tắt việc map claim mặc định
@@ -85,16 +85,18 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
     });
 }
 
-//try
-//{
-//    app.ApplyMigrations(app.Logger);
-//}
-//catch (Exception e)
-//{
-//    app.Logger.LogError(e, "An problem occurred during migration!");
-//}
+// hàm này để tự động migrate database khi chạy 
+// cho khỏi phải chạy lệnh update-database trong package manager console
+// chỉ cần add migration rồi chạy project là nó tự động cập nhật
+try
+{
+    app.ApplyMigrations(app.Logger);
+}
+catch (Exception e)
+{
+    app.Logger.LogError(e, "An problem occurred during migration!");
+}
 
-//test thử middle ware này
 app.UseExceptionHandler(errorApp =>
 {
     errorApp.Run(async context =>

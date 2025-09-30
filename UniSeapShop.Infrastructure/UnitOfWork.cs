@@ -4,11 +4,9 @@ using UniSeapShop.Infrastructure.Interfaces;
 
 namespace UniSeapShop.Infrastructure;
 
-public class UnitOfWork 
+public class UnitOfWork
 {
     private readonly UniSeapShopDBContext _context;
-    private readonly IGenericRepository<User> _userRepository;
-    private readonly IGenericRepository<Role> _roleRepository;
 
     public UnitOfWork(
         UniSeapShopDBContext context,
@@ -17,13 +15,12 @@ public class UnitOfWork
     )
     {
         _context = context;
-        _userRepository = userRepository;
-        _roleRepository = roleRepository;
+        Users = userRepository;
+        Roles = roleRepository;
     }
 
 
-    public IGenericRepository<User> Users => _userRepository;
-    public IGenericRepository<Role> Roles => _roleRepository;
+    public IGenericRepository<User> Users { get; }
 
-    
+    public IGenericRepository<Role> Roles { get; }
 }

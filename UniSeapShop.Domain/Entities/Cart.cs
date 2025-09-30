@@ -3,7 +3,7 @@
 public class Cart : BaseEntity
 {
     public Guid UserId { get; set; }
-    
+
     // Navigation properties
     public required Customer Customer { get; set; }
     public List<CartItem> CartItems { get; set; } = new();

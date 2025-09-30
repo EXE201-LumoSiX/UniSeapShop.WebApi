@@ -7,7 +7,7 @@ public class PayoutDetail : BaseEntity
     public Guid OrderId { get; set; }
     public string Status { get; set; } = string.Empty;
     public double ActualReceipt { get; set; }
-    
+
     // Navigation properties
     public required Order Order { get; set; }
 }

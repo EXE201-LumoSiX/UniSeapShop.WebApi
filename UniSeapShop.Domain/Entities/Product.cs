@@ -12,7 +12,7 @@ public class Product : BaseEntity
     public double? OriginalPrice { get; set; } // Original retail price for comparison
     public int Quantity { get; set; }
     public Guid SupplierId { get; set; }
-    
+
     // Second-hand specific properties
     public ProductCondition Condition { get; set; } = ProductCondition.Good;
     public string UsageHistory { get; set; } = string.Empty; // Brief history of the item
@@ -20,7 +20,7 @@ public class Product : BaseEntity
     public string Brand { get; set; } = string.Empty;
     public double? Weight { get; set; } // In kg or appropriate unit
     public string Dimensions { get; set; } = string.Empty; // Format: "LxWxH" in cm or appropriate unit
-    
+
     // Navigation properties
     public required Category Category { get; set; }
     public required Supplier Supplier { get; set; }
