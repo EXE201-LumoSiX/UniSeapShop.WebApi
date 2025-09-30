@@ -11,15 +11,21 @@ public class UnitOfWork : IUnitOfWork
     private readonly UniSeapShopDBContext _dbContext;
     private IDbContextTransaction? _transaction;
 
-    public UnitOfWork(UniSeapShopDBContext dbContext, IGenericRepository<User> users, IGenericRepository<Role> roles)
+    public UnitOfWork(
+        UniSeapShopDBContext dbContext, IGenericRepository<User> users,
+        IGenericRepository<Role> roles,
+        IGenericRepository<OtpVerification> otpVerifications
+        )
     {
         _dbContext = dbContext;
         Users = users;
         Roles = roles;
+        OtpVerifications = otpVerifications;
     }
 
     public IGenericRepository<User> Users { get; }
     public IGenericRepository<Role> Roles { get; }
+    public IGenericRepository<OtpVerification> OtpVerifications { get; }
 
     public void Dispose()
     {

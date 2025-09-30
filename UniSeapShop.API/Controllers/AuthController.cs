@@ -60,4 +60,14 @@ public class AuthController : ControllerBase
             return StatusCode(statusCode, errorResponse);
         }
     }
+
+    [HttpPost("verify-otp")]
+    public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpDto dto)
+    {
+        var verified = await _authService.VerifyEmailOtpAsync(dto.Email, dto.Otp);
+        if (!verified)
+            return BadRequest(ApiResult.Failure("400", "Mã OTP không hợp lệ hoặc đã hết hạn. Vui lòng thử lại."));
+
+        return Ok(ApiResult.Success("200", "Xác thực thành công. Tài khoản của bạn đã được kích hoạt."));
+    }
 }

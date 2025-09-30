@@ -7,6 +7,7 @@ public interface IUnitOfWork : IDisposable
 {
     IGenericRepository<User> Users { get; }
     IGenericRepository<Role> Roles { get; }
+    IGenericRepository<OtpVerification> OtpVerifications { get; }
     Task<int> SaveChangesAsync();
     IQueryable<T> Where<T>(Expression<Func<T, bool>> predicate) where T : class;
     IQueryable<TResult> Select<T, TResult>(Expression<Func<T, TResult>> selector) where T : class;
