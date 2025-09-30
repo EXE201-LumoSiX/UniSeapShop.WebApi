@@ -19,6 +19,11 @@ public class AuthController : ControllerBase
         _configuration = configuration;
     }
 
+    /// <summary>
+    /// Đăng nhập hệ thống bằng email và mật khẩu.
+    /// </summary>
+    /// <param name="loginDto">Thông tin đăng nhập (email, password).</param>
+    /// <returns>Thông tin đăng nhập thành công hoặc lỗi.</returns>
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequestDto loginDto)
     {
@@ -35,6 +40,11 @@ public class AuthController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Đăng ký tài khoản mới cho người dùng.
+    /// </summary>
+    /// <param name="registrationDto">Thông tin đăng ký (email, password, tên, số điện thoại).</param>
+    /// <returns>Thông tin tài khoản đã đăng ký hoặc lỗi.</returns>
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] UserRegistrationDto registrationDto)
     {

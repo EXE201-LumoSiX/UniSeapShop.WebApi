@@ -22,6 +22,11 @@ public class SystemController : ControllerBase
         _logger = logger;
     }
 
+    /// <summary>
+    /// Xóa toàn bộ dữ liệu trong database và seed lại dữ liệu mẫu (roles, users, ...).
+    /// Sử dụng khi cần làm sạch và khởi tạo lại dữ liệu hệ thống.
+    /// </summary>
+    /// <returns>Thông báo thành công hoặc lỗi khi seed dữ liệu.</returns>
     [HttpPost("seed-all-data")]
     public async Task<IActionResult> SeedData()
     {
@@ -96,6 +101,11 @@ public class SystemController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Seed các role và user mẫu vào hệ thống.
+    /// Trả về danh sách các account đã được seed (gồm tên, email, số điện thoại, role, password hash).
+    /// </summary>
+    /// <returns>Danh sách các account đã seed hoặc lỗi nếu có.</returns>
     [HttpPost("seed-roles-users")]
     public async Task<IActionResult> SeedRolesAndUsersEndpoint()
     {
