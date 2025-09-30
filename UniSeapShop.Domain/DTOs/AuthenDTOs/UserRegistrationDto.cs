@@ -7,15 +7,18 @@ public class UserRegistrationDto
 {
     [Required(ErrorMessage = "Email is required.")]
     [EmailAddress(ErrorMessage = "Invalid email format.")]
+    [DefaultValue("test@email.com")]
     public required string Email { get; set; }
 
     [Required(ErrorMessage = "Password is required.")]
     [StringLength(100, MinimumLength = 6, ErrorMessage = "Password must be at least 6 characters.")]
     [DataType(DataType.Password)]
+    [DefaultValue("Test123!")]
     public required string Password { get; set; }
 
     [Required(ErrorMessage = "Full name is required.")]
     [StringLength(100, ErrorMessage = "Full name cannot exceed 100 characters.")]
+    [DefaultValue("Nguyen Van A")]
     public required string FullName { get; set; }
 
     [Required(ErrorMessage = "Phone number is required.")]

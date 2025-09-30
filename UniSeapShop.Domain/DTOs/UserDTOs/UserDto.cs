@@ -10,6 +10,5 @@ public class UserDto
     public string? PhoneNumber { get; set; }
     public string UserImage { get; set; }
     public RoleType? RoleName { get; set; }
-    public Guid RoleId { get; set; }
     public Guid? SupplierId { get; set; }
 }
