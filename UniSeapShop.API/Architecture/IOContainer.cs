@@ -1,11 +1,12 @@
-﻿using System.Reflection;
-using System.Security.Claims;
-using System.Text;
-using System.Text.Json;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using StackExchange.Redis;
+using System.Reflection;
+using System.Security.Claims;
+using System.Text;
+using System.Text.Json;
 using UniSeapShop.Application.Interfaces;
 using UniSeapShop.Application.Interfaces.Commons;
 using UniSeapShop.Application.Services;
@@ -13,6 +14,7 @@ using UniSeapShop.Application.Services.Commons;
 using UniSeapShop.Application.Utils;
 using UniSeapShop.Domain;
 using UniSeapShop.Infrastructure;
+using UniSeapShop.Infrastructure.Commons;
 using UniSeapShop.Infrastructure.Interfaces;
 using UniSeapShop.Infrastructure.Repositories;
 
@@ -42,9 +44,26 @@ public static class IocContainer
     {
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<ILoggerService, LoggerService>();
+        services.AddScoped<IClaimsService, ClaimsService>();
 
         services.AddHttpContextAccessor();
         services.AddScoped<IAuthService, AuthService>();
+
+        return services;
+    }
+
+    public static IServiceCollection SetupRedisService(this IServiceCollection services, IConfiguration configuration)
+    {
+        var redisConnectionString = configuration.GetConnectionString("Redis");
+
+        if (string.IsNullOrEmpty(redisConnectionString))
+            throw new InvalidOperationException("Redis connection string is missing in environment variables.");
+
+        services.AddSingleton<IConnectionMultiplexer>(
+            ConnectionMultiplexer.Connect(redisConnectionString));
+
+        services.AddScoped<ICacheService, RedisCacheService>();
 
         return services;
     }
