@@ -12,17 +12,14 @@ namespace UniSeapShop.Application.Services;
 
 public class AuthService : IAuthService
 {
-    private readonly ICacheService _cacheService;
     private readonly ILoggerService _logger;
     private readonly IUnitOfWork _unitOfWork;
 
     public AuthService(
-        ICacheService cacheService,
         ILoggerService logger,
         IUnitOfWork unitOfWork
     )
     {
-        _cacheService = cacheService;
         _logger = logger;
         _unitOfWork = unitOfWork;
     }
@@ -31,7 +28,7 @@ public class AuthService : IAuthService
     {
         _logger.Info($"[LoginAsync] Login attempt for {loginDto.Email}");
 
-        // Lấy user từ DB (không dùng cache ở bước đầu để đảm bảo tính chính xác)
+        // Lấy user từ DB trực tiếp, không dùng cache
         var user = await GetUserByEmailAsync(loginDto.Email!);
 
         // ✅ Check null sớm: nếu không tồn tại thì throw NotFound
@@ -70,8 +67,7 @@ public class AuthService : IAuthService
         await _unitOfWork.Users.Update(user);
         await _unitOfWork.SaveChangesAsync();
 
-        // Cache user
-        await _cacheService.SetAsync($"user:{user.Email}", user, TimeSpan.FromHours(1));
+        // Không cache user nữa
 
         // Push welcome notification nếu chưa gửi
         //await SendWelcomeNotificationIfNotSentAsync(user);
@@ -88,13 +84,8 @@ public class AuthService : IAuthService
 
     public async Task<UserDto?> RegisterCustomerAsync(UserRegistrationDto registrationDto)
     {
-        _logger.Info($"[RegisterUserAsync] Start registration for {registrationDto.Email}");
-
         if (await UserExistsAsync(registrationDto.Email))
-        {
-            _logger.Warn($"[RegisterUserAsync] Email {registrationDto.Email} already registered.");
             throw ErrorHelper.Conflict(ErrorMessages.AccountEmailAlreadyRegistered);
-        }
 
         var hashedPassword = new PasswordHasher().HashPassword(registrationDto.Password);
 
@@ -117,10 +108,6 @@ public class AuthService : IAuthService
         await _unitOfWork.Users.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
-        _logger.Success($"[RegisterUserAsync] User {user.Email} created successfully.");
-
-        _logger.Info($"[RegisterUserAsync] OTP sent to {user.Email} for verification.");
-
         return ToUserDto(user);
     }
 
@@ -137,83 +124,17 @@ public class AuthService : IAuthService
         };
     }
 
-    private async Task<User?> GetUserByEmailAsync(string email, bool useCache = false)
+    private async Task<User?> GetUserByEmailAsync(string email)
     {
-        if (useCache)
-        {
-            var cacheKey = $"user:{email}";
-            var cachedUser = await _cacheService.GetAsync<User>(cacheKey);
-            if (cachedUser != null) return cachedUser;
-
-            var userFromDb = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email == email && !u.IsDeleted);
-            if (userFromDb == null)
-                throw ErrorHelper.NotFound(ErrorMessages.AccountNotFound);
-
-            await _cacheService.SetAsync(cacheKey, userFromDb, TimeSpan.FromHours(1));
-            return userFromDb;
-        }
-
         var user = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email == email && !u.IsDeleted);
-
-        // ✅ Bắt buộc throw NotFound nếu null
         if (user == null)
             throw ErrorHelper.NotFound(ErrorMessages.AccountNotFound);
-
         return user;
     }
 
     private async Task<bool> UserExistsAsync(string email)
     {
-        var cacheKey = $"user:{email}";
-        var cachedUser = await _cacheService.GetAsync<User>(cacheKey);
-        if (cachedUser != null) return true;
-
         var existingUser = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email == email);
-        if (existingUser != null)
-        {
-            await _cacheService.SetAsync(cacheKey, existingUser, TimeSpan.FromHours(1));
-            return true;
-        }
-
-        return false;
+        return existingUser != null;
     }
-
-    //private async Task GenerateAndSendOtpAsync(User user, OtpPurpose purpose, string otpCachePrefix)
-    //{
-    //    var otpToken = OtpGenerator.GenerateToken(6, TimeSpan.FromMinutes(10));
-    //    var otp = new OtpVerification
-    //    {
-    //        Target = user.Email,
-    //        OtpCode = otpToken.Code,
-    //        ExpiredAt = otpToken.ExpiresAtUtc,
-    //        IsUsed = false,
-    //        Purpose = purpose
-    //    };
-
-    //    await _unitOfWork.OtpVerifications.AddAsync(otp);
-    //    await _unitOfWork.SaveChangesAsync();
-    //    await _cacheService.SetAsync($"{otpCachePrefix}:{user.Email}", otpToken.Code, TimeSpan.FromMinutes(10));
-
-    //    // Send the correct email based on OTP purpose
-    //    if (purpose == OtpPurpose.Register)
-    //    {
-    //        await _emailService.SendOtpVerificationEmailAsync(new EmailRequestDto
-    //        {
-    //            To = user.Email,
-    //            Otp = otpToken.Code,
-    //            UserName = user.FullName
-    //        });
-    //        _logger.Info($"[GenerateAndSendOtpAsync] Registration OTP sent to {user.Email}");
-    //    }
-    //    else if (purpose == OtpPurpose.ForgotPassword)
-    //    {
-    //        await _emailService.SendForgotPasswordOtpEmailAsync(new EmailRequestDto
-    //        {
-    //            To = user.Email,
-    //            Otp = otpToken.Code,
-    //            UserName = user.FullName
-    //        });
-    //        _logger.Info($"[GenerateAndSendOtpAsync] Forgot password OTP sent to {user.Email}");
-    //    }
-    //}
 }

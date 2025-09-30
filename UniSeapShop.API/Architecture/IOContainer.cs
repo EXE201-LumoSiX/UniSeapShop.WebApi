@@ -6,10 +6,13 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using UniSeapShop.Application.Interfaces;
 using UniSeapShop.Application.Interfaces.Commons;
+using UniSeapShop.Application.Services;
 using UniSeapShop.Application.Services.Commons;
 using UniSeapShop.Application.Utils;
 using UniSeapShop.Domain;
+using UniSeapShop.Infrastructure;
 using UniSeapShop.Infrastructure.Interfaces;
 using UniSeapShop.Infrastructure.Repositories;
 
@@ -38,7 +41,10 @@ public static class IocContainer
     public static IServiceCollection SetupBusinessServicesLayer(this IServiceCollection services)
     {
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+
         services.AddHttpContextAccessor();
+        services.AddScoped<IAuthService, AuthService>();
 
         return services;
     }
@@ -75,9 +81,9 @@ public static class IocContainer
         {
             c.SwaggerDoc("v1", new OpenApiInfo
             {
-                Title = "BlindTreasure API",
+                Title = "UniSeapShop API",
                 Version = "v1",
-                Description = "API cho hệ thống thương mại điện tử BlindTreasure."
+                Description = "API for UniSeapShop e-commerce platform"
             });
 
             c.UseInlineDefinitionsForEnums();
