@@ -1,5 +1,7 @@
 # UniSeapShop Web API
 
+> **Lưu ý:** Trước khi test các chức năng CRUD, bạn cần gọi API seed dữ liệu tại SystemController (`/api/system/seed-all-data`) để khởi tạo dữ liệu mẫu cho hệ thống. Nếu không có dữ liệu, các chức năng sẽ không hoạt động đúng.
+
 Nền tảng mua bán đồ second-hand. Người dùng có thể đăng ký/đăng nhập, duyệt sản phẩm, thêm vào giỏ, thanh toán và theo dõi đơn hàng. Người bán có thể xem doanh thu ở mức cơ bản. Quản trị viên (admin) quản lý người dùng, sản phẩm và đơn hàng.
 
 ## Vai trò hệ thống
