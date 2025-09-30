@@ -11,7 +11,7 @@ public class Order : BaseEntity
     public OrderStatus Status { get; set; } = OrderStatus.Pending;
     public DateTime? CompletedDate { get; set; }
     public string? CancellationReason { get; set; }
-    
+
     // Navigation properties
     public required Customer Customer { get; set; }
     public List<OrderDetail> OrderDetails { get; set; } = new();

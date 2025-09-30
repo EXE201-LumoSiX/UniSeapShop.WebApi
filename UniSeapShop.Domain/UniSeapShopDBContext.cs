@@ -13,10 +13,6 @@ public class UniSeapShopDBContext : DbContext
     {
     }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-    }
-
     public DbSet<User> Users { get; set; }
     public DbSet<Role> Roles { get; set; }
     public DbSet<Customer> Customers { get; set; }
@@ -32,6 +28,10 @@ public class UniSeapShopDBContext : DbContext
     public DbSet<PayoutDetail> PayoutDetails { get; set; }
     public DbSet<Feeback> Feedbacks { get; set; }
     public DbSet<Voucher> Vouchers { get; set; }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -8,7 +8,7 @@ public class Role : BaseEntity
     public required RoleType RoleType { get; set; }
     public string Description { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
-    
+
     // Navigation properties
     public List<User> Users { get; set; } = new();
 }

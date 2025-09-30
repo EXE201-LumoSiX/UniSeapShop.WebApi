@@ -1,29 +1,77 @@
-﻿using UniSeapShop.Domain;
+﻿using Microsoft.EntityFrameworkCore.Storage;
+using UniSeapShop.Domain;
 using UniSeapShop.Domain.Entities;
 using UniSeapShop.Infrastructure.Interfaces;
 
 namespace UniSeapShop.Infrastructure;
 
-public class UnitOfWork 
+public class UnitOfWork : IUnitOfWork
 {
-    private readonly UniSeapShopDBContext _context;
-    private readonly IGenericRepository<User> _userRepository;
-    private readonly IGenericRepository<Role> _roleRepository;
+    private readonly UniSeapShopDBContext _dbContext;
+    private IDbContextTransaction? _transaction;
 
-    public UnitOfWork(
-        UniSeapShopDBContext context,
-        IGenericRepository<User> userRepository,
-        IGenericRepository<Role> roleRepository
-    )
+    public UnitOfWork(UniSeapShopDBContext dbContext, IGenericRepository<User> users, IGenericRepository<Role> roles)
     {
-        _context = context;
-        _userRepository = userRepository;
-        _roleRepository = roleRepository;
+        _dbContext = dbContext;
+        Users = users;
+        Roles = roles;
     }
 
+    public IGenericRepository<User> Users { get; }
+    public IGenericRepository<Role> Roles { get; }
 
-    public IGenericRepository<User> Users => _userRepository;
-    public IGenericRepository<Role> Roles => _roleRepository;
+    public void Dispose()
+    {
+        _dbContext.Dispose();
+    }
 
-    
+    public async Task<int> SaveChangesAsync()
+    {
+        return await _dbContext.SaveChangesAsync();
+    }
+
+    // Transaction support
+    public async Task BeginTransactionAsync()
+    {
+        if (_transaction != null) return;
+        _transaction = await _dbContext.Database.BeginTransactionAsync();
+    }
+
+    public async Task CommitAsync()
+    {
+        try
+        {
+            if (_transaction != null)
+            {
+                await _dbContext.SaveChangesAsync();
+                await _transaction.CommitAsync();
+            }
+        }
+        finally
+        {
+            await DisposeTransactionAsync();
+        }
+    }
+
+    public async Task RollbackAsync()
+    {
+        try
+        {
+            if (_transaction != null)
+                await _transaction.RollbackAsync();
+        }
+        finally
+        {
+            await DisposeTransactionAsync();
+        }
+    }
+
+    private async Task DisposeTransactionAsync()
+    {
+        if (_transaction != null)
+        {
+            await _transaction.DisposeAsync();
+            _transaction = null;
+        }
+    }
 }

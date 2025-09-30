@@ -8,7 +8,7 @@ public class OrderDetail : BaseEntity
     public double UnitPrice { get; set; }
     public double TotalPrice { get; set; }
     public Guid? VoucherId { get; set; } // Making nullable as it may not always have a voucher
-    
+
     // Navigation properties
     public required Order Order { get; set; }
     public required Product Product { get; set; }

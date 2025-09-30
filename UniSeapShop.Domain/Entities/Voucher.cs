@@ -6,7 +6,7 @@ public class Voucher : BaseEntity
     public double DiscountPercent { get; set; }
     public DateTime ExpiryDate { get; set; }
     public bool IsActive { get; set; } = true;
-    
+
     // Navigation properties
     public List<OrderDetail> OrderDetails { get; set; } = new();
 }

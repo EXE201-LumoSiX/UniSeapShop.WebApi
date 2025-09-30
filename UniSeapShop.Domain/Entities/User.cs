@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using UniSeapShop.Domain.Enums;
 
 namespace UniSeapShop.Domain.Entities;
 
@@ -15,10 +14,10 @@ public class User : BaseEntity
     public bool IsActive { get; set; } = true;
     public Guid RoleId { get; set; }
     public string CurrentMode { get; set; } = string.Empty;
-    
+
     [MaxLength(128)] public string? RefreshToken { get; set; }
     [MaxLength(128)] public DateTime? RefreshTokenExpiryTime { get; set; }
-    
+
     // Navigation properties
     public required Role Role { get; set; }
     public Customer? Customer { get; set; }

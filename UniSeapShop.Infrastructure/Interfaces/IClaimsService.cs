@@ -1,8 +1,7 @@
-﻿namespace UniSeapShop.Infrastructure.Interfaces
+﻿namespace UniSeapShop.Infrastructure.Interfaces;
+
+public interface IClaimsService
 {
-    public interface IClaimsService
-    {
-        public Guid CurrentUserId { get; }
-        public string? IpAddress { get; }
-    }
+    public Guid CurrentUserId { get; }
+    public string? IpAddress { get; }
 }
