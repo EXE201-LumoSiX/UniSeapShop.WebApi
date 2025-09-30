@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using UniSeapShop.Application.Interfaces;
 using UniSeapShop.Application.Interfaces.Commons;
 using UniSeapShop.Application.Utils;
@@ -26,24 +27,13 @@ public class AuthService : IAuthService
 
     public async Task<LoginResponseDto?> LoginAsync(LoginRequestDto loginDto, IConfiguration configuration)
     {
-        _logger.Info($"[LoginAsync] Login attempt for {loginDto.Email}");
-
-        // Lấy user từ DB trực tiếp, không dùng cache
         var user = await GetUserByEmailAsync(loginDto.Email!);
 
-        // ✅ Check null sớm: nếu không tồn tại thì throw NotFound
         if (user == null)
             throw ErrorHelper.NotFound(ErrorMessages.AccountNotFound);
 
-        // Nếu là Seller thì lấy thêm thông tin Seller
-        //if (user.Role == RoleType.Seller)
-        //{
-        //    var seller = await GetSellerByUserIdAsync(user.Id);
-        //    if (seller == null)
-        //        throw ErrorHelper.NotFound("Không tìm thấy thông tin người dùng");
-
-        //    user.Seller = seller;
-        //}
+        if (user.Role == null)
+            throw ErrorHelper.NotFound("User role not found. Please contact admin.");
 
         // Check account status
         if (!user.IsActive)
@@ -69,12 +59,6 @@ public class AuthService : IAuthService
         await _unitOfWork.Users.Update(user);
         await _unitOfWork.SaveChangesAsync();
 
-        // Không cache user nữa
-
-        // Push welcome notification nếu chưa gửi
-        //await SendWelcomeNotificationIfNotSentAsync(user);
-
-        _logger.Info($"[LoginAsync] Tokens generated and user cache updated for {user.Email}");
 
         return new LoginResponseDto
         {
@@ -138,7 +122,12 @@ public class AuthService : IAuthService
 
     private async Task<User?> GetUserByEmailAsync(string email)
     {
-        var user = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email == email && !u.IsDeleted);
+        // Sử dụng GetQueryable để lấy user kèm Role
+        var user = await _unitOfWork.Users
+            .GetQueryable()
+            .Where(u => u.Email == email && !u.IsDeleted)
+            .Include(u => u.Role)
+            .FirstOrDefaultAsync();
         if (user == null)
             throw ErrorHelper.NotFound(ErrorMessages.AccountNotFound);
         return user;
