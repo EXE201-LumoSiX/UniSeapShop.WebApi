@@ -12,6 +12,7 @@ using UniSeapShop.Application.Services;
 using UniSeapShop.Application.Services.Commons;
 using UniSeapShop.Application.Utils;
 using UniSeapShop.Domain;
+using UniSeapShop.Domain.Enums;
 using UniSeapShop.Infrastructure;
 using UniSeapShop.Infrastructure.Commons;
 using UniSeapShop.Infrastructure.Interfaces;
@@ -42,6 +43,7 @@ public static class IocContainer
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IClaimsService, ClaimsService>();
+        services.AddScoped<ICurrentTime, CurrentTime>();
 
         services.AddHttpContextAccessor();
         services.AddScoped<IAuthService, AuthService>();
@@ -189,17 +191,12 @@ public static class IocContainer
             });
         services.AddAuthorization(options =>
         {
-            options.AddPolicy("CustomerPolicy", policy =>
-                policy.RequireRole("Customer"));
-
             options.AddPolicy("AdminPolicy", policy =>
-                policy.RequireRole("Admin"));
-
-            options.AddPolicy("StaffPolicy", policy =>
-                policy.RequireRole("Staff"));
-
-            options.AddPolicy("SellerPolicy", policy =>
-                policy.RequireRole("Seller"));
+                policy.RequireRole(nameof(RoleType.Admin)));
+            options.AddPolicy("SupplierPolicy", policy =>
+                policy.RequireRole(nameof(RoleType.Supplier)));
+            options.AddPolicy("CustomerPolicy", policy =>
+                policy.RequireRole(nameof(RoleType.Customer)));
         });
 
         return services;
