@@ -13,6 +13,7 @@ using UniSeapShop.Application.Services.Commons;
 using UniSeapShop.Application.Utils;
 using UniSeapShop.Domain;
 using UniSeapShop.Infrastructure;
+using UniSeapShop.Infrastructure.Commons;
 using UniSeapShop.Infrastructure.Interfaces;
 using UniSeapShop.Infrastructure.Repositories;
 
@@ -29,8 +30,6 @@ public static class IocContainer
         services.SetupDbContext();
         services.SetupSwagger();
 
-        //Add generic repositories
-        services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
         //Add business services
         services.SetupBusinessServicesLayer();
 
@@ -42,6 +41,7 @@ public static class IocContainer
     {
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IClaimsService, ClaimsService>();
 
         services.AddHttpContextAccessor();
         services.AddScoped<IAuthService, AuthService>();
