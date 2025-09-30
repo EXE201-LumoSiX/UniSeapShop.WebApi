@@ -9,11 +9,19 @@ services:
         condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Server=uniseapshop.database;Database=UniSeapShopDB;User Id=sa;Password=UniSeap@123;TrustServerCertificate=True
-      - ConnectionStrings__Redis=redis:6379,abortConnect=false
+      - ConnectionStrings__DefaultConnection=Server=uniseapshop.database;Database=UniSeapShopDB;User Id=sa;Password=UniSeap@123;TrustServerCertificate=True;Max Pool Size=200;Min Pool Size=10
       - JWT__SecretKey=UniSeapShop_SECRETKEY_SIEUCAPBAOMAT_VAYMACHUADU16KYTU
       - JWT__Issuer=UniSeapShop_Issuer
       - JWT__Audience=UniSeapShop_Audience
+      - DOTNET_GCHeapHardLimit=300000000
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
     ports:
       - "5000:5000"
 
@@ -24,6 +32,17 @@ services:
       ACCEPT_EULA: Y
       SA_PASSWORD: UniSeap@123
       MSSQL_PID: Express
+      MSSQL_MEMORY_LIMIT_MB: 2048
+      MSSQL_ENABLE_HADR: 0
+      MSSQL_AGENT_ENABLED: false
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2.5GB
+        reservations:
+          cpus: '0.5'
+          memory: 1GB
     ports:
       - "1434:1433"
     healthcheck:
@@ -40,4 +59,3 @@ services:
 
 volumes:
   mssqldata:
-  redisdata:
