@@ -95,7 +95,7 @@ public class AuthService : IAuthService
                 Name = "Customer"
             }, // Mặc định là Customer
             IsEmailVerify = false,
-            IsActive = true
+            IsActive = false // Chưa kích hoạt cho đến khi xác thực email
         };
 
         await _unitOfWork.Users.AddAsync(user);
@@ -123,7 +123,12 @@ public class AuthService : IAuthService
 
         // Activate user
         user.IsEmailVerify = true;
+        user.IsActive = true;
+        var customer = CreateCustomer(user);
+
+
         await _unitOfWork.Users.Update(user);
+        await _unitOfWork.Customers.AddAsync(customer);
         await _unitOfWork.SaveChangesAsync();
 
         // Xóa cache cũ rồi thiết lập lại cache user mới
@@ -143,7 +148,109 @@ public class AuthService : IAuthService
         return true;
     }
 
+    public async Task<bool> ResetPasswordAsync(string email, string otp, string newPassword)
+    {
+        _logger.Info($"[ResetPasswordAsync] Password reset requested for {email}");
 
+        var user = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email == email && !u.IsDeleted);
+        if (user == null) return false;
+        if (!user.IsEmailVerify) return false;
+        if (!await VerifyOtpAsync(email, otp, OtpPurpose.ForgotPassword, "forgot-otp"))
+            return false;
+
+        // Hash và cập nhật mật khẩu
+        user.Password = new PasswordHasher().HashPassword(newPassword);
+        await _unitOfWork.Users.Update(user);
+        await _unitOfWork.SaveChangesAsync();
+
+        // ——> Xóa cache cũ rồi set lại cache user với mật khẩu mới
+        await _cacheService.RemoveAsync($"user:{email}");
+        await _cacheService.SetAsync($"user:{email}", user, TimeSpan.FromHours(1));
+
+        // Xóa OTP khỏi cache
+        await _cacheService.RemoveAsync($"forgot-otp:{email}");
+
+        await _emailService.SendPasswordChangeEmailAsync(new EmailRequestDto
+        {
+            To = user.Email,
+            UserName = user.FullName
+        });
+
+        _logger.Success($"[ResetPasswordAsync] Password reset successful for {email}.");
+        return true;
+    }
+
+    public async Task<bool> ResendOtpAsync(string email, OtpType type)
+    {
+        return type switch
+        {
+            OtpType.Register => await ResendRegisterOtpAsync(email),
+            OtpType.ForgotPassword => await SendForgotPasswordOtpRequestAsync(email),
+            _ => throw ErrorHelper.BadRequest(ErrorMessages.Oauth_InvalidOtp)
+        };
+    }
+
+    private async Task<bool> ResendRegisterOtpAsync(string email)
+    {
+        var user = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email == email);
+        if (user == null)
+            throw ErrorHelper.NotFound(ErrorMessages.AccountNotFound);
+
+        if (user.IsDeleted)
+            throw ErrorHelper.Forbidden(ErrorMessages.AccountSuspendedOrBan);
+
+        if (user.IsEmailVerify)
+            throw ErrorHelper.Conflict(ErrorMessages.AccountAlreadyVerified);
+
+        if (await _cacheService.ExistsAsync($"otp-sent:{email}"))
+            throw ErrorHelper.BadRequest(ErrorMessages.VerifyOtpExistingCoolDown);
+
+        await GenerateAndSendOtpAsync(user, OtpPurpose.Register, "register-otp");
+        await _cacheService.SetAsync($"otp-sent:{email}", true, TimeSpan.FromMinutes(1));
+
+        return true;
+    }
+
+    private async Task<bool> SendForgotPasswordOtpRequestAsync(string email)
+    {
+        var user = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email == email && !u.IsDeleted);
+        if (user == null)
+            throw ErrorHelper.NotFound(ErrorMessages.AccountNotFound);
+
+        if (user.IsDeleted)
+            throw ErrorHelper.Forbidden(ErrorMessages.AccountSuspendedOrBan);
+
+        if (!user.IsEmailVerify)
+            throw ErrorHelper.Conflict(ErrorMessages.AccountNotVerified);
+
+        var counterKey = $"forgot-otp-count:{email}";
+        var countValue = await _cacheService.GetAsync<int?>(counterKey) ?? 0;
+
+        if (countValue >= 3)
+            throw ErrorHelper.BadRequest(ErrorMessages.Oauth_InvalidOtp);
+
+        // Gửi OTP
+        await GenerateAndSendOtpAsync(user, OtpPurpose.ForgotPassword, "forgot-otp");
+
+        // Tăng số lần gửi và set timeout nếu là lần đầu tiên
+        await _cacheService.SetAsync(counterKey, countValue + 1, TimeSpan.FromMinutes(15));
+
+
+        _logger.Info($"[SendForgotPasswordOtpRequestAsync] OTP sent to {email}");
+
+        return true;
+    }
+
+    private Customer CreateCustomer(User user)
+    {
+        return new Customer
+        {
+            UserId = user.Id,
+            LoyaltyPoint = 0,
+            MembershipLevel = "Basic",
+            User = user
+        };
+    }
     private static UserDto ToUserDto(User user)
     {
         return new UserDto
