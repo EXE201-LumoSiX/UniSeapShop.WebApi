@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore.Storage;
+using System.Linq.Expressions;
 using UniSeapShop.Domain;
 using UniSeapShop.Domain.Entities;
 using UniSeapShop.Infrastructure.Interfaces;
@@ -10,15 +11,21 @@ public class UnitOfWork : IUnitOfWork
     private readonly UniSeapShopDBContext _dbContext;
     private IDbContextTransaction? _transaction;
 
-    public UnitOfWork(UniSeapShopDBContext dbContext, IGenericRepository<User> users, IGenericRepository<Role> roles)
+    public UnitOfWork(
+        UniSeapShopDBContext dbContext, IGenericRepository<User> users,
+        IGenericRepository<Role> roles,
+        IGenericRepository<OtpVerification> otpVerifications
+        )
     {
         _dbContext = dbContext;
         Users = users;
         Roles = roles;
+        OtpVerifications = otpVerifications;
     }
 
     public IGenericRepository<User> Users { get; }
     public IGenericRepository<Role> Roles { get; }
+    public IGenericRepository<OtpVerification> OtpVerifications { get; }
 
     public void Dispose()
     {
@@ -29,7 +36,17 @@ public class UnitOfWork : IUnitOfWork
     {
         return await _dbContext.SaveChangesAsync();
     }
+    // Where
+    public IQueryable<T> Where<T>(Expression<Func<T, bool>> predicate) where T : class
+    {
+        return _dbContext.Set<T>().Where(predicate);
+    }
 
+    // Select
+    public IQueryable<TResult> Select<T, TResult>(Expression<Func<T, TResult>> selector) where T : class
+    {
+        return _dbContext.Set<T>().Select(selector);
+    }
     // Transaction support
     public async Task BeginTransactionAsync()
     {

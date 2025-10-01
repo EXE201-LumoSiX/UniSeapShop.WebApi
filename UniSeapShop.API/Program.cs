@@ -1,7 +1,7 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.Diagnostics;
+﻿using Microsoft.AspNetCore.Diagnostics;
 using SwaggerThemes;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text.Json.Serialization;
 using UniSeapShop.API.Architecture;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
@@ -37,6 +37,7 @@ JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
 builder.WebHost.UseUrls("http://0.0.0.0:5000");
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.SetupRedisService(builder.Configuration);
 builder.Services.SetupIocContainer();
 
 

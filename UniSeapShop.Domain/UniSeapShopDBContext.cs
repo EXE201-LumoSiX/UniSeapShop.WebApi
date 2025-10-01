@@ -16,6 +16,7 @@ public class UniSeapShopDBContext : DbContext
     public DbSet<User> Users { get; set; }
     public DbSet<Role> Roles { get; set; }
     public DbSet<Customer> Customers { get; set; }
+    public DbSet<OtpVerification> OtpVerifications { get; set; }
     public DbSet<Supplier> Suppliers { get; set; }
     public DbSet<Product> Products { get; set; }
     public DbSet<ProductImage> ProductImages { get; set; }
@@ -279,6 +280,13 @@ public class UniSeapShopDBContext : DbContext
             entity.Property(e => e.DiscountPercent).IsRequired();
             entity.Property(e => e.ExpiryDate).IsRequired();
             entity.Property(e => e.IsActive).IsRequired();
+        });
+
+        modelBuilder.Entity<OtpVerification>(entity =>
+        {
+            entity.Property(e => e.Purpose)
+                .HasConversion<string>() // enum -> string
+                .HasMaxLength(32); // giới hạn độ dài nếu cần
         });
     }
 }
