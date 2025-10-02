@@ -1,64 +1,20 @@
 services:
+  
   uniseapshop.webapi:
     image: phuctran362003/uniseapshopwebapi:latest
-    build:
-      context: .
-      dockerfile: UniSeapShop.API/Dockerfile
     depends_on:
-      uniseapshop.database:
-        condition: service_healthy
       redis:
         condition: service_healthy
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Server=uniseapshop.database;Database=UniSeapShopDB;User Id=sa;Password=UniSeap@123;TrustServerCertificate=True;Max Pool Size=200;Min Pool Size=10
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=103.211.201.141,1433;Database=UniSeapShopDB;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True
       - JWT__SecretKey=UniSeapShop_SECRETKEY_SIEUCAPBAOMAT_VAYMACHUADU16KYTU
       - JWT__Issuer=UniSeapShop_Issuer
       - JWT__Audience=UniSeapShop_Audience
       - RESEND_APITOKEN=re_gQNBXJvY_ANFdgQphKQBxdW5DNf2UG6Zk
       - RESEND_FROM=noreply@fpt-devteam.fun
-      - DOTNET_GCHeapHardLimit=300000000
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 256M
     ports:
       - "5000:5000"
-
-  uniseapshop.database:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    restart: always
-    environment:
-      ACCEPT_EULA: Y
-      SA_PASSWORD: UniSeap@123
-      MSSQL_PID: Express
-      MSSQL_MEMORY_LIMIT_MB: 2048
-      MSSQL_ENABLE_HADR: 0
-      MSSQL_AGENT_ENABLED: false
-    deploy:
-      resources:
-        limits:
-          cpus: '2'
-          memory: 2.5GB
-        reservations:
-          cpus: '0.5'
-          memory: 1GB
-    ports:
-      - "1434:1433"
-    healthcheck:
-      test: [ "CMD-SHELL",
-              "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $${SA_PASSWORD} -C -Q 'SELECT 1' || bash -c 'cat < /dev/null > /dev/tcp/127.0.0.1/1433'"
-      ]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
-    volumes:
-      - mssqldata:/var/opt/mssql
 
   redis:
     image: redis:6.2
@@ -73,7 +29,6 @@ services:
       timeout: 3s
       retries: 5
 
-
+    
 volumes:
-  mssqldata:
   redisdata:

@@ -47,29 +47,27 @@ EF Core migrations sẽ được tự áp dụng khi khởi động (Program.cs 
 - Service API: `uniseapshop.webapi`
 	- Port: Host `5000` -> Container `5000`
 	- Swagger: http://localhost:5000
-- Service SQL Server: `uniseapshop.database`
-	- Image: `mcr.microsoft.com/mssql/server:2022-latest`
-	- Port: Host `1434` -> Container `1433`
-	- Tài khoản: `sa` / Mật khẩu: `UniSeap@123`
-	- Database mặc định: `UniSeapShopDB` (được tạo/migrate khi API khởi động lần đầu)
+- Service Redis: `redis`
+	- Port: Host `6379` -> Container `6379`
 
 ## Kết nối SQL Server bằng SSMS
-Bạn có thể đăng nhập vào SQL Server container để xem dữ liệu:
+Bạn có thể đăng nhập vào SQL Server để xem dữ liệu:
 
 1) Mở Microsoft SQL Server Management Studio (SSMS)
 2) Tại cửa sổ Connect to Server:
 	 - Server type: Database Engine
-	 - Server name: `localhost,1434`
+	 - Server name: `103.211.201.141,1433`
 	 - Authentication: SQL Server Authentication
 	 - Login: `sa`
-	 - Password: `UniSeap@123`
+	 - Password: `YourStrong!Passw0rd`
+	 - Database: `UniSeapShopDB`
 3) Nhấn Connect. Sau đó chọn database `UniSeapShopDB` trong Object Explorer.
 
 Mẹo xử lý sự cố:
-- Nếu kết nối thất bại, kiểm tra container đang chạy: `docker compose ps`
+- Nếu kết nối thất bại, kiểm tra kết nối internet của bạn
 - Nếu báo lỗi về mã hóa/chứng chỉ, trong SSMS -> Options -> tab Connection Properties:
 	- Đặt Encrypt: Optional (hoặc tích Trust server certificate)
-- Kiểm tra cổng máy chủ có đúng với `docker-compose.yml` (mặc định 1434)
+- Kiểm tra cấu hình trong docker-compose.yml cho thông tin kết nối mới nhất
 
 ## API mẫu (Auth)
 - Đăng nhập: `POST /api/Authe/login`
