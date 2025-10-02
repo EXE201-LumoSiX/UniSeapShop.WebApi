@@ -3,23 +3,25 @@ using Resend;
 using UniSeapShop.Application.Interfaces;
 using UniSeapShop.Domain.DTOs.EmailDTOs;
 using UniSeapShop.Infrastructure.Interfaces;
-namespace UniSeapShop.Application.Services
-{
-    public class EmailService : IEmailService
-    {
-        private readonly string _fromEmail;
-        private readonly IResend _resend;
-        private readonly IUnitOfWork _unitOfWork;
 
-        public EmailService(IResend resend, IConfiguration configuration, IUnitOfWork unitOfWork)
-        {
-            _resend = resend;
-            _fromEmail = configuration["RESEND_FROM"] ?? "noreply@fpt-devteam.fun";
-            _unitOfWork = unitOfWork;
-        }
-        public async Task SendRegistrationSuccessEmailAsync(EmailRequestDto request)
-        {
-            var html = $@"
+namespace UniSeapShop.Application.Services;
+
+public class EmailService : IEmailService
+{
+    private readonly string _fromEmail;
+    private readonly IResend _resend;
+    private readonly IUnitOfWork _unitOfWork;
+
+    public EmailService(IResend resend, IConfiguration configuration, IUnitOfWork unitOfWork)
+    {
+        _resend = resend;
+        _fromEmail = configuration["RESEND_FROM"] ?? "noreply@fpt-devteam.fun";
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task SendRegistrationSuccessEmailAsync(EmailRequestDto request)
+    {
+        var html = $@"
                   <html style=""background-color:#ebeaea;margin:0;padding:0;"">
                     <body style=""font-family:Arial,sans-serif;color:#252424;padding:20px;background-color:#ebeaea;"">
                       <div style=""max-width:600px;margin:auto;background:#fff;border:1px solid #d02a2a;border-radius:6px;padding:20px;"">
@@ -30,12 +32,12 @@ namespace UniSeapShop.Application.Services
                       </div>
                     </body>
                   </html>";
-            await SendEmailAsync(request.To, "Đăng ký thành công tại BlindTreasure", html);
-        }
+        await SendEmailAsync(request.To, "Đăng ký thành công tại BlindTreasure", html);
+    }
 
-        public async Task SendOtpVerificationEmailAsync(EmailRequestDto request)
-        {
-            var html = $@"
+    public async Task SendOtpVerificationEmailAsync(EmailRequestDto request)
+    {
+        var html = $@"
                   <html style=""background-color:#ebeaea;margin:0;padding:0;"">
                     <body style=""font-family:Arial,sans-serif;color:#252424;padding:20px;background-color:#ebeaea;"">
                       <div style=""max-width:600px;margin:auto;background:#fff;border:1px solid #d02a2a;border-radius:6px;padding:20px;text-align:center;"">
@@ -47,12 +49,12 @@ namespace UniSeapShop.Application.Services
                       </div>
                     </body>
                   </html>";
-            await SendEmailAsync(request.To, "Xác thực OTP tại BlindTreasure", html);
-        }
+        await SendEmailAsync(request.To, "Xác thực OTP tại BlindTreasure", html);
+    }
 
-        public async Task SendForgotPasswordOtpEmailAsync(EmailRequestDto request)
-        {
-            var html = $@"
+    public async Task SendForgotPasswordOtpEmailAsync(EmailRequestDto request)
+    {
+        var html = $@"
                     <html style=""background-color:#ebeaea;margin:0;padding:0;"">
                       <body style=""font-family:Arial,sans-serif;color:#252424;padding:20px;background-color:#ebeaea;"">
                         <div style=""max-width:600px;margin:auto;background:#fff;border:1px solid #d02a2a;border-radius:6px;padding:20px;text-align:center;"">
@@ -64,12 +66,12 @@ namespace UniSeapShop.Application.Services
                         </div>
                       </body>
                     </html>";
-            await SendEmailAsync(request.To, "OTP lấy lại mật khẩu tại BlindTreasure", html);
-        }
+        await SendEmailAsync(request.To, "OTP lấy lại mật khẩu tại BlindTreasure", html);
+    }
 
-        public async Task SendPasswordChangeEmailAsync(EmailRequestDto request)
-        {
-            var html = @"
+    public async Task SendPasswordChangeEmailAsync(EmailRequestDto request)
+    {
+        var html = @"
                   <html style=""background-color:#ebeaea;margin:0;padding:0;"">
                     <body style=""font-family:Arial,sans-serif;color:#252424;padding:20px;background-color:#ebeaea;"">
                       <div style=""max-width:600px;margin:auto;background:#fff;border:1px solid #d02a2a;border-radius:6px;padding:20px;"">
@@ -80,20 +82,19 @@ namespace UniSeapShop.Application.Services
                       </div>
                     </body>
                   </html>";
-            await SendEmailAsync(request.To, "Mật khẩu đã được thay đổi tại BlindTreasure", html);
-        }
+        await SendEmailAsync(request.To, "Mật khẩu đã được thay đổi tại BlindTreasure", html);
+    }
 
-        private async Task SendEmailAsync(string to, string subject, string htmlContent)
+    private async Task SendEmailAsync(string to, string subject, string htmlContent)
+    {
+        var message = new EmailMessage
         {
-            var message = new EmailMessage
-            {
-                From = _fromEmail,
-                Subject = subject,
-                HtmlBody = htmlContent
-            };
+            From = _fromEmail,
+            Subject = subject,
+            HtmlBody = htmlContent
+        };
 
-            message.To.Add(to);
-            await _resend.EmailSendAsync(message);
-        }
+        message.To.Add(to);
+        await _resend.EmailSendAsync(message);
     }
 }

@@ -1,21 +1,20 @@
 using Microsoft.EntityFrameworkCore;
 using UniSeapShop.Application.Interfaces;
+using UniSeapShop.Application.Interfaces.Commons;
 using UniSeapShop.Application.Utils;
+using UniSeapShop.Domain.DTOs.AuthenDTOs;
 using UniSeapShop.Domain.DTOs.UserDTOs;
 using UniSeapShop.Domain.Entities;
-using UniSeapShop.Infrastructure.Interfaces;
-using System.Security.Claims;
-using UniSeapShop.Application.Interfaces.Commons;
-using UniSeapShop.Domain.DTOs.AuthenDTOs;
 using UniSeapShop.Domain.Enums;
+using UniSeapShop.Infrastructure.Interfaces;
 
 namespace UniSeapShop.Application.Services;
 
 public class UserService : IUserService
 {
+    private readonly IClaimsService _claimService;
     private readonly ILoggerService _logger;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IClaimsService _claimService;
 
     public UserService(
         ILoggerService logger,
@@ -45,7 +44,7 @@ public class UserService : IUserService
             Password = hashedPassword,
             FullName = registrationDto.FullName,
             PhoneNumber = registrationDto.PhoneNumber,
-            UserImage =  "https://img.freepik.com/free-psd/3d-illustration-human-avatar-profile_23-2150671142.jpg",
+            UserImage = "https://img.freepik.com/free-psd/3d-illustration-human-avatar-profile_23-2150671142.jpg",
             IsEmailVerify = false,
             IsActive = true,
             RoleId = role.Id,
@@ -103,7 +102,8 @@ public class UserService : IUserService
     public async Task<UserDto?> GetCurrentUserProfileAsync()
     {
         var currentUserId = _claimService.CurrentUserId;
-        var user = await _unitOfWork.Users.GetQueryable().FirstOrDefaultAsync(u => u.Id == currentUserId && !u.IsDeleted);
+        var user = await _unitOfWork.Users.GetQueryable()
+            .FirstOrDefaultAsync(u => u.Id == currentUserId && !u.IsDeleted);
         if (user == null)
             throw ErrorHelper.NotFound("User not found.");
         return ToUserDto(user);

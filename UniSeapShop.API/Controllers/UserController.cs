@@ -1,9 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using UniSeapShop.Application.Interfaces;
 using UniSeapShop.Application.Utils;
 using UniSeapShop.Domain.DTOs.UserDTOs;
-using UniSeapShop.Domain.DTOs.AuthenDTOs;
-using Microsoft.AspNetCore.Authorization;
 
 namespace UniSeapShop.API.Controllers;
 
@@ -103,4 +102,3 @@ public class UserController : ControllerBase
         }
     }
 }
-
