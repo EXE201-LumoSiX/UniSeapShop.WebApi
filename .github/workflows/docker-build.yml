@@ -3,8 +3,7 @@ name: Docker Build, Push and Deploy
 on:
   push:
     branches:
-      - master  # Trigger workflow khi có push vào nhánh master
-      - test    # Thêm nhánh test vào trigger
+      - master  # Khi có code mới được push lên nhánh main thì workflow này sẽ chạy
 
 jobs:
   build-and-push:
@@ -22,15 +21,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}  # Đăng nhập Docker Hub bằng secret
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          
-      - name: Set Docker image tag
-        id: set-tag
-        run: |
-          if [ "${{ github.ref }}" = "refs/heads/master" ]; then
-            echo "TAG=latest" >> $GITHUB_OUTPUT
-          else
-            echo "TAG=test" >> $GITHUB_OUTPUT
-          fi
 
       - name: Build and Push Docker Image
         id: docker_build
@@ -39,7 +29,7 @@ jobs:
           context: .  # Thư mục chứa Dockerfile và mã nguồn
           file: UniSeapShop.API/Dockerfile  # Vị trí file Dockerfile
           push: true  # Sau khi build xong thì đẩy (push) lên Docker Hub
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/uniseapshopwebapi:${{ steps.set-tag.outputs.TAG }}  # Gán tag cho image dựa trên nhánh
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/uniseapshopwebapi:latest  # Gán tag cho image
           cache-from: type=gha  # Dùng cache từ GitHub Actions
           cache-to: type=gha,mode=max  # Tối đa hóa cache để dùng lại lần sau
       
@@ -57,7 +47,6 @@ jobs:
 
   deploy:
     needs: build-and-push  # Chờ job build-and-push hoàn thành
-    if: github.ref == 'refs/heads/master'  # Chỉ deploy khi push vào nhánh master
     runs-on: ubuntu-latest  # Máy chủ ảo của GitHub để thực hiện thao tác SSH
 
     steps:
