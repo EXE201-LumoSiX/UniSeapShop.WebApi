@@ -15,8 +15,8 @@ services:
       - JWT__SecretKey=UniSeapShop_SECRETKEY_SIEUCAPBAOMAT_VAYMACHUADU16KYTU
       - JWT__Issuer=UniSeapShop_Issuer
       - JWT__Audience=UniSeapShop_Audience
-      - RESEND_APITOKEN=re_TaFfmqDP_4MWUGK3arJmaVGEoSKw73TCv
-      - RESEND_FROM=noreply.uniseapshop.com
+      - RESEND_APITOKEN=re_gQNBXJvY_ANFdgQphKQBxdW5DNf2UG6Zk
+      - RESEND_FROM=noreply@fpt-devteam.fun
       - DOTNET_GCHeapHardLimit=300000000
     deploy:
       resources:

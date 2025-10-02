@@ -6,6 +6,7 @@ namespace UniSeapShop.Infrastructure.Interfaces;
 public interface IUnitOfWork : IDisposable
 {
     IGenericRepository<User> Users { get; }
+    IGenericRepository<Customer> Customers { get; }
     IGenericRepository<Role> Roles { get; }
     IGenericRepository<OtpVerification> OtpVerifications { get; }
     Task<int> SaveChangesAsync();

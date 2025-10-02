@@ -13,6 +13,7 @@ public class UnitOfWork : IUnitOfWork
 
     public UnitOfWork(
         UniSeapShopDBContext dbContext, IGenericRepository<User> users,
+        IGenericRepository<Customer> customers,
         IGenericRepository<Role> roles,
         IGenericRepository<OtpVerification> otpVerifications
         )
@@ -21,10 +22,12 @@ public class UnitOfWork : IUnitOfWork
         Users = users;
         Roles = roles;
         OtpVerifications = otpVerifications;
+        Customers = customers;
     }
 
     public IGenericRepository<User> Users { get; }
     public IGenericRepository<Role> Roles { get; }
+    public IGenericRepository<Customer> Customers { get; }
     public IGenericRepository<OtpVerification> OtpVerifications { get; }
 
     public void Dispose()

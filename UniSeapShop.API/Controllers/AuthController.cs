@@ -70,4 +70,31 @@ public class AuthController : ControllerBase
 
         return Ok(ApiResult.Success("200", "Xác thực thành công. Tài khoản của bạn đã được kích hoạt."));
     }
+
+    [HttpPost("resend-otp")]
+    public async Task<IActionResult> ResendOtp([FromForm] ResendOtpRequestDto dto)
+    {
+        try
+        {
+            var sent = await _authService.ResendOtpAsync(dto.Email, dto.Type);
+            return Ok(ApiResult<object>.Success(sent!, "200",
+                "Mã OTP đã được gửi lại thành công. Vui lòng kiểm tra email của bạn."));
+        }
+        catch (Exception ex)
+        {
+            var statusCode = ExceptionUtils.ExtractStatusCode(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<object>(ex);
+            return StatusCode(statusCode, errorResponse);
+        }
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+    {
+        var reset = await _authService.ResetPasswordAsync(dto.Email, dto.Otp, dto.NewPassword);
+        if (!reset)
+            return BadRequest(ApiResult.Failure("400",
+                "Mã OTP không hợp lệ, đã hết hạn hoặc thông tin đặt lại mật khẩu không chính xác."));
+        return Ok(ApiResult.Success("200", "Mật khẩu của bạn đã được đặt lại thành công."));
+    }
 }
