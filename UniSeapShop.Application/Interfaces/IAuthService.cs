@@ -10,5 +10,5 @@ public interface IAuthService
     Task<LoginResponseDto?> LoginAsync(LoginRequestDto loginDto, IConfiguration configuration);
     Task<UserDto?> RegisterCustomerAsync(UserRegistrationDto registrationDto);
     Task<bool> VerifyEmailOtpAsync(string email, string otp);
-    Task<bool> ResendOtpAsync(string email, OtpType type)
+    Task<bool> ResendOtpAsync(string email, OtpType type);
 }
