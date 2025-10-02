@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Storage;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore.Storage;
 using UniSeapShop.Domain;
 using UniSeapShop.Domain.Entities;
 using UniSeapShop.Infrastructure.Interfaces;
@@ -16,7 +16,7 @@ public class UnitOfWork : IUnitOfWork
         IGenericRepository<Customer> customers,
         IGenericRepository<Role> roles,
         IGenericRepository<OtpVerification> otpVerifications
-        )
+    )
     {
         _dbContext = dbContext;
         Users = users;
@@ -39,6 +39,7 @@ public class UnitOfWork : IUnitOfWork
     {
         return await _dbContext.SaveChangesAsync();
     }
+
     // Where
     public IQueryable<T> Where<T>(Expression<Func<T, bool>> predicate) where T : class
     {
@@ -50,6 +51,7 @@ public class UnitOfWork : IUnitOfWork
     {
         return _dbContext.Set<T>().Select(selector);
     }
+
     // Transaction support
     public async Task BeginTransactionAsync()
     {

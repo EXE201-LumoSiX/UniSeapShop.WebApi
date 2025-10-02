@@ -23,8 +23,8 @@ public class SystemController : ControllerBase
     }
 
     /// <summary>
-    /// Xóa toàn bộ dữ liệu trong database và seed lại dữ liệu mẫu (roles, users, ...).
-    /// Sử dụng khi cần làm sạch và khởi tạo lại dữ liệu hệ thống.
+    ///     Xóa toàn bộ dữ liệu trong database và seed lại dữ liệu mẫu (roles, users, ...).
+    ///     Sử dụng khi cần làm sạch và khởi tạo lại dữ liệu hệ thống.
     /// </summary>
     /// <returns>Thông báo thành công hoặc lỗi khi seed dữ liệu.</returns>
     [HttpPost("seed-all-data")]
@@ -102,8 +102,8 @@ public class SystemController : ControllerBase
     }
 
     /// <summary>
-    /// Seed các role và user mẫu vào hệ thống.
-    /// Trả về danh sách các account đã được seed (gồm tên, email, số điện thoại, role, password hash).
+    ///     Seed các role và user mẫu vào hệ thống.
+    ///     Trả về danh sách các account đã được seed (gồm tên, email, số điện thoại, role, password hash).
     /// </summary>
     /// <returns>Danh sách các account đã seed hoặc lỗi nếu có.</returns>
     [HttpPost("seed-roles-users")]
@@ -156,58 +156,69 @@ public class SystemController : ControllerBase
                 await _context.Roles.AddAsync(role);
         await _context.SaveChangesAsync();
 
-        // Seed một số user mẫu cho từng role
-        var users = new List<User>
+        // Seed user mẫu với password plain để show ra response
+        var users = new List<(User user, string plainPassword)>
         {
-            new()
-            {
-                FullName = "Admin User",
-                Email = "admin@uniseapshop.com",
-                Password = new PasswordHasher().HashPassword("Admin123!"),
-                PhoneNumber = "0123456789",
-                RoleId = roles.First(r => r.RoleType == RoleType.Admin).Id,
-                Role = roles.First(r => r.RoleType == RoleType.Admin),
-                IsEmailVerify = true,
-                IsActive = true
-            },
-            new()
-            {
-                FullName = "Supplier User",
-                Email = "supplier@uniseapshop.com",
-                Password = new PasswordHasher().HashPassword("Supplier123!"),
-                PhoneNumber = "0987654321",
-                RoleId = roles.First(r => r.RoleType == RoleType.Supplier).Id,
-                Role = roles.First(r => r.RoleType == RoleType.Supplier),
-                IsEmailVerify = true,
-                IsActive = true
-            },
-            new()
-            {
-                FullName = "Customer User",
-                Email = "customer@uniseapshop.com",
-                Password = new PasswordHasher().HashPassword("Customer123!"),
-                PhoneNumber = "0111222333",
-                RoleId = roles.First(r => r.RoleType == RoleType.Customer).Id,
-                Role = roles.First(r => r.RoleType == RoleType.Customer),
-                IsEmailVerify = true,
-                IsActive = true
-            }
+            (
+                new User
+                {
+                    FullName = "Admin User",
+                    Email = "admin@uniseapshop.com",
+                    Password = new PasswordHasher().HashPassword("Admin123!"),
+                    PhoneNumber = "0123456789",
+                    RoleId = roles.First(r => r.RoleType == RoleType.Admin).Id,
+                    Role = roles.First(r => r.RoleType == RoleType.Admin),
+                    IsEmailVerify = true,
+                    IsActive = true
+                },
+                "Admin123!"
+            ),
+            (
+                new User
+                {
+                    FullName = "Supplier User",
+                    Email = "supplier@uniseapshop.com",
+                    Password = new PasswordHasher().HashPassword("Supplier123!"),
+                    PhoneNumber = "0987654321",
+                    RoleId = roles.First(r => r.RoleType == RoleType.Supplier).Id,
+                    Role = roles.First(r => r.RoleType == RoleType.Supplier),
+                    IsEmailVerify = true,
+                    IsActive = true
+                },
+                "Supplier123!"
+            ),
+            (
+                new User
+                {
+                    FullName = "Customer User",
+                    Email = "customer@uniseapshop.com",
+                    Password = new PasswordHasher().HashPassword("Customer123!"),
+                    PhoneNumber = "0111222333",
+                    RoleId = roles.First(r => r.RoleType == RoleType.Customer).Id,
+                    Role = roles.First(r => r.RoleType == RoleType.Customer),
+                    IsEmailVerify = true,
+                    IsActive = true
+                },
+                "Customer123!"
+            )
         };
 
         var seededUserList = new List<object>();
-        foreach (var user in users)
+        foreach (var (user, plainPassword) in users)
         {
             if (!await _context.Users.AnyAsync(u => u.Email == user.Email))
                 await _context.Users.AddAsync(user);
+
             seededUserList.Add(new
             {
                 user.FullName,
                 user.Email,
                 user.PhoneNumber,
                 Role = user.Role.Name,
-                Password = user.Password // hash, chỉ để test, không show ra FE thực tế
+                Password = plainPassword // trả về plain password để test
             });
         }
+
         await _context.SaveChangesAsync();
         return seededUserList;
     }

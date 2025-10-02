@@ -1,10 +1,9 @@
-﻿namespace UniSeapShop.Domain.Enums
+﻿namespace UniSeapShop.Domain.Enums;
+
+public enum OtpPurpose
 {
-    public enum OtpPurpose
-    {
-        Register = 0,
-        ForgotPassword = 1,
-        ChangeEmail = 2,
-        TwoFactor = 3
-    }
+    Register = 0,
+    ForgotPassword = 1,
+    ChangeEmail = 2,
+    TwoFactor = 3
 }

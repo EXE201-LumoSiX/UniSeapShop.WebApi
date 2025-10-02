@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Diagnostics;
-using SwaggerThemes;
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Diagnostics;
+using SwaggerThemes;
 using UniSeapShop.API.Architecture;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
