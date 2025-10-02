@@ -1,6 +1,6 @@
 services:
   uniseapshop.webapi:
-    image: ${DOCKER_REGISTRY-}uniseapshopwebapi
+    image: phuctran362003/uniseapshopwebapi:latest
     build:
       context: .
       dockerfile: UniSeapShop.API/Dockerfile
