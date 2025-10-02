@@ -3,7 +3,7 @@ name: Docker Build, Push and Deploy
 on:
   push:
     branches:
-      - test  # Khi có code mới được push lên nhánh main thì workflow này sẽ chạy
+      - master  # Khi có code mới được push lên nhánh main thì workflow này sẽ chạy
 
 jobs:
   build-and-push:
