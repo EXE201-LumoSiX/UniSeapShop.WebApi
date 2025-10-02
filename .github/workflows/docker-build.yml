@@ -29,7 +29,7 @@ jobs:
           context: .  # Thư mục chứa Dockerfile và mã nguồn
           file: UniSeapShop.API/Dockerfile  # Vị trí file Dockerfile
           push: true  # Sau khi build xong thì đẩy (push) lên Docker Hub
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/uniseapshopapi:latest  # Gán tag cho image
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/uniseapshopwebapi:latest  # Gán tag cho image
           cache-from: type=gha  # Dùng cache từ GitHub Actions
           cache-to: type=gha,mode=max  # Tối đa hóa cache để dùng lại lần sau
       
@@ -113,7 +113,7 @@ jobs:
               
               # Rest of your deployment script...
               echo "💾 Backing up previous image tag..."
-              if docker image tag uniseapshopapi:latest uniseapshopapi:backup; then
+              if docker image tag ${{ secrets.DOCKERHUB_USERNAME }}/uniseapshopwebapi:latest ${{ secrets.DOCKERHUB_USERNAME }}/uniseapshopwebapi:backup; then
                 echo "✅ Image backup successful"
               else
                 echo "⚠️ No previous image to backup or backup failed"
