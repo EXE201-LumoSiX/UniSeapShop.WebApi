@@ -1,0 +1,158 @@
+name: Docker Build, Push and Deploy
+
+on:
+  push:
+    branches:
+      - master  # Khi có code mới được push lên nhánh main thì workflow này sẽ chạy
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest  # Máy chủ ảo mà GitHub cung cấp để chạy pipeline
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3  # Lấy code từ GitHub repository về
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3  # Thiết lập công cụ Buildx của Docker để build hiệu quả hơn
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}  # Đăng nhập Docker Hub bằng secret
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Docker Image
+        id: docker_build
+        uses: docker/build-push-action@v5
+        with:
+          context: .  # Thư mục chứa Dockerfile và mã nguồn
+          file: UniSeapShop.API/Dockerfile  # Vị trí file Dockerfile
+          push: true  # Sau khi build xong thì đẩy (push) lên Docker Hub
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/uniseapshopwebapi:latest  # Gán tag cho image
+          cache-from: type=gha  # Dùng cache từ GitHub Actions
+          cache-to: type=gha,mode=max  # Tối đa hóa cache để dùng lại lần sau
+      
+      - name: Build Status
+        if: always()
+        run: |
+          if [ "${{ steps.docker_build.outcome }}" == "success" ]; then
+            echo "✅ Docker build and push successful"
+            echo "🔍 Image Digest: ${{ steps.docker_build.outputs.digest }}"
+          else
+            echo "❌ Docker build failed"
+            echo "Error details:"
+            echo "${{ toJson(steps.docker_build) }}"
+          fi
+
+  deploy:
+    needs: build-and-push  # Chờ job build-and-push hoàn thành
+    runs-on: ubuntu-latest  # Máy chủ ảo của GitHub để thực hiện thao tác SSH
+
+    steps:
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3  # Plugin để chạy lệnh SSH từ xa vào VPS
+        with:
+          host: ${{ secrets.VPS_HOST }}  # IP hoặc domain của VPS (khai báo trong repo secret)
+          username: ${{ secrets.VPS_USER }}  # Tên user đăng nhập (thường là devphuctrann)
+          password: ${{ secrets.VPS_PASSWORD }}  # SSH password để đăng nhập
+
+          script: |
+            mkdir -p ~/projects/uniseapshop
+            cd ~/projects/uniseapshop
+              
+              # Set longer timeouts
+              export COMPOSE_HTTP_TIMEOUT=300
+              export DOCKER_CLIENT_TIMEOUT=300
+              
+              # Log system info for debugging
+              echo "🧪 VPS Environment Info:"
+              echo "--------------------------"
+              echo "🕒 Date: $(date)"
+              echo "💻 Hostname: $(hostname)"
+              echo "💾 Disk Space:"
+              df -h
+              echo "🧠 Memory Status:"
+              free -h
+              echo "🔌 Docker Status:"
+              docker info
+              echo "--------------------------"
+
+              echo "📥 Pulling latest Docker image with retry logic..."
+              RETRY_COUNT=0
+              MAX_RETRIES=5
+              
+              while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+                echo "🔄 Pull attempt $((RETRY_COUNT + 1))/$MAX_RETRIES..."
+                
+                if timeout 600 docker compose pull; then
+                  echo "✅ Pull successful!"
+                  break
+                else
+                  PULL_ERROR=$?
+                  echo "❌ Pull failed with error code: $PULL_ERROR"
+                  echo "📝 Docker pull logs:"
+                  docker compose logs
+                  echo "📊 Docker system status:"
+                  docker system df
+                  
+                  RETRY_COUNT=$((RETRY_COUNT + 1))
+                  if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                    echo "🧹 Pull failed, cleaning up and retrying in 60 seconds..."
+                    docker system prune -f
+                    sleep 60
+                  else
+                    echo "❌ All retry attempts failed. Exiting..."
+                    echo "🔍 Final system status:"
+                    docker ps -a
+                    docker images
+                    exit 1
+                  fi
+                fi
+              done
+              
+              # Rest of your deployment script...
+              echo "💾 Backing up previous image tag..."
+              if docker image tag ${{ secrets.DOCKERHUB_USERNAME }}/uniseapshopwebapi:latest ${{ secrets.DOCKERHUB_USERNAME }}/uniseapshopwebapi:backup; then
+                echo "✅ Image backup successful"
+              else
+                echo "⚠️ No previous image to backup or backup failed"
+              fi
+              
+              echo "🚀 Restarting container..."
+              if docker compose up -d; then
+                echo "✅ Container restart successful"
+              else
+                COMPOSE_ERROR=$?
+                echo "❌ Container restart failed with error code: $COMPOSE_ERROR"
+                echo "📝 Docker compose logs:"
+                docker compose logs
+                echo "📊 Container status:"
+                docker compose ps
+                echo "📋 Detailed container logs:"
+                docker compose logs --tail=100 uniseapshop.webapi
+                echo "📋 Database container logs:"
+                docker compose logs --tail=100 uniseapshop.database
+                echo "📋 Redis container logs:"
+                docker compose logs --tail=100 redis
+              fi
+              
+              echo "🧹 Removing dangling images to save space..."
+              docker image prune -f
+              
+              echo "🔍 Checking health status..."
+              if curl -f http://localhost:5000/health; then
+                echo "✅ Health check passed"
+              else
+                HEALTH_ERROR=$?
+                echo "❌ Health check failed with error code: $HEALTH_ERROR"
+                echo "📝 Application logs (last 50 lines):"
+                docker compose logs --tail=50 uniseapshop.webapi
+                echo "📊 Full container status:"
+                docker ps -a
+              fi
+              
+              echo "📊 Final deployment status:"
+              echo "--------------------------"
+              docker compose ps
+              echo "--------------------------"

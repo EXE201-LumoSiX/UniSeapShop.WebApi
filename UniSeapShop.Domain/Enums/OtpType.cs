@@ -1,8 +1,7 @@
-﻿namespace UniSeapShop.Domain.Enums
+﻿namespace UniSeapShop.Domain.Enums;
+
+public enum OtpType
 {
-    public enum OtpType
-    {
-        Register,
-        ForgotPassword
-    }
+    Register,
+    ForgotPassword
 }

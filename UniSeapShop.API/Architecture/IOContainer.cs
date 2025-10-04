@@ -1,13 +1,13 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using System.Reflection;
+using System.Security.Claims;
+using System.Text;
+using System.Text.Json;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Resend;
 using StackExchange.Redis;
-using System.Reflection;
-using System.Security.Claims;
-using System.Text;
-using System.Text.Json;
 using UniSeapShop.Application.Interfaces;
 using UniSeapShop.Application.Interfaces.Commons;
 using UniSeapShop.Application.Services;
@@ -191,16 +191,6 @@ public static class IocContainer
                 };
                 x.Events = new JwtBearerEvents
                 {
-                    OnMessageReceived = context =>
-                    {
-                        var accessToken = context.Request.Query["access_token"];
-                        var path = context.HttpContext.Request.Path;
-                        if (!string.IsNullOrEmpty(accessToken) &&
-                            (path.StartsWithSegments("/hubs/notification") ||
-                             path.StartsWithSegments("/hubs/chat")))
-                            context.Token = accessToken;
-                        return Task.CompletedTask;
-                    },
                     OnChallenge = context =>
                     {
                         context.HandleResponse();

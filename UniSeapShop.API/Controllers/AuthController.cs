@@ -20,7 +20,7 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Đăng nhập hệ thống bằng email và mật khẩu.
+    ///     Đăng nhập hệ thống bằng email và mật khẩu.
     /// </summary>
     /// <param name="loginDto">Thông tin đăng nhập (email, password).</param>
     /// <returns>Thông tin đăng nhập thành công hoặc lỗi.</returns>
@@ -41,7 +41,7 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Đăng ký tài khoản mới cho người dùng.
+    ///     Đăng ký tài khoản mới cho người dùng.
     /// </summary>
     /// <param name="registrationDto">Thông tin đăng ký (email, password, tên, số điện thoại).</param>
     /// <returns>Thông tin tài khoản đã đăng ký hoặc lỗi.</returns>
@@ -104,13 +104,13 @@ public class AuthController : ControllerBase
         }
     }
 
-    [HttpPost("reset-password")]
-    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
-    {
-        var reset = await _authService.ResetPasswordAsync(dto.Email, dto.Otp, dto.NewPassword);
-        if (!reset)
-            return BadRequest(ApiResult.Failure("400",
-                "Mã OTP không hợp lệ, đã hết hạn hoặc thông tin đặt lại mật khẩu không chính xác."));
-        return Ok(ApiResult.Success("200", "Mật khẩu của bạn đã được đặt lại thành công."));
-    }
+    // [HttpPost("reset-password")]
+    // public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+    // {
+    //     var reset = await _authService.ResetPasswordAsync(dto.Email, dto.Otp, dto.NewPassword);
+    //     if (!reset)
+    //         return BadRequest(ApiResult.Failure("400",
+    //             "Mã OTP không hợp lệ, đã hết hạn hoặc thông tin đặt lại mật khẩu không chính xác."));
+    //     return Ok(ApiResult.Success("200", "Mật khẩu của bạn đã được đặt lại thành công."));
+    // }
 }

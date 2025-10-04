@@ -14,10 +14,10 @@ namespace UniSeapShop.Application.Services;
 
 public class AuthService : IAuthService
 {
-    private readonly ILoggerService _logger;
-    private readonly IUnitOfWork _unitOfWork;
     private readonly ICacheService _cacheService;
     private readonly IEmailService _emailService;
+    private readonly ILoggerService _logger;
+    private readonly IUnitOfWork _unitOfWork;
 
     public AuthService(
         ILoggerService logger,
@@ -48,7 +48,7 @@ public class AuthService : IAuthService
 
         _logger.Success($"[LoginAsync] User {loginDto.Email} authenticated successfully.");
         // Get role
-        string roleName = GetUserRole(user.RoleId);
+        var roleName = GetUserRole(user.RoleId);
 
         // Generate JWT & RefreshToken
         var accessToken = JwtUtils.GenerateJwtToken(
@@ -171,6 +171,16 @@ public class AuthService : IAuthService
         return true;
     }
 
+    public async Task<bool> ResendOtpAsync(string email, OtpType type)
+    {
+        return type switch
+        {
+            OtpType.Register => await ResendRegisterOtpAsync(email),
+            OtpType.ForgotPassword => await SendForgotPasswordOtpRequestAsync(email),
+            _ => throw ErrorHelper.BadRequest(ErrorMessages.Oauth_InvalidOtp)
+        };
+    }
+
     public async Task<bool> ResetPasswordAsync(string email, string otp, string newPassword)
     {
         _logger.Info($"[ResetPasswordAsync] Password reset requested for {email}");
@@ -201,16 +211,6 @@ public class AuthService : IAuthService
 
         _logger.Success($"[ResetPasswordAsync] Password reset successful for {email}.");
         return true;
-    }
-
-    public async Task<bool> ResendOtpAsync(string email, OtpType type)
-    {
-        return type switch
-        {
-            OtpType.Register => await ResendRegisterOtpAsync(email),
-            OtpType.ForgotPassword => await SendForgotPasswordOtpRequestAsync(email),
-            _ => throw ErrorHelper.BadRequest(ErrorMessages.Oauth_InvalidOtp)
-        };
     }
 
     private async Task<bool> ResendRegisterOtpAsync(string email)
@@ -275,6 +275,7 @@ public class AuthService : IAuthService
         };
     }
 
+
     private Supplier CreateSupplier(User user)
     {
         return new Supplier
@@ -334,6 +335,7 @@ public class AuthService : IAuthService
         var existingUser = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email == email);
         return existingUser != null;
     }
+
     private async Task GenerateAndSendOtpAsync(User user, OtpPurpose purpose, string otpCachePrefix)
     {
         var otpToken = OtpGenerator.GenerateToken(6, TimeSpan.FromMinutes(10));
@@ -372,6 +374,7 @@ public class AuthService : IAuthService
             _logger.Info($"[GenerateAndSendOtpAsync] Forgot password OTP sent to {user.Email}");
         }
     }
+
     private async Task<bool> VerifyOtpAsync(string email, string otp, OtpPurpose purpose, string otpCachePrefix)
     {
         var cacheKey = $"{otpCachePrefix}:{email}";
