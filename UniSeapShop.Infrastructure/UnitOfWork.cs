@@ -15,7 +15,8 @@ public class UnitOfWork : IUnitOfWork
         UniSeapShopDBContext dbContext, IGenericRepository<User> users,
         IGenericRepository<Customer> customers,
         IGenericRepository<Role> roles,
-        IGenericRepository<OtpVerification> otpVerifications
+        IGenericRepository<OtpVerification> otpVerifications,
+        IGenericRepository<Category> categories
     )
     {
         _dbContext = dbContext;
@@ -23,12 +24,14 @@ public class UnitOfWork : IUnitOfWork
         Roles = roles;
         OtpVerifications = otpVerifications;
         Customers = customers;
+        Categories = categories;
     }
 
     public IGenericRepository<User> Users { get; }
     public IGenericRepository<Role> Roles { get; }
     public IGenericRepository<Customer> Customers { get; }
     public IGenericRepository<OtpVerification> OtpVerifications { get; }
+    public IGenericRepository<Category> Categories { get; }
 
     public void Dispose()
     {
