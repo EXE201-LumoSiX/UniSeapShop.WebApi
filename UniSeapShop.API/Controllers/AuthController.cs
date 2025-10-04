@@ -61,6 +61,22 @@ public class AuthController : ControllerBase
         }
     }
 
+    [HttpPost("register-supplier")]
+    public async Task<IActionResult> RegisterSupplier([FromBody] SellerRegistrationDto registrationDto)
+    {
+        try
+        {
+            var result = await _authService.RegisterSupplierAsync(registrationDto);
+            return Ok(ApiResult<object>.Success(result!, "200", "Đăng ký nhà cung cấp thành công."));
+        }
+        catch (Exception ex)
+        {
+            var statusCode = ExceptionUtils.ExtractStatusCode(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<UserDto>(ex);
+            return StatusCode(statusCode, errorResponse);
+        }
+    }
+
     [HttpPost("verify-otp")]
     public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpDto dto)
     {

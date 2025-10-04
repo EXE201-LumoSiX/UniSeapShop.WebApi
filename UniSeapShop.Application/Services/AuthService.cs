@@ -109,6 +109,29 @@ public class AuthService : IAuthService
 
         return ToUserDto(user);
     }
+    public async Task<UserDto?> RegisterSupplierAsync(SellerRegistrationDto dto)
+    {
+        if (await GetSupplierByEmailAsync(dto.Email))
+            throw ErrorHelper.Conflict(ErrorMessages.AccountEmailAlreadyRegistered);
+        if (!await UserExistsAsync(dto.Email))
+            throw ErrorHelper.NotFound(ErrorMessages.AccountNotFound);
+
+        var user = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+
+        var seller = new Supplier
+        {
+            UserId = user.Id,
+            Description = dto.Description,
+            Rating = 0,
+            IsActive = user.IsActive,
+            User = user,
+        };
+
+        await _unitOfWork.Suppliers.AddAsync(seller);
+        await _unitOfWork.SaveChangesAsync();
+
+        return ToUserDto(user);
+    }
 
     public async Task<bool> VerifyEmailOtpAsync(string email, string otp)
     {
@@ -251,6 +274,18 @@ public class AuthService : IAuthService
             User = user
         };
     }
+
+    private Supplier CreateSupplier(User user)
+    {
+        return new Supplier
+        {
+            UserId = user.Id,
+            Description = string.Empty,
+            Rating = 0,
+            IsActive = user.IsActive,
+            User = user
+        };
+    }
     private static UserDto ToUserDto(User user)
     {
         return new UserDto
@@ -263,14 +298,22 @@ public class AuthService : IAuthService
         };
     }
 
-    private string GetUserRole(Guid id)
+    private string GetUserRole(Guid? id)
     {
+        if (id == null || id == Guid.Empty)
+            throw ErrorHelper.BadRequest("Invalid role ID.");
         var roleName = _unitOfWork
             .Where<Role>(u => u.Id == id)
             .Select(u => u.Name) // hoặc cột Role trực tiếp
             .FirstOrDefault();
 
         return roleName ?? string.Empty;
+    }
+
+    private async Task<bool> GetSupplierByEmailAsync(string email)
+    {
+        var existingUser = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Supplier.User.Email == email);
+        return existingUser != null;
     }
 
     private async Task<User?> GetUserByEmailAsync(string email)
