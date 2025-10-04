@@ -260,7 +260,8 @@ public class AuthService : IAuthService
             Username = user.FullName,
             Email = user.Email,
             UserImage = user.UserImage,
-            PhoneNumber = user.PhoneNumber
+            PhoneNumber = user.PhoneNumber,
+            RoleName = user.Role?.RoleType.ToString(),
         };
     }
 
