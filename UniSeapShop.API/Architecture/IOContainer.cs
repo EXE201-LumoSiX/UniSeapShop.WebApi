@@ -1,13 +1,13 @@
-﻿using System.Reflection;
-using System.Security.Claims;
-using System.Text;
-using System.Text.Json;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Resend;
 using StackExchange.Redis;
+using System.Reflection;
+using System.Security.Claims;
+using System.Text;
+using System.Text.Json;
 using UniSeapShop.Application.Interfaces;
 using UniSeapShop.Application.Interfaces.Commons;
 using UniSeapShop.Application.Services;
@@ -52,6 +52,7 @@ public static class IocContainer
 
         services.AddHttpContextAccessor();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IUserService, UserService>();
 
         return services;
     }
