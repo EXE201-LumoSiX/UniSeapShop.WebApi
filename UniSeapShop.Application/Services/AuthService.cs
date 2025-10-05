@@ -91,8 +91,8 @@ public class AuthService : IAuthService
             UserImage = "https://img.freepik.com/free-psd/3d-illustration-human-avatar-profile_23-2150671142.jpg",
             Role = new Role
             {
-                RoleType = RoleType.Customer,
-                Name = "Customer"
+                RoleType = RoleType.User,
+                Name = "User"
             }, // Mặc định là Customer
             IsEmailVerify = false,
             IsActive = false // Chưa kích hoạt cho đến khi xác thực email
@@ -111,10 +111,17 @@ public class AuthService : IAuthService
     }
     public async Task<UserDto?> RegisterSupplierAsync(SellerRegistrationDto dto)
     {
-        if (await GetSupplierByEmailAsync(dto.Email))
-            throw ErrorHelper.Conflict(ErrorMessages.AccountEmailAlreadyRegistered);
         if (!await UserExistsAsync(dto.Email))
             throw ErrorHelper.NotFound(ErrorMessages.AccountNotFound);
+        if (await GetSupplierByEmailAsync(dto.Email))
+        {
+            UserDto userDto = new UserDto
+            {
+                Email = dto.Email
+            };
+            return userDto;
+        }
+
 
         var user = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
 

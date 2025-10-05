@@ -34,7 +34,7 @@ public class UserService : IUserService
 
         var hashedPassword = new PasswordHasher().HashPassword(registrationDto.Password);
 
-        var role = await _unitOfWork.Roles.FirstOrDefaultAsync(r => r.RoleType == RoleType.Customer);
+        var role = await _unitOfWork.Roles.FirstOrDefaultAsync(r => r.RoleType == RoleType.User);
         if (role == null)
             throw ErrorHelper.NotFound("Default role 'Customer' not found.");
 

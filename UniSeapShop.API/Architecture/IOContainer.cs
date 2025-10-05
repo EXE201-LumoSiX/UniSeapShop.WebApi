@@ -218,9 +218,9 @@ public static class IocContainer
             options.AddPolicy("AdminPolicy", policy =>
                 policy.RequireRole(nameof(RoleType.Admin)));
             options.AddPolicy("SupplierPolicy", policy =>
-                policy.RequireRole(nameof(RoleType.Supplier)));
+                policy.RequireRole(nameof(RoleType.User)));
             options.AddPolicy("CustomerPolicy", policy =>
-                policy.RequireRole(nameof(RoleType.Customer)));
+                policy.RequireRole(nameof(RoleType.User)));
         });
 
         return services;
