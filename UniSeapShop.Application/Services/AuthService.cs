@@ -320,7 +320,7 @@ public class AuthService : IAuthService
 
     private async Task<bool> GetSupplierByEmailAsync(string email)
     {
-        var existingUser = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Supplier.User.Email == email);
+        var existingUser = await _unitOfWork.Suppliers.FirstOrDefaultAsync(u => u.User.Email == email);
         return existingUser != null;
     }
 
