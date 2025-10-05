@@ -1,5 +1,5 @@
-﻿using System.Linq.Expressions;
-using Microsoft.EntityFrameworkCore.Storage;
+﻿using Microsoft.EntityFrameworkCore.Storage;
+using System.Linq.Expressions;
 using UniSeapShop.Domain;
 using UniSeapShop.Domain.Entities;
 using UniSeapShop.Infrastructure.Interfaces;
@@ -20,8 +20,7 @@ public class UnitOfWork : IUnitOfWork
         IGenericRepository<Category> categories,
         IGenericRepository<Supplier> suppliers,
         IGenericRepository<Role> roles,
-        IGenericRepository<OtpVerification> otpVerifications,
-        IGenericRepository<Category> categories
+        IGenericRepository<OtpVerification> otpVerifications
     )
     {
         _dbContext = dbContext;
@@ -29,7 +28,6 @@ public class UnitOfWork : IUnitOfWork
         Orders = orders;
         OrdersDetail = ordersDetail;
         Products = products;
-        Categories = categories;
         Suppliers = suppliers;
         Roles = roles;
         OtpVerifications = otpVerifications;
@@ -46,7 +44,6 @@ public class UnitOfWork : IUnitOfWork
     public IGenericRepository<Supplier> Suppliers { get; }
     public IGenericRepository<Customer> Customers { get; }
     public IGenericRepository<OtpVerification> OtpVerifications { get; }
-    public IGenericRepository<Category> Categories { get; }
 
     public void Dispose()
     {

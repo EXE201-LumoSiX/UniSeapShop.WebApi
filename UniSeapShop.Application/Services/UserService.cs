@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using UniSeapShop.Application.Interfaces;
 using UniSeapShop.Application.Interfaces.Commons;
 using UniSeapShop.Application.Utils;
@@ -40,143 +40,73 @@ public class UserService : IUserService
 
         var user = new User
         {
-            if (await UserExistsAsync(registrationDto.Email))
-                throw ErrorHelper.Conflict("Email already registered.");
+            Email = registrationDto.Email,
+            Password = hashedPassword,
+            FullName = registrationDto.FullName,
+            PhoneNumber = registrationDto.PhoneNumber,
+            UserImage = "https://img.freepik.com/free-psd/3d-illustration-human-avatar-profile_23-2150671142.jpg",
+            IsEmailVerify = false,
+            IsActive = true,
+            RoleId = role.Id,
+            Role = role
+        };
 
-            var hashedPassword = new PasswordHasher().HashPassword(registrationDto.Password);
+        await _unitOfWork.Users.AddAsync(user);
+        await _unitOfWork.SaveChangesAsync();
 
-            var role = await _unitOfWork.Roles.FirstOrDefaultAsync(r => r.RoleType == RoleType.Customer);
-            if (role == null)
-                throw ErrorHelper.NotFound("Default role 'Customer' not found.");
-
-            var user = new User
-            {
-                Email = registrationDto.Email,
-                Password = hashedPassword,
-                FullName = registrationDto.FullName,
-                PhoneNumber = registrationDto.PhoneNumber,
-                UserImage = "https://img.freepik.com/free-psd/3d-illustration-human-avatar-profile_23-2150671142.jpg",
-                IsEmailVerify = false,
-                IsActive = true,
-                RoleId = role.Id,
-                Role = role
-            };
-
-            await _unitOfWork.Users.AddAsync(user);
-            await _unitOfWork.SaveChangesAsync();
-
-            _logger.Success($"User created successfully: {user.Email}");
-            return ToUserDto(user);
-        }
-        catch (Exception ex)
-        {
-            _logger.Error($"Error in CreateUserAsync: {ex.Message}");
-            throw;
-        }
+        return ToUserDto(user);
     }
 
     public async Task<UserDto?> GetUserByIdAsync(Guid userId)
     {
-        try {
-            var user = await _unitOfWork.Users.GetQueryable().FirstOrDefaultAsync(u => u.Id == userId && !u.IsDeleted);
-            if (user == null)
-                throw ErrorHelper.NotFound("User not found.");
-
-            _logger.Info($"User retrieved successfully: {user.Email}");
-            return ToUserDto(user);
-        }
-        catch (Exception ex)
-        {
-            _logger.Error($"Error in GetUserByIdAsync: {ex.Message}");
-            throw;
-        }
+        var user = await _unitOfWork.Users.GetQueryable().FirstOrDefaultAsync(u => u.Id == userId && !u.IsDeleted);
+        if (user == null)
+            throw ErrorHelper.NotFound("User not found.");
+        return ToUserDto(user);
     }
 
     public async Task<List<UserDto>> GetAllUsersAsync()
     {
-        try
-        {
-            var users = await _unitOfWork.Users.GetQueryable().Where(u => !u.IsDeleted).ToListAsync();
-            _logger.Info($"Total users retrieved: {users.Count}");
-            return users.Select(ToUserDto).ToList();
-        }
-        catch (Exception ex)
-        {
-            _logger.Error($"Error in GetAllUsersAsync: {ex.Message}");
-            throw;
-        }
+        var users = await _unitOfWork.Users.GetQueryable().Where(u => !u.IsDeleted).ToListAsync();
+        return users.Select(ToUserDto).ToList();
     }
 
     public async Task<UserDto?> UpdateUserAsync(Guid userId, UserUpdateDto updateDto)
     {
-        try
-        {
-            var user = await _unitOfWork.Users.GetQueryable().FirstOrDefaultAsync(u => u.Id == userId && !u.IsDeleted);
-            if (user == null)
-                throw ErrorHelper.NotFound("User not found.");
+        var user = await _unitOfWork.Users.GetQueryable().FirstOrDefaultAsync(u => u.Id == userId && !u.IsDeleted);
+        if (user == null)
+            throw ErrorHelper.NotFound("User not found.");
 
-            user.FullName = updateDto.FullName ?? user.FullName;
-            user.PhoneNumber = updateDto.PhoneNumber ?? user.PhoneNumber;
-            user.UserImage = updateDto.UserImage ?? user.UserImage;
+        user.FullName = updateDto.FullName ?? user.FullName;
+        user.PhoneNumber = updateDto.PhoneNumber ?? user.PhoneNumber;
+        user.UserImage = updateDto.UserImage ?? user.UserImage;
+        // Nếu cần cập nhật password, thêm logic tại đây
 
-            if (!string.IsNullOrWhiteSpace(updateDto.Password))
-            {
-                var hashedPassword = new PasswordHasher().HashPassword(updateDto.Password);
-                user.Password = hashedPassword;
-            }
+        await _unitOfWork.Users.Update(user);
+        await _unitOfWork.SaveChangesAsync();
 
-            await _unitOfWork.Users.Update(user);
-            await _unitOfWork.SaveChangesAsync();
-
-            _logger.Success($"User updated successfully: {user.Email}");
-            return ToUserDto(user);
-        }
-        catch (Exception ex)
-        {
-            _logger.Error($"Error in UpdateUserAsync: {ex.Message}");
-            throw;
-        }
+        return ToUserDto(user);
     }
 
     public async Task<bool> DeleteUserAsync(Guid userId)
     {
-        try
-        {
-            var user = await _unitOfWork.Users.GetQueryable().FirstOrDefaultAsync(u => u.Id == userId && !u.IsDeleted);
-            if (user == null)
-                throw ErrorHelper.NotFound("User not found.");
-
-            user.IsDeleted = true;
-            await _unitOfWork.Users.Update(user);
-            await _unitOfWork.SaveChangesAsync();
-
-            _logger.Success($"User deleted successfully: {user.Email}");
-            return true;
-        }
-        catch (Exception ex)
-        {
-            _logger.Error($"Error in DeleteUserAsync: {ex.Message}");
-            throw;
-        }
+        var user = await _unitOfWork.Users.GetQueryable().FirstOrDefaultAsync(u => u.Id == userId && !u.IsDeleted);
+        if (user == null)
+            throw ErrorHelper.NotFound("User not found.");
+        user.IsDeleted = true;
+        await _unitOfWork.Users.Update(user);
+        await _unitOfWork.SaveChangesAsync();
+        return true;
     }
 
     public async Task<UserDto?> GetCurrentUserProfileAsync()
     {
-        try
-        {
-            var currentUserId = _claimService.CurrentUserId;
-            var user = await _unitOfWork.Users.GetByIdAsync(currentUserId, u => u.Role);
-            if (user == null || user.IsDeleted)
-                throw ErrorHelper.NotFound("User not found.");
-
-            _logger.Info($"Current user profile retrieved: {user.Email}");
-            return ToUserDto(user);
-        }
-        catch (Exception ex)
-        {
-            _logger.Error($"Error in GetCurrentUserProfileAsync: {ex.Message}");
-            throw;
-        }
+        var currentUserId = _claimService.CurrentUserId;
+        var user = await _unitOfWork.Users.GetQueryable()
+            .FirstOrDefaultAsync(u => u.Id == currentUserId && !u.IsDeleted);
+        if (user == null)
+            throw ErrorHelper.NotFound("User not found.");
+        return ToUserDto(user);
     }
 
     private static UserDto ToUserDto(User user)
@@ -187,22 +117,13 @@ public class UserService : IUserService
             Username = user.FullName,
             Email = user.Email,
             UserImage = user.UserImage,
-            PhoneNumber = user.PhoneNumber,
-            RoleName = user.Role?.RoleType.ToString()
+            PhoneNumber = user.PhoneNumber
         };
     }
 
     private async Task<bool> UserExistsAsync(string email)
     {
-        try
-        {
-            var existingUser = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email == email);
-            return existingUser != null;
-        }
-        catch (Exception ex)
-        {
-            _logger.Error($"Error in UserExistsAsync: {ex.Message}");
-            throw;
-        }
+        var existingUser = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email == email);
+        return existingUser != null;
     }
 }
