@@ -20,7 +20,8 @@ public class UnitOfWork : IUnitOfWork
         IGenericRepository<Category> categories,
         IGenericRepository<Supplier> suppliers,
         IGenericRepository<Role> roles,
-        IGenericRepository<OtpVerification> otpVerifications
+        IGenericRepository<OtpVerification> otpVerifications,
+        IGenericRepository<Category> categories
     )
     {
         _dbContext = dbContext;
@@ -33,6 +34,7 @@ public class UnitOfWork : IUnitOfWork
         Roles = roles;
         OtpVerifications = otpVerifications;
         Customers = customers;
+        Categories = categories;
     }
 
     public IGenericRepository<User> Users { get; }
@@ -44,6 +46,7 @@ public class UnitOfWork : IUnitOfWork
     public IGenericRepository<Supplier> Suppliers { get; }
     public IGenericRepository<Customer> Customers { get; }
     public IGenericRepository<OtpVerification> OtpVerifications { get; }
+    public IGenericRepository<Category> Categories { get; }
 
     public void Dispose()
     {

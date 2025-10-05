@@ -49,7 +49,8 @@ public static class IocContainer
         services.AddScoped<IClaimsService, ClaimsService>();
         services.AddScoped<ICurrentTime, CurrentTime>();
         services.AddScoped<IEmailService, EmailService>();
-
+        services.AddScoped<IUserService, UserService>();
+        services.AddScoped<ICategoryService, CategoryService>();
         services.AddHttpContextAccessor();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();
