@@ -1,4 +1,5 @@
-﻿using UniSeapShop.Application.Interfaces;
+﻿using Microsoft.EntityFrameworkCore;
+using UniSeapShop.Application.Interfaces;
 using UniSeapShop.Application.Interfaces.Commons;
 using UniSeapShop.Domain.DTOs.CardDTOs;
 using UniSeapShop.Domain.DTOs.CartItemDTOs;
@@ -219,6 +220,48 @@ namespace UniSeapShop.Application.Services
             catch (Exception ex)
             {
                 _loggerService.Error($"Error removing product {productId} from cart for user {userId}: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task RemoveAllItemsByCustomerIdAsync()
+        {
+            var userId = _claimsService.CurrentUserId;
+
+            try
+            {
+                var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
+                if (customer == null)
+                {
+                    _loggerService.Warn($"Customer not found for user {userId}");
+                    throw new InvalidOperationException("Customer not found.");
+                }
+
+                var cart = await _unitOfWork.Carts
+                    .GetQueryable()
+                    .Include(c => c.CartItems)
+                    .FirstOrDefaultAsync(c => c.CustomerId == customer.Id);
+
+                if (cart == null)
+                {
+                    _loggerService.Warn($"Cart not found for customer {customer.Id}");
+                    throw new InvalidOperationException("Cart not found.");
+                }
+
+                if (cart.CartItems == null || !cart.CartItems.Any())
+                {
+                    _loggerService.Info($"No items to remove — cart already empty for user {userId}");
+                    return;
+                }
+
+                await _unitOfWork.CartItems.SoftRemoveRange(cart.CartItems);
+                await _unitOfWork.SaveChangesAsync();
+
+                _loggerService.Success($"All items removed from cart for user {userId}");
+            }
+            catch (Exception ex)
+            {
+                _loggerService.Error($"Error removing all items from cart for user {userId}: {ex.Message}");
                 throw;
             }
         }

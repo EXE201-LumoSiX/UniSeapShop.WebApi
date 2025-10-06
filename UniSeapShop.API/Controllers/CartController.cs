@@ -103,4 +103,24 @@ public class CartController : ControllerBase
             return StatusCode(statusCode, errorResponse);
         }
     }
+
+    /// <summary>
+    /// Remove all cart items for the current customer (useful for admin or forced cleanup).
+    /// </summary>
+    [HttpDelete("remove-all")]
+    [Authorize]
+    public async Task<IActionResult> RemoveAllItemsForCustomer()
+    {
+        try
+        {
+            await _cartService.RemoveAllItemsByCustomerIdAsync();
+            return Ok(ApiResult<bool>.Success(true, "200", "All cart items for the customer removed successfully."));
+        }
+        catch (Exception ex)
+        {
+            var statusCode = ExceptionUtils.ExtractStatusCode(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<bool>(ex);
+            return StatusCode(statusCode, errorResponse);
+        }
+    }
 }

@@ -14,5 +14,6 @@ namespace UniSeapShop.Application.Interfaces
         Task AddItemToCartAsync(AddCartItemDto addItemDto);
         Task UpdateItemQuantityAsync(UpdateCartItemDto updateItemDto);
         Task RemoveItemFromCartAsync(Guid productId);
+        Task RemoveAllItemsByCustomerIdAsync();
     }
 }
