@@ -92,7 +92,7 @@ public class UniSeapShopDBContext : DbContext
             // One-to-One relationship with Cart
             entity.HasOne(c => c.Cart)
                 .WithOne(cart => cart.Customer)
-                .HasForeignKey<Cart>(cart => cart.UserId)
+                .HasForeignKey<Cart>(cart => cart.CustomerId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -166,7 +166,7 @@ public class UniSeapShopDBContext : DbContext
         modelBuilder.Entity<Cart>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.Property(e => e.UserId).IsRequired();
+            entity.Property(e => e.CustomerId).IsRequired();
 
             // One-to-Many relationship with CartItems
             entity.HasMany(c => c.CartItems)
