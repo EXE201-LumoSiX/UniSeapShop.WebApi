@@ -10,4 +10,6 @@ public interface ICartService
     Task<CartDto> UpdateItemQuantityAsync(UpdateCartItemDto updateItemDto);
     Task<CartDto> RemoveItemFromCartAsync(Guid productId);
     Task<CartDto> RemoveAllItemsByCustomerIdAsync();
+    Task<CartDto> CheckCartItemAsync(CheckCartItemDto checkItemDto);
+    Task<CartDto> CheckAllCartItemsAsync(CheckAllCartItemsDto checkAllDto);
 }

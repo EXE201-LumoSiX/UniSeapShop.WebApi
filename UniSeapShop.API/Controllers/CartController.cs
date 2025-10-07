@@ -126,4 +126,48 @@ public class CartController : ControllerBase
             return StatusCode(statusCode, errorResponse);
         }
     }
+
+    /// <summary>
+    ///     Check/uncheck một sản phẩm cụ thể trong giỏ hàng.
+    /// </summary>
+    /// <param name="dto">Thông tin sản phẩm và trạng thái check.</param>
+    /// <returns>Giỏ hàng sau khi cập nhật.</returns>
+    [HttpPatch("items/check")]
+    [Authorize]
+    public async Task<IActionResult> CheckCartItem([FromBody] CheckCartItemDto dto)
+    {
+        try
+        {
+            var result = await _cartService.CheckCartItemAsync(dto);
+            return Ok(ApiResult<CartDto>.Success(result, "200", "Cart item check status updated successfully."));
+        }
+        catch (Exception ex)
+        {
+            var statusCode = ExceptionUtils.ExtractStatusCode(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<CartDto>(ex);
+            return StatusCode(statusCode, errorResponse);
+        }
+    }
+
+    /// <summary>
+    ///     Check/uncheck tất cả sản phẩm trong giỏ hàng.
+    /// </summary>
+    /// <param name="dto">Trạng thái check cho tất cả items.</param>
+    /// <returns>Giỏ hàng sau khi cập nhật.</returns>
+    [HttpPatch("items/check-all")]
+    [Authorize]
+    public async Task<IActionResult> CheckAllCartItems([FromBody] CheckAllCartItemsDto dto)
+    {
+        try
+        {
+            var result = await _cartService.CheckAllCartItemsAsync(dto);
+            return Ok(ApiResult<CartDto>.Success(result, "200", "All cart items check status updated successfully."));
+        }
+        catch (Exception ex)
+        {
+            var statusCode = ExceptionUtils.ExtractStatusCode(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<CartDto>(ex);
+            return StatusCode(statusCode, errorResponse);
+        }
+    }
 }

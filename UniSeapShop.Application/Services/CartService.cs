@@ -262,6 +262,97 @@ public class CartService : ICartService
         return await MapToDto(cart, userId, new List<CartItem>(), new Dictionary<Guid, Product>());
     }
 
+    public async Task<CartDto> CheckCartItemAsync(CheckCartItemDto checkItemDto)
+    {
+        var userId = _claimsService.CurrentUserId;
+
+        var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
+        if (customer == null)
+        {
+            _loggerService.Warn($"Customer not found for user {userId}");
+            throw ErrorHelper.NotFound("Customer not found.");
+        }
+
+        var cart = await _unitOfWork.Carts.FirstOrDefaultAsync(c => c.CustomerId == customer.Id);
+        if (cart == null)
+        {
+            _loggerService.Warn($"Cart not found for user {userId}");
+            throw ErrorHelper.NotFound("Cart not found.");
+        }
+
+        var cartItem = await _unitOfWork.CartItems.FirstOrDefaultAsync(ci =>
+            ci.CartId == cart.Id && ci.ProductId == checkItemDto.ProductId);
+
+        if (cartItem == null)
+        {
+            _loggerService.Warn($"Product {checkItemDto.ProductId} not found in cart for user {userId}");
+            throw ErrorHelper.NotFound("Item not found in cart.");
+        }
+
+        cartItem.IsCheck = checkItemDto.IsCheck;
+        await _unitOfWork.CartItems.Update(cartItem);
+        await _unitOfWork.SaveChangesAsync();
+
+        _loggerService.Success(
+            $"Product {checkItemDto.ProductId} check status updated to {checkItemDto.IsCheck} for user {userId}");
+
+        // Lấy tất cả cart items sau khi cập nhật
+        var cartItems = await _unitOfWork.CartItems.GetAllAsync(ci => ci.CartId == cart.Id);
+
+        // Chuẩn bị Dictionary sản phẩm
+        var productIds = cartItems.Select(ci => ci.ProductId).Distinct().ToList();
+        var products = await _unitOfWork.Products.GetAllAsync(p => productIds.Contains(p.Id));
+        var productDict = products.ToDictionary(p => p.Id, p => p);
+
+        // Map sang DTO và trả về
+        return await MapToDto(cart, userId, cartItems, productDict);
+    }
+
+    public async Task<CartDto> CheckAllCartItemsAsync(CheckAllCartItemsDto checkAllDto)
+    {
+        var userId = _claimsService.CurrentUserId;
+
+        var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
+        if (customer == null)
+        {
+            _loggerService.Warn($"Customer not found for user {userId}");
+            throw ErrorHelper.NotFound("Customer not found.");
+        }
+
+        var cart = await _unitOfWork.Carts.FirstOrDefaultAsync(c => c.CustomerId == customer.Id);
+        if (cart == null)
+        {
+            _loggerService.Warn($"Cart not found for user {userId}");
+            throw ErrorHelper.NotFound("Cart not found.");
+        }
+
+        var cartItems = await _unitOfWork.CartItems.GetAllAsync(ci => ci.CartId == cart.Id);
+        if (!cartItems.Any())
+        {
+            _loggerService.Info($"No items in cart for user {userId}");
+            return await MapToDto(cart, userId, cartItems, new Dictionary<Guid, Product>());
+        }
+
+        // Cập nhật trạng thái check cho tất cả items
+        foreach (var cartItem in cartItems)
+        {
+            cartItem.IsCheck = checkAllDto.IsCheckAll;
+            await _unitOfWork.CartItems.Update(cartItem);
+        }
+
+        await _unitOfWork.SaveChangesAsync();
+
+        _loggerService.Success($"All cart items check status updated to {checkAllDto.IsCheckAll} for user {userId}");
+
+        // Chuẩn bị Dictionary sản phẩm
+        var productIds = cartItems.Select(ci => ci.ProductId).Distinct().ToList();
+        var products = await _unitOfWork.Products.GetAllAsync(p => productIds.Contains(p.Id));
+        var productDict = products.ToDictionary(p => p.Id, p => p);
+
+        // Map sang DTO và trả về
+        return await MapToDto(cart, userId, cartItems, productDict);
+    }
+
     private async Task<CartDto> MapToDto(Cart cart, Guid userId, IEnumerable<CartItem>? cartItems = null,
         Dictionary<Guid, Product>? productDict = null)
     {

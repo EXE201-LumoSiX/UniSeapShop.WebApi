@@ -1,0 +1,431 @@
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Net.payOS;
+using Net.payOS.Types;
+using Newtonsoft.Json;
+using UniSeapShop.Application.Interfaces;
+using UniSeapShop.Application.Interfaces.Commons;
+using UniSeapShop.Application.Utils;
+using UniSeapShop.Domain.DTOs.OrderDTOs;
+using UniSeapShop.Domain.DTOs.PaymentDTOs;
+using UniSeapShop.Domain.Entities;
+using UniSeapShop.Domain.Enums;
+using UniSeapShop.Infrastructure.Interfaces;
+
+namespace UniSeapShop.Application.Services;
+
+public class PaymentService : IPaymentService
+{
+    private readonly IClaimsService _claimsService;
+    private readonly IConfiguration _configuration;
+    private readonly ILoggerService _loggerService;
+    private readonly PayOS _payOs;
+    private readonly IUnitOfWork _unitOfWork;
+
+    public PaymentService(PayOS payOs, IUnitOfWork unitOfWork, ILoggerService loggerService,
+        IClaimsService claimsService, IConfiguration configuration)
+    {
+        _payOs = payOs;
+        _unitOfWork = unitOfWork;
+        _loggerService = loggerService;
+        _claimsService = claimsService;
+        _configuration = configuration;
+    }
+
+    public async Task<List<PaymentInfoDto>> GetAllPayments(PaymentStatus? status = null, DateTime? fromDate = null,
+        DateTime? toDate = null)
+    {
+        try
+        {
+            var query = _unitOfWork.Payments.GetQueryable();
+
+            if (status.HasValue)
+                query = query.Where(p => p.Status == status.Value);
+
+            if (fromDate.HasValue)
+                query = query.Where(p => p.CreatedAt >= fromDate.Value);
+
+            if (toDate.HasValue)
+                query = query.Where(p => p.CreatedAt <= toDate.Value);
+
+            query = query.OrderByDescending(p => p.CreatedAt);
+
+            var payments = await query.ToListAsync();
+
+            return payments.Select(p => new PaymentInfoDto
+            {
+                Id = p.Id,
+                OrderId = p.OrderId,
+                Amount = p.Amount,
+                PaymentGateway = p.PaymentGateway.ToString(),
+                Status = p.Status.ToString(),
+                GatewayTransactionId = p.GatewayTransactionId,
+                PaymentUrl = p.PaymentUrl,
+                CreatedAt = p.CreatedAt,
+                UpdatedAt = p.UpdatedAt
+            }).ToList();
+        }
+        catch (Exception e)
+        {
+            _loggerService.Error($"Error getting payments: {e.Message}");
+            throw;
+        }
+    }
+
+    public async Task<string> ProcessPayment(Guid userId, CreateOrderDto createOrderDto)
+    {
+        try
+        {
+            // Get customer by user ID
+            var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
+            if (customer == null)
+                throw ErrorHelper.NotFound("Customer not found");
+
+            var order = await CreateOrderFromCart(customer.Id, createOrderDto);
+
+            // Get redirect URL from configuration or use default
+            var defaultRedirectUrl = _configuration["PaymentSettings:SuccessUrl"]
+                                     ?? Environment.GetEnvironmentVariable("PAYMENT_SUCCESS_URL")
+                                     ?? "https://uniseapshop.vercel.app/payment-success";
+
+            var payment = new Payment
+            {
+                OrderId = order.Id,
+                Amount = order.TotalAmount,
+                PaymentGateway = PaymentGateway.PayOS,
+                Status = PaymentStatus.Pending,
+                RedirectUrl = defaultRedirectUrl,
+                Order = await _unitOfWork.Orders.GetByIdAsync(order.Id) ?? throw ErrorHelper.NotFound("Order not found")
+            };
+
+            await _unitOfWork.Payments.AddAsync(payment);
+            await _unitOfWork.SaveChangesAsync();
+
+            var itemList = new List<ItemData>();
+            foreach (var detail in order.OrderDetails)
+                itemList.Add(new ItemData(
+                    detail.ProductName ?? "Product",
+                    detail.Quantity,
+                    (int)detail.UnitPrice
+                ));
+
+            var orderCode = DateTime.Now.Ticks % 1000000000; // Simple order code generation
+
+            // PayOS requires description max 25 chars, so use first 5 chars of order GUID
+            var shortOrderId = order.Id.ToString().Substring(0, 5);
+            var paymentDescription = $"Uniseap payment #{shortOrderId}";
+
+            var paymentData = new PaymentData(
+                orderCode,
+                (int)order.TotalAmount,
+                paymentDescription,
+                itemList,
+                defaultRedirectUrl,
+                defaultRedirectUrl
+            );
+
+            var paymentResult = await _payOs.createPaymentLink(paymentData);
+
+            payment.GatewayTransactionId = paymentResult.orderCode.ToString();
+            payment.PaymentUrl = paymentResult.checkoutUrl;
+            payment.GatewayResponse = JsonConvert.SerializeObject(paymentResult);
+
+            await _unitOfWork.Payments.Update(payment);
+            await _unitOfWork.SaveChangesAsync();
+
+            _loggerService.Info($"Payment link created for order {order.Id}: {paymentResult.checkoutUrl}");
+
+            return paymentResult.checkoutUrl;
+        }
+        catch (Exception ex)
+        {
+            _loggerService.Error($"Failed to process payment: {ex.Message}");
+            throw ErrorHelper.BadRequest("Unable to create payment link. Please try again later.");
+        }
+    }
+
+    public async Task ProcessWebhook(WebhookType webhookData)
+    {
+        try
+        {
+            var data = _payOs.verifyPaymentWebhookData(webhookData);
+
+            var payment = await _unitOfWork.Payments.FirstOrDefaultAsync(p =>
+                p.GatewayTransactionId == data.orderCode.ToString());
+
+            if (payment == null)
+            {
+                _loggerService.Error($"Payment not found for orderCode: {data.orderCode}");
+                return;
+            }
+
+            payment.Status = PaymentStatus.Completed;
+            payment.GatewayResponse = JsonConvert.SerializeObject(data);
+            await _unitOfWork.Payments.Update(payment);
+
+            await UpdateOrderStatus(payment.OrderId, OrderStatus.Completed);
+
+            _loggerService.Info($"Payment successful for order {payment.OrderId}");
+        }
+        catch (Exception ex)
+        {
+            _loggerService.Error($"Error processing webhook: {ex.Message}");
+        }
+    }
+
+    public async Task<PaymentStatusDto> GetPaymentStatus(Guid paymentId)
+    {
+        var payment = await _unitOfWork.Payments.GetByIdAsync(paymentId);
+
+        if (payment == null)
+            throw ErrorHelper.NotFound("Payment not found");
+
+        if (payment.Status == PaymentStatus.Pending)
+            try
+            {
+                var paymentInfo = await _payOs.getPaymentLinkInformation(long.Parse(payment.GatewayTransactionId!));
+
+                if (paymentInfo.status == "PAID" && payment.Status != PaymentStatus.Completed)
+                {
+                    payment.Status = PaymentStatus.Completed;
+                    await _unitOfWork.Payments.Update(payment);
+
+                    await UpdateOrderStatus(payment.OrderId, OrderStatus.Completed);
+                    await _unitOfWork.SaveChangesAsync();
+                }
+                else if (paymentInfo.status == "CANCELLED" && payment.Status != PaymentStatus.Cancelled)
+                {
+                    payment.Status = PaymentStatus.Cancelled;
+                    await _unitOfWork.Payments.Update(payment);
+
+                    await UpdateOrderStatus(payment.OrderId, OrderStatus.Cancelled);
+                    await _unitOfWork.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                _loggerService.Error($"Error checking payment status: {ex.Message}");
+            }
+
+        return new PaymentStatusDto
+        {
+            PaymentId = payment.Id,
+            OrderId = payment.OrderId,
+            Status = payment.Status.ToString(),
+            PaymentUrl = payment.PaymentUrl,
+            Amount = payment.Amount,
+            CreatedAt = payment.CreatedAt,
+            UpdatedAt = payment.UpdatedAt
+        };
+    }
+
+    public async Task<bool> CancelPayment(Guid paymentId, string reason)
+    {
+        var payment = await _unitOfWork.Payments.GetByIdAsync(paymentId);
+        if (payment == null)
+            throw ErrorHelper.NotFound("Payment not found");
+
+        if (payment.Status != PaymentStatus.Pending)
+            throw ErrorHelper.BadRequest("Only pending payments can be cancelled");
+
+        try
+        {
+            var result = await _payOs.cancelPaymentLink(long.Parse(payment.GatewayTransactionId!), reason);
+
+            payment.Status = PaymentStatus.Cancelled;
+            payment.GatewayResponse = JsonConvert.SerializeObject(result);
+            await _unitOfWork.Payments.Update(payment);
+
+            await UpdateOrderStatus(payment.OrderId, OrderStatus.Cancelled);
+            await _unitOfWork.SaveChangesAsync();
+
+            _loggerService.Info($"Payment {paymentId} cancelled successfully");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _loggerService.Error($"Failed to cancel payment: {ex.Message}");
+            throw ErrorHelper.BadRequest("Cannot cancel payment");
+        }
+    }
+
+    public async Task<List<PaymentStatusDto>> GetPaymentsByOrderId(Guid orderId)
+    {
+        var payments = await _unitOfWork.Payments.GetAllAsync(p => p.OrderId == orderId);
+
+        return payments.Select(p => new PaymentStatusDto
+        {
+            PaymentId = p.Id,
+            OrderId = p.OrderId,
+            Status = p.Status.ToString(),
+            PaymentUrl = p.PaymentUrl,
+            Amount = p.Amount,
+            CreatedAt = p.CreatedAt,
+            UpdatedAt = p.UpdatedAt
+        }).ToList();
+    }
+
+    public async Task<OrderDto> CreateOrderFromCart(Guid customerId, CreateOrderDto createOrderDto)
+    {
+        try
+        {
+            var customer = await _unitOfWork.Customers.GetByIdAsync(customerId);
+            if (customer == null)
+                throw ErrorHelper.NotFound("Customer not found");
+
+            var cart = await _unitOfWork.Carts.FirstOrDefaultAsync(c => c.CustomerId == customerId);
+            if (cart == null)
+                throw ErrorHelper.NotFound("Cart not found");
+
+            var cartItems = await _unitOfWork.CartItems.GetAllAsync(ci => ci.CartId == cart.Id);
+            if (!cartItems.Any())
+                throw ErrorHelper.BadRequest("No items in cart");
+
+            // Check if any items are already selected (checked)
+            var checkedItems = cartItems.Where(ci => ci.IsCheck).ToList();
+
+            if (!checkedItems.Any())
+            {
+                // If no items are checked, auto-check all items for payment
+                foreach (var item in cartItems)
+                {
+                    item.IsCheck = true;
+                    await _unitOfWork.CartItems.Update(item);
+                }
+
+                await _unitOfWork.SaveChangesAsync();
+                checkedItems = cartItems.ToList();
+
+                _loggerService.Info($"Auto-checked all {cartItems.Count} items for payment");
+            }
+            else
+            {
+                _loggerService.Info($"Using {checkedItems.Count} pre-selected items for payment");
+            }
+
+            // Use the checked items for order creation
+            cartItems = checkedItems;
+
+            var order = new Order
+            {
+                CustomerId = customerId,
+                OrderDate = DateTime.UtcNow,
+                ShipAddress = createOrderDto.ShipAddress,
+                PaymentMethod = createOrderDto.PaymentGateway.ToString(),
+                Status = OrderStatus.Pending,
+                Customer = customer
+            };
+
+            await _unitOfWork.Orders.AddAsync(order);
+            await _unitOfWork.SaveChangesAsync();
+
+            var orderDetails = new List<OrderDetail>();
+            foreach (var cartItem in cartItems)
+            {
+                var product = await _unitOfWork.Products.GetByIdAsync(cartItem.ProductId);
+                if (product == null) continue;
+
+                var orderDetail = new OrderDetail
+                {
+                    OrderId = order.Id,
+                    ProductId = cartItem.ProductId,
+                    Quantity = cartItem.Quantity,
+                    UnitPrice = product.Price,
+                    TotalPrice = product.Price * cartItem.Quantity,
+                    Order = order,
+                    Product = product
+                };
+
+                orderDetails.Add(orderDetail);
+                await _unitOfWork.OrdersDetail.AddAsync(orderDetail);
+
+                // Update product quantity
+                product.Quantity -= cartItem.Quantity;
+                await _unitOfWork.Products.Update(product);
+
+                // Remove from cart
+                await _unitOfWork.CartItems.SoftRemove(cartItem);
+            }
+
+            await _unitOfWork.SaveChangesAsync();
+
+            return new OrderDto
+            {
+                Id = order.Id,
+                CustomerId = order.CustomerId,
+                OrderDate = order.OrderDate,
+                ShipAddress = order.ShipAddress,
+                PaymentMethod = order.PaymentMethod,
+                Status = order.Status,
+                TotalAmount = (decimal)orderDetails.Sum(od => od.TotalPrice),
+                OrderDetails = orderDetails.Select(od => new OrderDetailDto
+                {
+                    Id = od.Id,
+                    ProductId = od.ProductId,
+                    ProductName = od.Product.ProductName,
+                    ProductImage = od.Product.ProductImage,
+                    Quantity = od.Quantity,
+                    UnitPrice = od.UnitPrice,
+                    TotalPrice = od.TotalPrice
+                }).ToList()
+            };
+        }
+        catch (Exception e)
+        {
+            _loggerService.Error($"Error creating order from cart: {e.Message}");
+            throw;
+        }
+    }
+
+    public async Task<OrderDto> UpdateOrderStatus(Guid orderId, OrderStatus status)
+    {
+        try
+        {
+            var order = await _unitOfWork.Orders.GetByIdAsync(orderId);
+
+            if (order == null)
+                throw ErrorHelper.NotFound($"Order with ID: {orderId} not found");
+
+            // Load order details separately
+            var orderDetails = await _unitOfWork.OrdersDetail.GetAllAsync(od => od.OrderId == orderId);
+
+            order.Status = status;
+            order.UpdatedAt = DateTime.UtcNow;
+
+            if (status == OrderStatus.Completed)
+                order.CompletedDate = DateTime.UtcNow;
+
+            await _unitOfWork.Orders.Update(order);
+            await _unitOfWork.SaveChangesAsync();
+
+            _loggerService.Info($"Updated order {orderId} status to {status}");
+
+            return new OrderDto
+            {
+                Id = order.Id,
+                CustomerId = order.CustomerId,
+                OrderDate = order.OrderDate,
+                ShipAddress = order.ShipAddress,
+                PaymentMethod = order.PaymentMethod,
+                Status = order.Status,
+                CompletedDate = order.CompletedDate,
+                CancellationReason = order.CancellationReason,
+                TotalAmount = (decimal)orderDetails.Sum(od => od.TotalPrice),
+                OrderDetails = orderDetails.Select(od => new OrderDetailDto
+                {
+                    Id = od.Id,
+                    ProductId = od.ProductId,
+                    ProductName = od.Product?.ProductName ?? "Unknown Product",
+                    Quantity = od.Quantity,
+                    UnitPrice = od.UnitPrice,
+                    TotalPrice = od.TotalPrice
+                }).ToList()
+            };
+        }
+        catch (Exception e)
+        {
+            _loggerService.Error($"Error updating order {orderId} status: {e.Message}");
+            throw;
+        }
+    }
+}

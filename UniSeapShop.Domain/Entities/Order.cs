@@ -12,6 +12,9 @@ public class Order : BaseEntity
     public DateTime? CompletedDate { get; set; }
     public string? CancellationReason { get; set; }
 
+    // Computed property for total amount
+    public decimal TotalAmount => OrderDetails?.Sum(od => (decimal)od.TotalPrice) ?? 0m;
+
     // Navigation properties
     public required Customer Customer { get; set; }
     public List<OrderDetail> OrderDetails { get; set; } = new();

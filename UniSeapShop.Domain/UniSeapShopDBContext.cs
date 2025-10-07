@@ -247,9 +247,13 @@ public class UniSeapShopDBContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.OrderId).IsRequired();
+            entity.Property(e => e.Amount).IsRequired();
+            entity.Property(e => e.PaymentGateway).IsRequired();
             entity.Property(e => e.Status).IsRequired();
-            entity.Property(e => e.Provider).IsRequired();
-            entity.Property(e => e.TransactionCode).IsRequired();
+            entity.Property(e => e.GatewayTransactionId).IsRequired(false);
+            entity.Property(e => e.PaymentUrl).IsRequired(false);
+            entity.Property(e => e.RedirectUrl).IsRequired(false);
+            entity.Property(e => e.GatewayResponse).IsRequired(false);
         });
 
         // PayoutDetail configuration
