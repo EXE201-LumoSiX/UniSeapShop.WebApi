@@ -18,31 +18,31 @@ public class CartController : ControllerBase
         _cartService = cartService;
     }
     /// <summary>
-    /// Add an item to the cart.
+    /// Thêm một sản phẩm vào giỏ hàng của user hiện tại.
     /// </summary>
-    /// <param name="dto">The item to add.</param>
-    /// <returns>A success message.</returns>
+    /// <param name="dto">Thông tin sản phẩm và số lượng cần thêm.</param>
+    /// <returns>Giỏ hàng sau khi thêm.</returns>
     [HttpPost("items")]
     [Authorize]
     public async Task<IActionResult> AddItemToCart([FromBody] AddCartItemDto dto)
     {
         try
         {
-            await _cartService.AddItemToCartAsync(dto);
-            return Ok(ApiResult<bool>.Success(true, "201", "Item added to cart successfully."));
+            var result = await _cartService.AddItemToCartAsync(dto);
+            return Ok(ApiResult<CartDto>.Success(result, "201", "Item added to cart successfully."));
         }
         catch (Exception ex)
         {
             var statusCode = ExceptionUtils.ExtractStatusCode(ex);
-            var errorResponse = ExceptionUtils.CreateErrorResponse<bool>(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<CartDto>(ex);
             return StatusCode(statusCode, errorResponse);
         }
     }
 
     /// <summary>
-    /// Get the current user's cart.
+    /// Lấy thông tin giỏ hàng hiện tại của user (dựa trên access token).
     /// </summary>
-    /// <returns>The cart details.</returns>
+    /// <returns>Thông tin chi tiết giỏ hàng.</returns>
     [HttpGet]
     [Authorize]
     public async Task<IActionResult> GetCart()
@@ -61,51 +61,52 @@ public class CartController : ControllerBase
     }
 
     /// <summary>
-    /// Update the quantity of an item in the cart.
+    /// Cập nhật số lượng của một sản phẩm trong giỏ hàng.
     /// </summary>
-    /// <param name="dto">The item and new quantity.</param>
-    /// <returns>A success message.</returns>
+    /// <param name="dto">Mã sản phẩm và số lượng mới.</param>
+    /// <returns>Giỏ hàng sau khi cập nhật.</returns>
     [HttpPut("items")]
     [Authorize]
     public async Task<IActionResult> UpdateItemQuantity([FromBody] UpdateCartItemDto dto)
     {
         try
         {
-            await _cartService.UpdateItemQuantityAsync(dto);
-            return Ok(ApiResult<bool>.Success(true, "200", "Item quantity updated successfully."));
+            var result = await _cartService.UpdateItemQuantityAsync(dto);
+            return Ok(ApiResult<CartDto>.Success(result, "200", "Item quantity updated successfully."));
         }
         catch (Exception ex)
         {
             var statusCode = ExceptionUtils.ExtractStatusCode(ex);
-            var errorResponse = ExceptionUtils.CreateErrorResponse<bool>(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<CartDto>(ex);
             return StatusCode(statusCode, errorResponse);
         }
     }
 
     /// <summary>
-    /// Remove an item from the cart.
+    /// Xóa một sản phẩm khỏi giỏ hàng.
     /// </summary>
-    /// <param name="productId">The ID of the product to remove.</param>
-    /// <returns>A success message.</returns>
+    /// <param name="productId">ID sản phẩm cần xóa.</param>
+    /// <returns>Giỏ hàng sau khi xóa.</returns>
     [HttpDelete("items/{productId:guid}")]
     [Authorize]
     public async Task<IActionResult> RemoveItemFromCart(Guid productId)
     {
         try
         {
-            await _cartService.RemoveItemFromCartAsync(productId);
-            return Ok(ApiResult<bool>.Success(true, "200", "Item removed from cart successfully."));
+            var result = await _cartService.RemoveItemFromCartAsync(productId);
+            return Ok(ApiResult<CartDto>.Success(result, "200", "Item removed from cart successfully."));
         }
         catch (Exception ex)
         {
             var statusCode = ExceptionUtils.ExtractStatusCode(ex);
-            var errorResponse = ExceptionUtils.CreateErrorResponse<bool>(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<CartDto>(ex);
             return StatusCode(statusCode, errorResponse);
         }
     }
 
     /// <summary>
-    /// Remove all cart items for the current customer (useful for admin or forced cleanup).
+    /// Xóa toàn bộ sản phẩm trong giỏ hàng của user hiện tại.
+    /// Thường dùng cho thao tác "dọn sạch" sau khi checkout hoặc reset.
     /// </summary>
     [HttpDelete("remove-all")]
     [Authorize]
@@ -113,13 +114,13 @@ public class CartController : ControllerBase
     {
         try
         {
-            await _cartService.RemoveAllItemsByCustomerIdAsync();
-            return Ok(ApiResult<bool>.Success(true, "200", "All cart items for the customer removed successfully."));
+            var result = await _cartService.RemoveAllItemsByCustomerIdAsync();
+            return Ok(ApiResult<CartDto>.Success(result, "200", "All cart items for the customer removed successfully."));
         }
         catch (Exception ex)
         {
             var statusCode = ExceptionUtils.ExtractStatusCode(ex);
-            var errorResponse = ExceptionUtils.CreateErrorResponse<bool>(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<CartDto>(ex);
             return StatusCode(statusCode, errorResponse);
         }
     }

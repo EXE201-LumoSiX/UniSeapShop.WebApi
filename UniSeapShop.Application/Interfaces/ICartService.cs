@@ -11,9 +11,9 @@ namespace UniSeapShop.Application.Interfaces
     public interface ICartService
     {
         Task<CartDto> GetCartByUserIdAsync();
-        Task AddItemToCartAsync(AddCartItemDto addItemDto);
-        Task UpdateItemQuantityAsync(UpdateCartItemDto updateItemDto);
-        Task RemoveItemFromCartAsync(Guid productId);
-        Task RemoveAllItemsByCustomerIdAsync();
+        Task<CartDto> AddItemToCartAsync(AddCartItemDto addItemDto);
+        Task<CartDto> UpdateItemQuantityAsync(UpdateCartItemDto updateItemDto);
+        Task<CartDto> RemoveItemFromCartAsync(Guid productId);
+        Task<CartDto> RemoveAllItemsByCustomerIdAsync();
     }
 }
