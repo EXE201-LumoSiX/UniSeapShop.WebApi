@@ -1,6 +1,20 @@
-﻿namespace UniSeapShop.Application.Interfaces;
+﻿using Net.payOS.Types;
+using UniSeapShop.Domain.DTOs.OrderDTOs;
+using UniSeapShop.Domain.DTOs.PaymentDTOs;
+using UniSeapShop.Domain.Enums;
+
+namespace UniSeapShop.Application.Interfaces;
 
 public interface IPaymentService
 {
-}
+    Task<List<PaymentInfoDto>> GetAllPayments(PaymentStatus? status = null, DateTime? fromDate = null,
+        DateTime? toDate = null);
 
+    Task<string> ProcessPayment(Guid userId, CreateOrderDto createOrderDto);
+    Task ProcessWebhook(WebhookType webhookData);
+    Task<PaymentStatusDto> GetPaymentStatus(Guid paymentId);
+    Task<bool> CancelPayment(Guid paymentId, string reason);
+    Task<List<PaymentStatusDto>> GetPaymentsByOrderId(Guid orderId);
+    Task<OrderDto> CreateOrderFromCart(Guid customerId, CreateOrderDto createOrderDto);
+    Task<OrderDto> UpdateOrderStatus(Guid orderId, OrderStatus status);
+}

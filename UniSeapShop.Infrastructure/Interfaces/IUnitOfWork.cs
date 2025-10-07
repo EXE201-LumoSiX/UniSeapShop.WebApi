@@ -16,6 +16,7 @@ public interface IUnitOfWork : IDisposable
     IGenericRepository<OtpVerification> OtpVerifications { get; }
     IGenericRepository<Cart> Carts { get; }
     IGenericRepository<CartItem> CartItems { get; }
+    IGenericRepository<Payment> Payments { get; }
     Task<int> SaveChangesAsync();
     IQueryable<T> Where<T>(Expression<Func<T, bool>> predicate) where T : class;
     IQueryable<TResult> Select<T, TResult>(Expression<Func<T, TResult>> selector) where T : class;

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Net.payOS;
 using Resend;
 using StackExchange.Redis;
 using UniSeapShop.Application.Interfaces;
@@ -35,12 +36,14 @@ public static class IocContainer
 
         //Add business services
         services.SetupBusinessServicesLayer();
+        services.SetupPayOSService();
 
         services.SetupJwt();
         // services.SetupGraphQl();
         services.SetupReSendService();
         return services;
     }
+
 
     public static IServiceCollection SetupBusinessServicesLayer(this IServiceCollection services)
     {
@@ -51,6 +54,7 @@ public static class IocContainer
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<ICategoryService, CategoryService>();
+        services.AddScoped<IPaymentService, PaymentService>();
         services.AddHttpContextAccessor();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();
@@ -225,6 +229,28 @@ public static class IocContainer
                 policy.RequireRole(nameof(RoleType.User)));
         });
 
+        return services;
+    }
+
+    public static IServiceCollection SetupPayOSService(this IServiceCollection services)
+    {
+        IConfiguration configuration = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", true, true)
+            .AddEnvironmentVariables()
+            .Build();
+
+        //PayOS
+        services.AddSingleton<PayOS>(provider =>
+        {
+            var clientId = configuration["Payment:PayOS:ClientId"] ??
+                           throw new Exception("Cannot find PAYOS_CLIENT_ID");
+            var apiKey = configuration["Payment:PayOS:ApiKey"] ?? throw new Exception("Cannot find PAYOS_API_KEY");
+            var checksumKey = configuration["Payment:PayOS:ChecksumKey"] ??
+                              throw new Exception("Cannot find PAYOS_CHECKSUM_KEY");
+
+            return new PayOS(clientId, apiKey, checksumKey);
+        });
         return services;
     }
 }

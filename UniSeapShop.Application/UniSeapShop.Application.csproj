@@ -7,12 +7,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\UniSeapShop.Domain\UniSeapShop.Domain.csproj" />
-        <ProjectReference Include="..\UniSeapShop.Infrastructure\UniSeapShop.Infrastructure.csproj" />
+        <ProjectReference Include="..\UniSeapShop.Domain\UniSeapShop.Domain.csproj"/>
+        <ProjectReference Include="..\UniSeapShop.Infrastructure\UniSeapShop.Infrastructure.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="payOS" Version="1.0.9" />
+        <PackageReference Include="payOS" Version="1.0.9"/>
     </ItemGroup>
 
 </Project>
