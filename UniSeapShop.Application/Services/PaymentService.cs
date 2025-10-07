@@ -97,12 +97,16 @@ public class PaymentService : IPaymentService
                                      ?? Environment.GetEnvironmentVariable("PAYMENT_SUCCESS_URL")
                                      ?? "https://uniseapshop.vercel.app/payment-success";
 
-            // Get webhook URL from configuration
+            var cancelUrl = _configuration["PaymentSettings:CancelUrl"]
+                           ?? Environment.GetEnvironmentVariable("PAYMENT_CANCEL_URL")
+                           ?? "https://uniseapshop.vercel.app/payment-cancel";
+
+            // Get webhook URL from configuration  
             var webhookUrl = _configuration["PaymentSettings:WebhookUrl"]
                             ?? Environment.GetEnvironmentVariable("PAYMENT_WEBHOOK_URL")
                             ?? "https://uniseapshop.fpt-devteam.fun/api/payments/webhook";
             
-            _loggerService.Info($"[PAYMENT] Phase 3: URLs configured - RedirectUrl: {defaultRedirectUrl}, WebhookUrl: {webhookUrl}");
+            _loggerService.Info($"[PAYMENT] Phase 3: URLs configured - RedirectUrl: {defaultRedirectUrl}, CancelUrl: {cancelUrl}, WebhookUrl: {webhookUrl}");
 
             var payment = new Payment
             {
@@ -142,9 +146,13 @@ public class PaymentService : IPaymentService
                 (int)order.TotalAmount,
                 paymentDescription,
                 itemList,
-                defaultRedirectUrl,
-                webhookUrl
+                defaultRedirectUrl,  // Success return URL
+                cancelUrl            // Cancel return URL
             );
+
+            // PayOS sẽ gọi webhook URL sau khi payment thành công
+            _loggerService.Info($"[PAYMENT] Phase 4: PaymentData created with Return URLs - Success: {defaultRedirectUrl}, Cancel: {cancelUrl}");
+            _loggerService.Info($"[PAYMENT] Phase 4: Webhook URL for server notifications: {webhookUrl} (configured in PayOS merchant settings)");
 
             _loggerService.Info($"[PAYMENT] Phase 5: Calling PayOS createPaymentLink API");
             var paymentResult = await _payOs.createPaymentLink(paymentData);

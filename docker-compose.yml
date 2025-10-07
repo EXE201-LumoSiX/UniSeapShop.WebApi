@@ -20,6 +20,7 @@ services:
       - "Payment__PayOS__ApiKey=9ec9866c-f853-4e29-9a8f-773ae1d9891a"
       - "Payment__PayOS__ChecksumKey=0e6a8e155bfb9fa69ccf7e252f121f0d31852e8c0157caa0a0aa85638b740890"
       - "PaymentSettings__SuccessUrl=https://uniseapshop.vercel.app/payment-success"
+      - "PaymentSettings__CancelUrl=https://uniseapshop.vercel.app/payment-cancel"
       - "PaymentSettings__WebhookUrl=https://uniseapshop.fpt-devteam.fun/api/payments/webhook"
     ports:
       - "5000:5000"
