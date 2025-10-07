@@ -331,7 +331,7 @@ public class SystemController : ControllerBase
             ProductName = "Áo Hoodie Unisex",
             ProductImage = "https://example.com/images/hoodie_main.jpg",
             Description = "Áo hoodie second-hand, form rộng, chất cotton dày dặn.",
-            Price = 250000,
+            Price = 1000,
             OriginalPrice = 500000,
             Quantity = 5,
             Category = categories.First(c => c.CategoryName == "Thời trang"),
