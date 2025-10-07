@@ -20,8 +20,6 @@ public class CategoryService : ICategoryService
 
     public async Task<CategoryDto> CreateCategoryAsync(CreateCategoryDto createCategoryDto)
     {
-        try
-        {
             var category = new Category
             {
                 CategoryName = createCategoryDto.CategoryName,
@@ -39,18 +37,10 @@ public class CategoryService : ICategoryService
                 CategoryName = category.CategoryName,
                 ProductCount = 0
             };
-        }
-        catch (Exception ex)
-        {
-            _loggerService.Error($"Error creating category: {ex.Message}");
-            throw;
-        }
     }
 
     public async Task<bool> DeleteCategoryAsync(Guid categoryId)
     {
-        try
-        {
             var category = await _unitOfWork.Categories.GetByIdAsync(categoryId);
 
             if (category == null || category.IsDeleted)
@@ -60,21 +50,14 @@ public class CategoryService : ICategoryService
             }
 
             await _unitOfWork.Categories.SoftRemove(category);
+            await _unitOfWork.SaveChangesAsync();
 
             _loggerService.Success("Category deleted successfully.");
             return true;
-        }
-        catch (Exception ex)
-        {
-            _loggerService.Error($"Error deleting category: {ex.Message}");
-            throw;
-        }
     }
 
     public async Task<List<CategoryDto>> GetAllCategoriesAsync()
     {
-        try
-        {
             var categories = await _unitOfWork.Categories.GetQueryable()
                 .Where(c => !c.IsDeleted)
                 .ToListAsync();
@@ -86,18 +69,10 @@ public class CategoryService : ICategoryService
                 CategoryName = c.CategoryName,
                 ProductCount = c.Products.Count
             }).ToList();
-        }
-        catch (Exception ex)
-        {
-            _loggerService.Error($"Error fetching categories: {ex.Message}");
-            throw;
-        }
     }
 
     public async Task<CategoryDetailsDto> GetCategoryByIdAsync(Guid categoryId)
     {
-        try
-        {
             var category = await _unitOfWork.Categories.GetQueryable()
                 .Include(c => c.Products)
                 .FirstOrDefaultAsync(c => c.Id == categoryId && !c.IsDeleted);
@@ -117,18 +92,10 @@ public class CategoryService : ICategoryService
                     Price = p.Price
                 }).ToList()
             };
-        }
-        catch (Exception ex)
-        {
-            _loggerService.Error($"Error in GetCategoryByIdAsync: {ex.Message}");
-            throw;
-        }
     }
 
     public async Task<CategoryDto> UpdateCategoryAsync(Guid categoryId, UpdateCategoryDto updateCategoryDto)
-    {
-        try
-        {
+    {      
             var category = await _unitOfWork.Categories.GetQueryable()
                 .FirstOrDefaultAsync(c => c.Id == categoryId && !c.IsDeleted);
 
@@ -148,11 +115,5 @@ public class CategoryService : ICategoryService
                 CategoryName = category.CategoryName,
                 ProductCount = category.Products.Count
             };
-        }
-        catch (Exception ex)
-        {
-            _loggerService.Error($"Error in UpdateCategoryAsync: {ex.Message}");
-            throw;
-        }
-    }
+    }       
 }
