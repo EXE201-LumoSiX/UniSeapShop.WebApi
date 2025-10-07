@@ -16,9 +16,9 @@ services:
       - JWT__Audience=UniSeapShop_Audience
       - RESEND_APITOKEN=re_gQNBXJvY_ANFdgQphKQBxdW5DNf2UG6Zk
       - RESEND_FROM=noreply@fpt-devteam.fun
-      - "Payment__PayOS__ClientId=c45d1aed-9fdb-46f5-aea2-dad5107b5abd"
-      - "Payment__PayOS__ApiKey=d1809534-a218-42a7-a4d9-922e474a0b38"
-      - "Payment__PayOS__ChecksumKey=9a291b87a0921d424054082fc4174eb79dbc80926dc03080266f65592b12f382"
+      - "Payment__PayOS__ClientId=c822a81c-dd46-421c-8a43-7551e175130b"
+      - "Payment__PayOS__ApiKey=9ec9866c-f853-4e29-9a8f-773ae1d9891a"
+      - "Payment__PayOS__ChecksumKey=0e6a8e155bfb9fa69ccf7e252f121f0d31852e8c0157caa0a0aa85638b740890"
     ports:
       - "5000:5000"
 
