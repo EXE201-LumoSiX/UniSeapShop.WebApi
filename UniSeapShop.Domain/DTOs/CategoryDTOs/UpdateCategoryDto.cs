@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace UniSeapShop.Domain.DTOs.CategoryDTOs;
 
-namespace UniSeapShop.Domain.DTOs.CategoryDTOs
+public class UpdateCategoryDto
 {
-    public class UpdateCategoryDto
-    {
-        public string CategoryName { get; set; }
-    }
+    public string CategoryName { get; set; }
 }

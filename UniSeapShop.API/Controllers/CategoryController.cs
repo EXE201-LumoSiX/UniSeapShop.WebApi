@@ -7,7 +7,7 @@ using UniSeapShop.Domain.DTOs.CategoryDTOs;
 namespace UniSeapShop.API.Controllers;
 
 /// <summary>
-/// Controller for managing categories.
+///     Controller for managing categories.
 /// </summary>
 [Route("api/categories")]
 [ApiController]
@@ -21,7 +21,7 @@ public class CategoryController : ControllerBase
     }
 
     /// <summary>
-    /// Create a new category.
+    ///     Create a new category.
     /// </summary>
     /// <param name="dto">The category data to create.</param>
     /// <returns>The created category.</returns>
@@ -43,7 +43,7 @@ public class CategoryController : ControllerBase
     }
 
     /// <summary>
-    /// Get all categories.
+    ///     Get all categories.
     /// </summary>
     /// <returns>A list of categories.</returns>
     [HttpGet]
@@ -64,7 +64,7 @@ public class CategoryController : ControllerBase
     }
 
     /// <summary>
-    /// Get a category by its ID.
+    ///     Get a category by its ID.
     /// </summary>
     /// <param name="id">The ID of the category.</param>
     /// <returns>The category details.</returns>
@@ -86,7 +86,7 @@ public class CategoryController : ControllerBase
     }
 
     /// <summary>
-    /// Update an existing category.
+    ///     Update an existing category.
     /// </summary>
     /// <param name="id">The ID of the category to update.</param>
     /// <param name="dto">The updated category data.</param>
@@ -109,7 +109,7 @@ public class CategoryController : ControllerBase
     }
 
     /// <summary>
-    /// Delete a category by its ID.
+    ///     Delete a category by its ID.
     /// </summary>
     /// <param name="id">The ID of the category to delete.</param>
     /// <returns>A success message.</returns>
