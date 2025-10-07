@@ -127,7 +127,7 @@ public class PaymentController : ControllerBase
     }
 
     /// <summary>
-    ///     Webhook endpoint to receive PayOS payment notifications
+    ///     Webhook endpoint to receive PayOS payment notifications (POST)
     /// </summary>
     [HttpPost("webhook")]
     [AllowAnonymous]
@@ -142,6 +142,35 @@ public class PaymentController : ControllerBase
         {
             // Return 200 OK to prevent PayOS from retrying
             return Ok();
+        }
+    }
+
+    /// <summary>
+    ///     Webhook endpoint to receive PayOS payment notifications (GET)
+    /// </summary>
+    [HttpGet("webhook")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ProcessWebhookGet(
+        [FromQuery] string code,
+        [FromQuery] string id,
+        [FromQuery] bool cancel,
+        [FromQuery] string status,
+        [FromQuery] long orderCode)
+    {
+        try
+        {
+            // Log the webhook GET request
+            Console.WriteLine($"[WEBHOOK-GET] Received: code={code}, id={id}, cancel={cancel}, status={status}, orderCode={orderCode}");
+            
+            // Instead of creating WebhookType, directly process the webhook
+            await _paymentService.ProcessWebhookGet(orderCode, status, code);
+            return Ok("Webhook processed successfully");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[WEBHOOK-GET] Error: {ex.Message}");
+            // Return 200 OK to prevent PayOS from retrying
+            return Ok($"Webhook processing error: {ex.Message}");
         }
     }
 
