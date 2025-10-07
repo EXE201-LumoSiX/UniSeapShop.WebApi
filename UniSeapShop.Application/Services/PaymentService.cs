@@ -74,19 +74,35 @@ public class PaymentService : IPaymentService
 
     public async Task<string> ProcessPayment(Guid userId, CreateOrderDto createOrderDto)
     {
+        _loggerService.Info($"[PAYMENT] Starting payment process for UserId: {userId}");
         try
         {
             // Get customer by user ID
+            _loggerService.Info($"[PAYMENT] Phase 1: Finding customer for UserId: {userId}");
             var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
             if (customer == null)
+            {
+                _loggerService.Error($"[PAYMENT] Phase 1 FAILED: Customer not found for UserId: {userId}");
                 throw ErrorHelper.NotFound("Customer not found");
+            }
+            _loggerService.Info($"[PAYMENT] Phase 1 SUCCESS: Customer found - CustomerId: {customer.Id}");
 
+            _loggerService.Info($"[PAYMENT] Phase 2: Creating order from cart for CustomerId: {customer.Id}");
             var order = await CreateOrderFromCart(customer.Id, createOrderDto);
+            _loggerService.Info($"[PAYMENT] Phase 2 SUCCESS: Order created - OrderId: {order.Id}, TotalAmount: {order.TotalAmount}");
 
             // Get redirect URL from configuration or use default
+            _loggerService.Info($"[PAYMENT] Phase 3: Configuring URLs and creating payment record");
             var defaultRedirectUrl = _configuration["PaymentSettings:SuccessUrl"]
                                      ?? Environment.GetEnvironmentVariable("PAYMENT_SUCCESS_URL")
                                      ?? "https://uniseapshop.vercel.app/payment-success";
+
+            // Get webhook URL from configuration
+            var webhookUrl = _configuration["PaymentSettings:WebhookUrl"]
+                            ?? Environment.GetEnvironmentVariable("PAYMENT_WEBHOOK_URL")
+                            ?? "https://uniseapshop.fpt-devteam.fun/api/payments/webhook";
+            
+            _loggerService.Info($"[PAYMENT] Phase 3: URLs configured - RedirectUrl: {defaultRedirectUrl}, WebhookUrl: {webhookUrl}");
 
             var payment = new Payment
             {
@@ -98,9 +114,12 @@ public class PaymentService : IPaymentService
                 Order = await _unitOfWork.Orders.GetByIdAsync(order.Id) ?? throw ErrorHelper.NotFound("Order not found")
             };
 
+            _loggerService.Info($"[PAYMENT] Phase 3: Payment record created - Amount: {payment.Amount}");
             await _unitOfWork.Payments.AddAsync(payment);
             await _unitOfWork.SaveChangesAsync();
+            _loggerService.Info($"[PAYMENT] Phase 3 SUCCESS: Payment record saved to database - PaymentId: {payment.Id}");
 
+            _loggerService.Info($"[PAYMENT] Phase 4: Preparing PayOS payment data");
             var itemList = new List<ItemData>();
             foreach (var detail in order.OrderDetails)
                 itemList.Add(new ItemData(
@@ -108,12 +127,15 @@ public class PaymentService : IPaymentService
                     detail.Quantity,
                     (int)detail.UnitPrice
                 ));
+            _loggerService.Info($"[PAYMENT] Phase 4: Item list prepared - {itemList.Count} items");
 
             var orderCode = DateTime.Now.Ticks % 1000000000; // Simple order code generation
 
             // PayOS requires description max 25 chars, so use first 5 chars of order GUID
             var shortOrderId = order.Id.ToString().Substring(0, 5);
             var paymentDescription = $"Uniseap payment #{shortOrderId}";
+            
+            _loggerService.Info($"[PAYMENT] Phase 4: PayOS data configured - OrderCode: {orderCode}, Description: {paymentDescription}");
 
             var paymentData = new PaymentData(
                 orderCode,
@@ -121,92 +143,175 @@ public class PaymentService : IPaymentService
                 paymentDescription,
                 itemList,
                 defaultRedirectUrl,
-                defaultRedirectUrl
+                webhookUrl
             );
 
+            _loggerService.Info($"[PAYMENT] Phase 5: Calling PayOS createPaymentLink API");
             var paymentResult = await _payOs.createPaymentLink(paymentData);
+            _loggerService.Info($"[PAYMENT] Phase 5 SUCCESS: PayOS API response received - CheckoutUrl: {paymentResult.checkoutUrl}");
 
+            _loggerService.Info($"[PAYMENT] Phase 6: Updating payment record with PayOS response");
             payment.GatewayTransactionId = paymentResult.orderCode.ToString();
             payment.PaymentUrl = paymentResult.checkoutUrl;
             payment.GatewayResponse = JsonConvert.SerializeObject(paymentResult);
 
             await _unitOfWork.Payments.Update(payment);
             await _unitOfWork.SaveChangesAsync();
+            _loggerService.Info($"[PAYMENT] Phase 6 SUCCESS: Payment record updated with GatewayTransactionId: {payment.GatewayTransactionId}");
 
-            _loggerService.Info($"Payment link created for order {order.Id}: {paymentResult.checkoutUrl}");
+            _loggerService.Info($"[PAYMENT] PROCESS COMPLETED SUCCESSFULLY - OrderId: {order.Id}, PaymentId: {payment.Id}, CheckoutUrl: {paymentResult.checkoutUrl}");
 
             return paymentResult.checkoutUrl;
         }
         catch (Exception ex)
         {
-            _loggerService.Error($"Failed to process payment: {ex.Message}");
+            _loggerService.Error($"[PAYMENT] PROCESS FAILED - UserId: {userId}, Error: {ex.Message}, StackTrace: {ex.StackTrace}");
             throw ErrorHelper.BadRequest("Unable to create payment link. Please try again later.");
         }
     }
 
     public async Task ProcessWebhook(WebhookType webhookData)
     {
+        _loggerService.Info($"[WEBHOOK] Starting webhook processing - Data: {JsonConvert.SerializeObject(webhookData)}");
         try
         {
+            _loggerService.Info($"[WEBHOOK] Phase 1: Verifying webhook data with PayOS");
             var data = _payOs.verifyPaymentWebhookData(webhookData);
+            _loggerService.Info($"[WEBHOOK] Phase 1 SUCCESS: Webhook verified - OrderCode: {data.orderCode}, Status: {data.code}");
 
+            _loggerService.Info($"[WEBHOOK] Phase 2: Finding payment record for OrderCode: {data.orderCode}");
             var payment = await _unitOfWork.Payments.FirstOrDefaultAsync(p =>
                 p.GatewayTransactionId == data.orderCode.ToString());
 
             if (payment == null)
             {
-                _loggerService.Error($"Payment not found for orderCode: {data.orderCode}");
+                _loggerService.Error($"[WEBHOOK] Phase 2 FAILED: Payment not found for orderCode: {data.orderCode}");
                 return;
             }
+            _loggerService.Info($"[WEBHOOK] Phase 2 SUCCESS: Payment found - PaymentId: {payment.Id}, OrderId: {payment.OrderId}");
 
+            _loggerService.Info($"[WEBHOOK] Phase 3: Updating payment status to Completed");
             payment.Status = PaymentStatus.Completed;
             payment.GatewayResponse = JsonConvert.SerializeObject(data);
             await _unitOfWork.Payments.Update(payment);
+            _loggerService.Info($"[WEBHOOK] Phase 3 SUCCESS: Payment status updated to Completed");
 
+            _loggerService.Info($"[WEBHOOK] Phase 4: Updating order status to Completed for OrderId: {payment.OrderId}");
             await UpdateOrderStatus(payment.OrderId, OrderStatus.Completed);
+            _loggerService.Info($"[WEBHOOK] Phase 4 SUCCESS: Order status updated to Completed");
 
-            _loggerService.Info($"Payment successful for order {payment.OrderId}");
+            _loggerService.Info($"[WEBHOOK] PROCESSING COMPLETED SUCCESSFULLY - PaymentId: {payment.Id}, OrderId: {payment.OrderId}");
         }
         catch (Exception ex)
         {
-            _loggerService.Error($"Error processing webhook: {ex.Message}");
+            _loggerService.Error($"[WEBHOOK] PROCESSING FAILED - Error: {ex.Message}, StackTrace: {ex.StackTrace}");
         }
     }
 
     public async Task<PaymentStatusDto> GetPaymentStatus(Guid paymentId)
+    {
+        _loggerService.Info($"[GET_STATUS] Getting payment status for PaymentId: {paymentId}");
+        var payment = await _unitOfWork.Payments.GetByIdAsync(paymentId);
+
+        if (payment == null)
+        {
+            _loggerService.Error($"[GET_STATUS] Payment not found for PaymentId: {paymentId}");
+            throw ErrorHelper.NotFound("Payment not found");
+        }
+        
+        _loggerService.Info($"[GET_STATUS] Payment found - Status: {payment.Status}, OrderId: {payment.OrderId}");
+
+        // Auto-sync with PayOS if payment is still pending
+        if (payment.Status == PaymentStatus.Pending)
+        {
+            _loggerService.Info($"[GET_STATUS] Payment is pending, syncing with PayOS - GatewayTransactionId: {payment.GatewayTransactionId}");
+            try
+            {
+                var paymentInfo = await _payOs.getPaymentLinkInformation(long.Parse(payment.GatewayTransactionId!));
+                _loggerService.Info($"[GET_STATUS] PayOS sync response - Status: {paymentInfo.status}");
+
+                if (paymentInfo.status == "PAID" && payment.Status != PaymentStatus.Completed)
+                {
+                    _loggerService.Info($"[GET_STATUS] Updating payment status to Completed");
+                    payment.Status = PaymentStatus.Completed;
+                    await _unitOfWork.Payments.Update(payment);
+
+                    await UpdateOrderStatus(payment.OrderId, OrderStatus.Completed);
+                    await _unitOfWork.SaveChangesAsync();
+                    _loggerService.Info($"[GET_STATUS] Payment and order status updated to Completed");
+                }
+                else if (paymentInfo.status == "CANCELLED" && payment.Status != PaymentStatus.Cancelled)
+                {
+                    _loggerService.Info($"[GET_STATUS] Updating payment status to Cancelled");
+                    payment.Status = PaymentStatus.Cancelled;
+                    await _unitOfWork.Payments.Update(payment);
+
+                    await UpdateOrderStatus(payment.OrderId, OrderStatus.Cancelled);
+                    await _unitOfWork.SaveChangesAsync();
+                    _loggerService.Info($"[GET_STATUS] Payment and order status updated to Cancelled");
+                }
+                else
+                {
+                    _loggerService.Info($"[GET_STATUS] No status change needed - PayOS status: {paymentInfo.status}, Current status: {payment.Status}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _loggerService.Error($"[GET_STATUS] Error syncing with PayOS - Error: {ex.Message}");
+            }
+        }
+        else
+        {
+            _loggerService.Info($"[GET_STATUS] Payment not pending, no sync needed - Current status: {payment.Status}");
+        }
+
+        return new PaymentStatusDto
+        {
+            PaymentId = payment.Id,
+            OrderId = payment.OrderId,
+            Status = payment.Status.ToString(),
+            PaymentUrl = payment.PaymentUrl,
+            Amount = payment.Amount,
+            CreatedAt = payment.CreatedAt,
+            UpdatedAt = payment.UpdatedAt
+        };
+    }
+
+    public async Task<PaymentStatusDto> GetPaymentStatusOnly(Guid paymentId)
     {
         var payment = await _unitOfWork.Payments.GetByIdAsync(paymentId);
 
         if (payment == null)
             throw ErrorHelper.NotFound("Payment not found");
 
-        if (payment.Status == PaymentStatus.Pending)
-            try
-            {
-                var paymentInfo = await _payOs.getPaymentLinkInformation(long.Parse(payment.GatewayTransactionId!));
+        // Read-only method - no sync with PayOS
+        return new PaymentStatusDto
+        {
+            PaymentId = payment.Id,
+            OrderId = payment.OrderId,
+            Status = payment.Status.ToString(),
+            PaymentUrl = payment.PaymentUrl,
+            Amount = payment.Amount,
+            CreatedAt = payment.CreatedAt,
+            UpdatedAt = payment.UpdatedAt
+        };
+    }
 
-                if (paymentInfo.status == "PAID" && payment.Status != PaymentStatus.Completed)
-                {
-                    payment.Status = PaymentStatus.Completed;
-                    await _unitOfWork.Payments.Update(payment);
+    public async Task<PaymentStatusDto> GetPaymentByOrderCode(string orderCode)
+    {
+        _loggerService.Info($"[GET_BY_ORDERCODE] Getting payment by OrderCode: {orderCode}");
+        var payment = await _unitOfWork.Payments.FirstOrDefaultAsync(p =>
+            p.GatewayTransactionId == orderCode);
 
-                    await UpdateOrderStatus(payment.OrderId, OrderStatus.Completed);
-                    await _unitOfWork.SaveChangesAsync();
-                }
-                else if (paymentInfo.status == "CANCELLED" && payment.Status != PaymentStatus.Cancelled)
-                {
-                    payment.Status = PaymentStatus.Cancelled;
-                    await _unitOfWork.Payments.Update(payment);
+        if (payment == null)
+        {
+            _loggerService.Error($"[GET_BY_ORDERCODE] Payment not found for OrderCode: {orderCode}");
+            throw ErrorHelper.NotFound("Payment not found");
+        }
+        
+        _loggerService.Info($"[GET_BY_ORDERCODE] Payment found - PaymentId: {payment.Id}, OrderId: {payment.OrderId}, Status: {payment.Status}");
 
-                    await UpdateOrderStatus(payment.OrderId, OrderStatus.Cancelled);
-                    await _unitOfWork.SaveChangesAsync();
-                }
-            }
-            catch (Exception ex)
-            {
-                _loggerService.Error($"Error checking payment status: {ex.Message}");
-            }
-
+        // Read-only method - no sync with PayOS
         return new PaymentStatusDto
         {
             PaymentId = payment.Id,

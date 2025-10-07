@@ -13,6 +13,8 @@ public interface IPaymentService
     Task<string> ProcessPayment(Guid userId, CreateOrderDto createOrderDto);
     Task ProcessWebhook(WebhookType webhookData);
     Task<PaymentStatusDto> GetPaymentStatus(Guid paymentId);
+    Task<PaymentStatusDto> GetPaymentStatusOnly(Guid paymentId);
+    Task<PaymentStatusDto> GetPaymentByOrderCode(string orderCode);
     Task<bool> CancelPayment(Guid paymentId, string reason);
     Task<List<PaymentStatusDto>> GetPaymentsByOrderId(Guid orderId);
     Task<OrderDto> CreateOrderFromCart(Guid customerId, CreateOrderDto createOrderDto);

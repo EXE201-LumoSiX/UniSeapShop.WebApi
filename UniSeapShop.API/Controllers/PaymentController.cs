@@ -91,6 +91,42 @@ public class PaymentController : ControllerBase
     }
 
     /// <summary>
+    ///     Get payment by order code (for client redirect handling)
+    /// </summary>
+    [HttpGet("order-code/{orderCode}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetPaymentByOrderCode(string orderCode)
+    {
+        try
+        {
+            var status = await _paymentService.GetPaymentByOrderCode(orderCode);
+            return Ok(ApiResult<PaymentStatusDto>.Success(status, "Payment found successfully"));
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ApiResult<object>.Failure("400", ex.Message));
+        }
+    }
+
+    /// <summary>
+    ///     Get payment status by payment ID (read-only, no sync)
+    /// </summary>
+    [HttpGet("{paymentId}/status-only")]
+    [Authorize]
+    public async Task<IActionResult> GetPaymentStatusOnly(Guid paymentId)
+    {
+        try
+        {
+            var status = await _paymentService.GetPaymentStatusOnly(paymentId);
+            return Ok(ApiResult<PaymentStatusDto>.Success(status, "Payment status retrieved successfully"));
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ApiResult<object>.Failure("400", ex.Message));
+        }
+    }
+
+    /// <summary>
     ///     Webhook endpoint to receive PayOS payment notifications
     /// </summary>
     [HttpPost("webhook")]
