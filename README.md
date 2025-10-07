@@ -1,3 +1,15 @@
+## Quy trình làm việc với Git
+
+> **QUAN TRỌNG:**  
+> 1. **LUÔN CẬP NHẬT CODE TỪ MASTER TRƯỚC KHI TẠO NHÁNH MỚI** để tránh conflict!  
+> 2. **KHÔNG PUSH TRỰC TIẾP LÊN MASTER!**
+
+Quy trình làm việc:
+1. Update code từ master: `git checkout master && git pull`
+2. Tạo nhánh mới: `git checkout -b feature/ten-tinh-nang`
+3. Commit và push: `git push origin feature/ten-tinh-nang`
+4. Tạo Pull Request để review trước khi merge
+
 # UniSeapShop Web API
 
 > **Lưu ý:** Trước khi test các chức năng CRUD, bạn cần gọi API seed dữ liệu tại SystemController (`/api/system/seed-all-data`) để khởi tạo dữ liệu mẫu cho hệ thống. Nếu không có dữ liệu, các chức năng sẽ không hoạt động đúng.
@@ -68,6 +80,8 @@ Mẹo xử lý sự cố:
 - Nếu báo lỗi về mã hóa/chứng chỉ, trong SSMS -> Options -> tab Connection Properties:
 	- Đặt Encrypt: Optional (hoặc tích Trust server certificate)
 - Kiểm tra cấu hình trong docker-compose.yml cho thông tin kết nối mới nhất
+
+
 
 ## API mẫu (Auth)
 - Đăng nhập: `POST /api/Authe/login`
