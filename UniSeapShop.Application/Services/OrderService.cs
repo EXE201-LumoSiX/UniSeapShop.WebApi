@@ -25,8 +25,6 @@ namespace UniSeapShop.Application.Services
 
         public async Task<List<OrderDto>> GetPaidOrdersForCustomer()
         {
-            try
-            {
                 var customerId = _claimsService.CurrentUserId;
                 _loggerService.Info($"Fetching paid orders for customer with ID: {customerId}");
 
@@ -56,18 +54,10 @@ namespace UniSeapShop.Application.Services
                         TotalPrice = od.TotalPrice,
                     }).ToList()
                 }).ToList();
-            }
-            catch (Exception ex)
-            {
-                _loggerService.Error($"Error fetching paid orders for customer: {ex.Message}");
-                throw;
-            }
         }
 
         public async Task<List<OrderDetailDto>> GetSoldProductsForSupplier()
         {
-            try
-            {
                 var supplierId = _claimsService.CurrentUserId;
                 _loggerService.Info($"Fetching sold products for supplier with ID: {supplierId}");
 
@@ -86,12 +76,6 @@ namespace UniSeapShop.Application.Services
                     UnitPrice = od.UnitPrice,
                     TotalPrice = od.TotalPrice,
                 }).ToList();
-            }
-            catch (Exception ex)
-            {
-                _loggerService.Error($"Error fetching sold products for supplier: {ex.Message}");
-                throw;
-            }
         }
     }
 }
