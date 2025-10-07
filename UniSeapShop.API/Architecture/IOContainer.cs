@@ -1,13 +1,13 @@
-﻿using System.Reflection;
-using System.Security.Claims;
-using System.Text;
-using System.Text.Json;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Resend;
 using StackExchange.Redis;
+using System.Reflection;
+using System.Security.Claims;
+using System.Text;
+using System.Text.Json;
 using UniSeapShop.Application.Interfaces;
 using UniSeapShop.Application.Interfaces.Commons;
 using UniSeapShop.Application.Services;
@@ -49,9 +49,11 @@ public static class IocContainer
         services.AddScoped<IClaimsService, ClaimsService>();
         services.AddScoped<ICurrentTime, CurrentTime>();
         services.AddScoped<IEmailService, EmailService>();
-
+        services.AddScoped<IUserService, UserService>();
+        services.AddScoped<ICategoryService, CategoryService>();
         services.AddHttpContextAccessor();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IUserService, UserService>();
 
         return services;
     }
@@ -217,9 +219,9 @@ public static class IocContainer
             options.AddPolicy("AdminPolicy", policy =>
                 policy.RequireRole(nameof(RoleType.Admin)));
             options.AddPolicy("SupplierPolicy", policy =>
-                policy.RequireRole(nameof(RoleType.Supplier)));
+                policy.RequireRole(nameof(RoleType.User)));
             options.AddPolicy("CustomerPolicy", policy =>
-                policy.RequireRole(nameof(RoleType.Customer)));
+                policy.RequireRole(nameof(RoleType.User)));
         });
 
         return services;

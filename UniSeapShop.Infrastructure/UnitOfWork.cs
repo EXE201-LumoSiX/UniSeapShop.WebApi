@@ -1,5 +1,5 @@
-﻿using System.Linq.Expressions;
-using Microsoft.EntityFrameworkCore.Storage;
+﻿using Microsoft.EntityFrameworkCore.Storage;
+using System.Linq.Expressions;
 using UniSeapShop.Domain;
 using UniSeapShop.Domain.Entities;
 using UniSeapShop.Infrastructure.Interfaces;
@@ -14,19 +14,34 @@ public class UnitOfWork : IUnitOfWork
     public UnitOfWork(
         UniSeapShopDBContext dbContext, IGenericRepository<User> users,
         IGenericRepository<Customer> customers,
+        IGenericRepository<Order> orders,
+        IGenericRepository<OrderDetail> ordersDetail,
+        IGenericRepository<Product> products,
+        IGenericRepository<Category> categories,
+        IGenericRepository<Supplier> suppliers,
         IGenericRepository<Role> roles,
         IGenericRepository<OtpVerification> otpVerifications
     )
     {
         _dbContext = dbContext;
         Users = users;
+        Orders = orders;
+        OrdersDetail = ordersDetail;
+        Products = products;
+        Suppliers = suppliers;
         Roles = roles;
         OtpVerifications = otpVerifications;
         Customers = customers;
+        Categories = categories;
     }
 
     public IGenericRepository<User> Users { get; }
     public IGenericRepository<Role> Roles { get; }
+    public IGenericRepository<Order> Orders { get; }
+    public IGenericRepository<OrderDetail> OrdersDetail { get; }
+    public IGenericRepository<Product> Products { get; }
+    public IGenericRepository<Category> Categories { get; }
+    public IGenericRepository<Supplier> Suppliers { get; }
     public IGenericRepository<Customer> Customers { get; }
     public IGenericRepository<OtpVerification> OtpVerifications { get; }
 

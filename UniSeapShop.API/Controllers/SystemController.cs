@@ -131,14 +131,14 @@ public class SystemController : ControllerBase
             new()
             {
                 Name = "User",
-                RoleType = RoleType.Customer,
+                RoleType = RoleType.User,
                 Description = "Người mua hàng, sử dụng các dịch vụ của hệ thống.",
                 IsActive = true
             },
             new()
             {
                 Name = "Supplier",
-                RoleType = RoleType.Supplier,
+                RoleType = RoleType.User,
                 Description = "Người bán hàng, đăng bán sản phẩm second-hand.",
                 IsActive = true
             },
@@ -180,8 +180,8 @@ public class SystemController : ControllerBase
                     Email = "supplier@uniseapshop.com",
                     Password = new PasswordHasher().HashPassword("Supplier123!"),
                     PhoneNumber = "0987654321",
-                    RoleId = roles.First(r => r.RoleType == RoleType.Supplier).Id,
-                    Role = roles.First(r => r.RoleType == RoleType.Supplier),
+                    RoleId = roles.First(r => r.RoleType == RoleType.User).Id,
+                    Role = roles.First(r => r.RoleType == RoleType.User),
                     IsEmailVerify = true,
                     IsActive = true
                 },
@@ -194,8 +194,8 @@ public class SystemController : ControllerBase
                     Email = "customer@uniseapshop.com",
                     Password = new PasswordHasher().HashPassword("Customer123!"),
                     PhoneNumber = "0111222333",
-                    RoleId = roles.First(r => r.RoleType == RoleType.Customer).Id,
-                    Role = roles.First(r => r.RoleType == RoleType.Customer),
+                    RoleId = roles.First(r => r.RoleType == RoleType.User).Id,
+                    Role = roles.First(r => r.RoleType == RoleType.User),
                     IsEmailVerify = true,
                     IsActive = true
                 },

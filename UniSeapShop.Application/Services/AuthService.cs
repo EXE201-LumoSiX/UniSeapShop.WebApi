@@ -91,8 +91,8 @@ public class AuthService : IAuthService
             UserImage = "https://img.freepik.com/free-psd/3d-illustration-human-avatar-profile_23-2150671142.jpg",
             Role = new Role
             {
-                RoleType = RoleType.Customer,
-                Name = "Customer"
+                RoleType = RoleType.User,
+                Name = "User"
             }, // Mặc định là Customer
             IsEmailVerify = false,
             IsActive = false // Chưa kích hoạt cho đến khi xác thực email
@@ -106,6 +106,36 @@ public class AuthService : IAuthService
         await GenerateAndSendOtpAsync(user, OtpPurpose.Register, "register-otp");
 
         _logger.Info($"[RegisterUserAsync] OTP sent to {user.Email} for verification.");
+
+        return ToUserDto(user);
+    }
+    public async Task<UserDto?> RegisterSupplierAsync(SellerRegistrationDto dto)
+    {
+        if (!await UserExistsAsync(dto.Email))
+            throw ErrorHelper.NotFound(ErrorMessages.AccountNotFound);
+        if (await GetSupplierByEmailAsync(dto.Email))
+        {
+            UserDto userDto = new UserDto
+            {
+                Email = dto.Email
+            };
+            return userDto;
+        }
+
+
+        var user = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+
+        var seller = new Supplier
+        {
+            UserId = user.Id,
+            Description = dto.Description,
+            Rating = 0,
+            IsActive = user.IsActive,
+            User = user,
+        };
+
+        await _unitOfWork.Suppliers.AddAsync(seller);
+        await _unitOfWork.SaveChangesAsync();
 
         return ToUserDto(user);
     }
@@ -252,6 +282,18 @@ public class AuthService : IAuthService
         };
     }
 
+
+    private Supplier CreateSupplier(User user)
+    {
+        return new Supplier
+        {
+            UserId = user.Id,
+            Description = string.Empty,
+            Rating = 0,
+            IsActive = user.IsActive,
+            User = user
+        };
+    }
     private static UserDto ToUserDto(User user)
     {
         return new UserDto
@@ -260,18 +302,27 @@ public class AuthService : IAuthService
             Username = user.FullName,
             Email = user.Email,
             UserImage = user.UserImage,
-            PhoneNumber = user.PhoneNumber
+            PhoneNumber = user.PhoneNumber,
+            RoleName = user.Role?.RoleType.ToString(),
         };
     }
 
-    private string GetUserRole(Guid id)
+    private string GetUserRole(Guid? id)
     {
+        if (id == null || id == Guid.Empty)
+            throw ErrorHelper.BadRequest("Invalid role ID.");
         var roleName = _unitOfWork
             .Where<Role>(u => u.Id == id)
             .Select(u => u.Name) // hoặc cột Role trực tiếp
             .FirstOrDefault();
 
         return roleName ?? string.Empty;
+    }
+
+    private async Task<bool> GetSupplierByEmailAsync(string email)
+    {
+        var existingUser = await _unitOfWork.Suppliers.FirstOrDefaultAsync(u => u.User.Email == email);
+        return existingUser != null;
     }
 
     private async Task<User?> GetUserByEmailAsync(string email)
