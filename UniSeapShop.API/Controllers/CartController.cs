@@ -17,8 +17,9 @@ public class CartController : ControllerBase
     {
         _cartService = cartService;
     }
+
     /// <summary>
-    /// Thêm một sản phẩm vào giỏ hàng của user hiện tại.
+    ///     Thêm một sản phẩm vào giỏ hàng của user hiện tại.
     /// </summary>
     /// <param name="dto">Thông tin sản phẩm và số lượng cần thêm.</param>
     /// <returns>Giỏ hàng sau khi thêm.</returns>
@@ -40,7 +41,7 @@ public class CartController : ControllerBase
     }
 
     /// <summary>
-    /// Lấy thông tin giỏ hàng hiện tại của user (dựa trên access token).
+    ///     Lấy thông tin giỏ hàng hiện tại của user (dựa trên access token).
     /// </summary>
     /// <returns>Thông tin chi tiết giỏ hàng.</returns>
     [HttpGet]
@@ -61,7 +62,7 @@ public class CartController : ControllerBase
     }
 
     /// <summary>
-    /// Cập nhật số lượng của một sản phẩm trong giỏ hàng.
+    ///     Cập nhật số lượng của một sản phẩm trong giỏ hàng.
     /// </summary>
     /// <param name="dto">Mã sản phẩm và số lượng mới.</param>
     /// <returns>Giỏ hàng sau khi cập nhật.</returns>
@@ -83,7 +84,7 @@ public class CartController : ControllerBase
     }
 
     /// <summary>
-    /// Xóa một sản phẩm khỏi giỏ hàng.
+    ///     Xóa một sản phẩm khỏi giỏ hàng.
     /// </summary>
     /// <param name="productId">ID sản phẩm cần xóa.</param>
     /// <returns>Giỏ hàng sau khi xóa.</returns>
@@ -105,8 +106,8 @@ public class CartController : ControllerBase
     }
 
     /// <summary>
-    /// Xóa toàn bộ sản phẩm trong giỏ hàng của user hiện tại.
-    /// Thường dùng cho thao tác "dọn sạch" sau khi checkout hoặc reset.
+    ///     Xóa toàn bộ sản phẩm trong giỏ hàng của user hiện tại.
+    ///     Thường dùng cho thao tác "dọn sạch" sau khi checkout hoặc reset.
     /// </summary>
     [HttpDelete("remove-all")]
     [Authorize]
@@ -115,7 +116,8 @@ public class CartController : ControllerBase
         try
         {
             var result = await _cartService.RemoveAllItemsByCustomerIdAsync();
-            return Ok(ApiResult<CartDto>.Success(result, "200", "All cart items for the customer removed successfully."));
+            return Ok(
+                ApiResult<CartDto>.Success(result, "200", "All cart items for the customer removed successfully."));
         }
         catch (Exception ex)
         {

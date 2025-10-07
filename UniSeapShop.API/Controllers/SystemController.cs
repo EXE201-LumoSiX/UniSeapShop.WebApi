@@ -1,4 +1,4 @@
-﻿    using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using UniSeapShop.Application.Interfaces.Commons;
 using UniSeapShop.Application.Utils;
@@ -134,7 +134,8 @@ public class SystemController : ControllerBase
         try
         {
             var seededProducts = await SeedProductsAndCategories();
-            return Ok(ApiResult<List<object>>.Success(seededProducts, "200", "Seeded products and categories successfully"));
+            return Ok(ApiResult<List<object>>.Success(seededProducts, "200",
+                "Seeded products and categories successfully"));
         }
         catch (Exception ex)
         {
@@ -149,29 +150,29 @@ public class SystemController : ControllerBase
     {
         // 1️⃣ Seed các Role
         var roles = new List<Role>
-    {
-        new()
         {
-            Name = "Customer",
-            RoleType = RoleType.User,
-            Description = "Người mua hàng, sử dụng các dịch vụ của hệ thống.",
-            IsActive = true
-        },
-        new()
-        {
-            Name = "Supplier",
-            RoleType = RoleType.User,
-            Description = "Người bán hàng, đăng bán sản phẩm second-hand.",
-            IsActive = true
-        },
-        new()
-        {
-            Name = "Admin",
-            RoleType = RoleType.Admin,
-            Description = "Quản trị viên hệ thống, toàn quyền quản lý.",
-            IsActive = true
-        }
-    };
+            new()
+            {
+                Name = "Customer",
+                RoleType = RoleType.User,
+                Description = "Người mua hàng, sử dụng các dịch vụ của hệ thống.",
+                IsActive = true
+            },
+            new()
+            {
+                Name = "Supplier",
+                RoleType = RoleType.User,
+                Description = "Người bán hàng, đăng bán sản phẩm second-hand.",
+                IsActive = true
+            },
+            new()
+            {
+                Name = "Admin",
+                RoleType = RoleType.Admin,
+                Description = "Quản trị viên hệ thống, toàn quyền quản lý.",
+                IsActive = true
+            }
+        };
 
         foreach (var role in roles)
             if (!await _context.Roles.AnyAsync(r => r.RoleType == role.RoleType))
@@ -181,50 +182,50 @@ public class SystemController : ControllerBase
 
         // 2️⃣ Seed các User mẫu
         var users = new List<(User user, string plainPassword)>
-    {
-        (
-            new User
-            {
-                FullName = "Admin User",
-                Email = "admin@uniseapshop.com",
-                Password = new PasswordHasher().HashPassword("Admin123!"),
-                PhoneNumber = "0123456789",
-                RoleId = roles.First(r => r.RoleType == RoleType.Admin).Id,
-                Role = roles.First(r => r.RoleType == RoleType.Admin),
-                IsEmailVerify = true,
-                IsActive = true
-            },
-            "Admin123!"
-        ),
-        (
-            new User
-            {
-                FullName = "Supplier User",
-                Email = "supplier@uniseapshop.com",
-                Password = new PasswordHasher().HashPassword("Supplier123!"),
-                PhoneNumber = "0987654321",
-                RoleId = roles.First(r => r.Name == "Supplier").Id,
-                Role = roles.First(r => r.Name == "Supplier"),
-                IsEmailVerify = true,
-                IsActive = true
-            },
-            "Supplier123!"
-        ),
-        (
-            new User
-            {
-                FullName = "Customer User",
-                Email = "customer@uniseapshop.com",
-                Password = new PasswordHasher().HashPassword("Customer123!"),
-                PhoneNumber = "0111222333",
-                RoleId = roles.First(r => r.Name == "Customer").Id,
-                Role = roles.First(r => r.Name == "Customer"),
-                IsEmailVerify = true,
-                IsActive = true
-            },
-            "Customer123!"
-        )
-    };
+        {
+            (
+                new User
+                {
+                    FullName = "Admin User",
+                    Email = "admin@uniseapshop.com",
+                    Password = new PasswordHasher().HashPassword("Admin123!"),
+                    PhoneNumber = "0123456789",
+                    RoleId = roles.First(r => r.RoleType == RoleType.Admin).Id,
+                    Role = roles.First(r => r.RoleType == RoleType.Admin),
+                    IsEmailVerify = true,
+                    IsActive = true
+                },
+                "Admin123!"
+            ),
+            (
+                new User
+                {
+                    FullName = "Supplier User",
+                    Email = "supplier@uniseapshop.com",
+                    Password = new PasswordHasher().HashPassword("Supplier123!"),
+                    PhoneNumber = "0987654321",
+                    RoleId = roles.First(r => r.Name == "Supplier").Id,
+                    Role = roles.First(r => r.Name == "Supplier"),
+                    IsEmailVerify = true,
+                    IsActive = true
+                },
+                "Supplier123!"
+            ),
+            (
+                new User
+                {
+                    FullName = "Customer User",
+                    Email = "customer@uniseapshop.com",
+                    Password = new PasswordHasher().HashPassword("Customer123!"),
+                    PhoneNumber = "0111222333",
+                    RoleId = roles.First(r => r.Name == "Customer").Id,
+                    Role = roles.First(r => r.Name == "Customer"),
+                    IsEmailVerify = true,
+                    IsActive = true
+                },
+                "Customer123!"
+            )
+        };
 
         var seededUserList = new List<object>();
 
@@ -282,19 +283,18 @@ public class SystemController : ControllerBase
     }
 
 
-
     private async Task<List<object>> SeedProductsAndCategories()
     {
         // 1️⃣ Seed Category
         var categories = new List<Category>
-    {
-        new() { CategoryName = "Thời trang" },
-        new() { CategoryName = "Điện tử" },
-        new() { CategoryName = "Đồ gia dụng" },
-        new() { CategoryName = "Sách & Văn phòng phẩm" },
-        new() { CategoryName = "Đồ thể thao" },
-        new() { CategoryName = "Trang sức & Phụ kiện" }
-    };
+        {
+            new() { CategoryName = "Thời trang" },
+            new() { CategoryName = "Điện tử" },
+            new() { CategoryName = "Đồ gia dụng" },
+            new() { CategoryName = "Sách & Văn phòng phẩm" },
+            new() { CategoryName = "Đồ thể thao" },
+            new() { CategoryName = "Trang sức & Phụ kiện" }
+        };
 
         foreach (var cat in categories)
             if (!await _context.Categories.AnyAsync(c => c.CategoryName == cat.CategoryName))
@@ -341,9 +341,10 @@ public class SystemController : ControllerBase
             EstimatedAge = 6,
             Brand = "H&M",
             Weight = 0.6,
-            Dimensions = "70x55",
+            Dimensions = "70x55"
         };
-        p1.Images = CreateImages(p1, "https://example.com/images/hoodie_main.jpg", "https://example.com/images/hoodie_side.jpg");
+        p1.Images = CreateImages(p1, "https://example.com/images/hoodie_main.jpg",
+            "https://example.com/images/hoodie_side.jpg");
 
         // Sản phẩm 2
         var p2 = new Product
@@ -361,9 +362,10 @@ public class SystemController : ControllerBase
             EstimatedAge = 12,
             Brand = "Sony",
             Weight = 0.2,
-            Dimensions = "18x15x5",
+            Dimensions = "18x15x5"
         };
-        p2.Images = CreateImages(p2, "https://example.com/images/headphone_main.jpg", "https://example.com/images/headphone_side.jpg");
+        p2.Images = CreateImages(p2, "https://example.com/images/headphone_main.jpg",
+            "https://example.com/images/headphone_side.jpg");
 
         // Sản phẩm 3
         var p3 = new Product
@@ -381,9 +383,10 @@ public class SystemController : ControllerBase
             EstimatedAge = 12,
             Brand = "Philips",
             Weight = 1.2,
-            Dimensions = "25x12x15",
+            Dimensions = "25x12x15"
         };
-        p3.Images = CreateImages(p3, "https://example.com/images/iron_main.jpg", "https://example.com/images/iron_side.jpg");
+        p3.Images = CreateImages(p3, "https://example.com/images/iron_main.jpg",
+            "https://example.com/images/iron_side.jpg");
 
         // Sản phẩm 4
         var p4 = new Product
@@ -401,9 +404,10 @@ public class SystemController : ControllerBase
             EstimatedAge = 8,
             Brand = "NXB Thế Giới",
             Weight = 0.4,
-            Dimensions = "21x14x2",
+            Dimensions = "21x14x2"
         };
-        p4.Images = CreateImages(p4, "https://example.com/images/book_main.jpg", "https://example.com/images/book_side.jpg");
+        p4.Images = CreateImages(p4, "https://example.com/images/book_main.jpg",
+            "https://example.com/images/book_side.jpg");
 
         // Sản phẩm 5
         var p5 = new Product
@@ -421,9 +425,10 @@ public class SystemController : ControllerBase
             EstimatedAge = 12,
             Brand = "Yonex",
             Weight = 0.1,
-            Dimensions = "67x20",
+            Dimensions = "67x20"
         };
-        p5.Images = CreateImages(p5, "https://example.com/images/racket_main.jpg", "https://example.com/images/racket_side.jpg");
+        p5.Images = CreateImages(p5, "https://example.com/images/racket_main.jpg",
+            "https://example.com/images/racket_side.jpg");
 
         // Sản phẩm 6
         var p6 = new Product
@@ -441,9 +446,10 @@ public class SystemController : ControllerBase
             EstimatedAge = 5,
             Brand = "Pandora",
             Weight = 0.02,
-            Dimensions = "2x2",
+            Dimensions = "2x2"
         };
-        p6.Images = CreateImages(p6, "https://example.com/images/ring_main.jpg", "https://example.com/images/ring_side.jpg");
+        p6.Images = CreateImages(p6, "https://example.com/images/ring_main.jpg",
+            "https://example.com/images/ring_side.jpg");
 
         // Sản phẩm 7
         var p7 = new Product
@@ -461,9 +467,10 @@ public class SystemController : ControllerBase
             EstimatedAge = 8,
             Brand = "Zara",
             Weight = 0.8,
-            Dimensions = "30x10x20",
+            Dimensions = "30x10x20"
         };
-        p7.Images = CreateImages(p7, "https://example.com/images/bag_main.jpg", "https://example.com/images/bag_side.jpg");
+        p7.Images = CreateImages(p7, "https://example.com/images/bag_main.jpg",
+            "https://example.com/images/bag_side.jpg");
 
         // Sản phẩm 8
         var p8 = new Product
@@ -481,9 +488,10 @@ public class SystemController : ControllerBase
             EstimatedAge = 12,
             Brand = "Philips",
             Weight = 1.5,
-            Dimensions = "30x15x15",
+            Dimensions = "30x15x15"
         };
-        p8.Images = CreateImages(p8, "https://example.com/images/blender_main.jpg", "https://example.com/images/blender_side.jpg");
+        p8.Images = CreateImages(p8, "https://example.com/images/blender_main.jpg",
+            "https://example.com/images/blender_side.jpg");
 
         // Sản phẩm 9
         var p9 = new Product
@@ -501,9 +509,10 @@ public class SystemController : ControllerBase
             EstimatedAge = 10,
             Brand = "Nike",
             Weight = 0.9,
-            Dimensions = "28x10x10",
+            Dimensions = "28x10x10"
         };
-        p9.Images = CreateImages(p9, "https://example.com/images/shoe_main.jpg", "https://example.com/images/shoe_side.jpg");
+        p9.Images = CreateImages(p9, "https://example.com/images/shoe_main.jpg",
+            "https://example.com/images/shoe_side.jpg");
 
         // Sản phẩm 10
         var p10 = new Product
@@ -521,9 +530,10 @@ public class SystemController : ControllerBase
             EstimatedAge = 6,
             Brand = "Casio",
             Weight = 0.15,
-            Dimensions = "4x4x1",
+            Dimensions = "4x4x1"
         };
-        p10.Images = CreateImages(p10, "https://example.com/images/watch_main.jpg", "https://example.com/images/watch_side.jpg");
+        p10.Images = CreateImages(p10, "https://example.com/images/watch_main.jpg",
+            "https://example.com/images/watch_side.jpg");
 
         products.AddRange(new[] { p1, p2, p3, p4, p5, p6, p7, p8, p9, p10 });
 

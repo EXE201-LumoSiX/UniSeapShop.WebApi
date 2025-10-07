@@ -1,14 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace UniSeapShop.Domain.DTOs.CartItemDTOs;
 
-namespace UniSeapShop.Domain.DTOs.CartItemDTOs
+public class UpdateCartItemDto
 {
-    public class UpdateCartItemDto
-    {
-        public Guid ProductId { get; set; }
-        public int Quantity { get; set; }
-    }
+    public Guid ProductId { get; set; }
+    public int Quantity { get; set; }
 }

@@ -109,13 +109,14 @@ public class AuthService : IAuthService
 
         return ToUserDto(user);
     }
+
     public async Task<UserDto?> RegisterSupplierAsync(SellerRegistrationDto dto)
     {
         if (!await UserExistsAsync(dto.Email))
             throw ErrorHelper.NotFound(ErrorMessages.AccountNotFound);
         if (await GetSupplierByEmailAsync(dto.Email))
         {
-            UserDto userDto = new UserDto
+            var userDto = new UserDto
             {
                 Email = dto.Email
             };
@@ -131,7 +132,7 @@ public class AuthService : IAuthService
             Description = dto.Description,
             Rating = 0,
             IsActive = user.IsActive,
-            User = user,
+            User = user
         };
 
         await _unitOfWork.Suppliers.AddAsync(seller);
@@ -294,6 +295,7 @@ public class AuthService : IAuthService
             User = user
         };
     }
+
     private static UserDto ToUserDto(User user)
     {
         return new UserDto
@@ -303,7 +305,7 @@ public class AuthService : IAuthService
             Email = user.Email,
             UserImage = user.UserImage,
             PhoneNumber = user.PhoneNumber,
-            RoleName = user.Role?.RoleType.ToString(),
+            RoleName = user.Role?.RoleType.ToString()
         };
     }
 
