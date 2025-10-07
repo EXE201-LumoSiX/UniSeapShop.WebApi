@@ -1,78 +1,145 @@
-# Payment Flow Guide
+# Hướng dẫn Luồng Thanh toán UniSeapShop
 
-## Luồng thanh toán
-1. Thêm sản phẩm vào giỏ → Chọn items → Thanh toán → PayOS → Tạo đơn hàng
+> Hướng dẫn ngắn gọn giúp bạn hiểu và tích hợp với luồng thanh toán của UniSeapShop qua PayOS.
 
-## Tổng quan luồng
-UniSeapShop sử dụng PayOS làm cổng thanh toán chính. Luồng thanh toán được thiết kế đơn giản và an toàn cho người dùng.
+## Cơ chế của PayOS
 
-## APIs chính
+1.  **Thêm vào giỏ hàng**: Người dùng thêm sản phẩm vào giỏ hàng.
+2.  **Thanh toán**: Người dùng bắt đầu thanh toán. Hệ thống có thể sử dụng các sản phẩm đã được chọn sẵn hoặc tự động chọn tất cả nếu chưa có sản phẩm nào được chọn.
+3.  **Tạo Link Thanh toán**: Backend gọi đến `POST /api/payments/create-link`.
+4.  **Chuyển hướng đến PayOS**: Người dùng được chuyển đến cổng thanh toán PayOS.
+5.  **Webhook (Thông báo tự động)**: Sau khi thanh toán, PayOS gửi một thông báo đến `POST /api/payments/webhook`.
+6.  **Tạo Đơn hàng**: Hệ thống xác thực webhook, tạo đơn hàng và cập nhật trạng thái thanh toán.
+7.  **Chuyển hướng về Trang Thành công**: Người dùng được chuyển về trang thông báo thanh toán thành công của cửa hàng.
 
-### Luồng chính (dành cho người non-tech)
-1. Khách hàng thêm sản phẩm vào giỏ hàng
-2. Chọn sản phẩm muốn mua (hoặc hệ thống tự chọn tất cả)
-3. Nhấn "Thanh toán" → Hệ thống tạo link PayOS
-4. Khách hàng được chuyển đến trang PayOS để thanh toán
-5. PayOS gọi webhook về hệ thống
-6. Hệ thống cập nhật trạng thái và tạo đơn hàng
-7. Khách hàng được chuyển về trang thành công
+---
 
-### Giỏ hàng
-POST /api/cart/items                    # Thêm sản phẩm
-GET /api/cart                          # Xem giỏ hàng
-PATCH /api/cart/items/check            # Chọn 1 sản phẩm
-PATCH /api/cart/items/check-all        # Chọn tất cả
+## Các API Endpoints
 
-### Thanh toán
-POST /api/payments/create-link         # Tạo link PayOS
-GET /api/payments/{paymentId}          # Kiểm tra trạng thái
-POST /api/payments/webhook             # PayOS webhook
+| Phương thức | Endpoint | Mô tả |
+| :--- | :--- | :--- |
+| `POST` | `/api/cart/items` | Thêm một sản phẩm vào giỏ hàng. |
+| `GET` | `/api/cart` | Xem giỏ hàng hiện tại. |
+| `PATCH` | `/api/cart/items/check` | Chọn/bỏ chọn một sản phẩm cụ thể trong giỏ. |
+| `PATCH` | `/api/cart/items/check-all` | Chọn/bỏ chọn tất cả sản phẩm trong giỏ. |
+| `POST` | `/api/payments/create-link` | Tạo link thanh toán PayOS từ giỏ hàng. |
+| `GET` | `/api/payments/{paymentId}` | Kiểm tra trạng thái của một thanh toán cụ thể. |
+| `POST` | `/api/payments/webhook` | **[Nội bộ]** Endpoint nhận thông báo tự động từ PayOS. |
 
-## Request/Response mẫu
+---
 
-### Tạo thanh toán
-POST /api/payments/create-link
-Request body:
+## Ví dụ Request & Response
+
+<details>
+<summary><strong>POST /api/payments/create-link</strong></summary>
+
+**Request Body (Dữ liệu gửi đi):**
+```json
 {
-  "shipAddress": "Địa chỉ giao hàng",
+  "shipAddress": "123 Đường ABC, Quận 1, TP.HCM",
   "paymentGateway": 0
 }
+```
 
-Response (ví dụ):
+**Success Response (Phản hồi thành công):**
+```json
 {
   "isSuccess": true,
   "value": {
+    "code": "200",
+    "message": "Tạo link thanh toán thành công",
     "data": "https://pay.payos.vn/web/..."
   }
 }
+```
+</details>
 
-### Kiểm tra trạng thái
-GET /api/payments/{paymentId}
-Trạng thái chính: Pending, Completed, Cancelled, Failed, Refunded
+<details>
+<summary><strong>GET /api/payments/{paymentId}</strong></summary>
 
-## Frontend flow (ngắn gọn)
-// 1. Tạo link thanh toán
-const response = await fetch('/api/payments/create-link', {
-  method: 'POST',
-  headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-  body: JSON.stringify({ shipAddress: 'địa chỉ', paymentGateway: 0 })
-});
-const result = await response.json();
-const paymentUrl = result.value.data;
+**Success Response (Phản hồi thành công):**
+```json
+{
+  "isSuccess": true,
+  "value": {
+    "data": {
+      "paymentId": "đây-là-guid",
+      "orderId": "đây-là-guid",
+      "status": "Completed",
+      "paymentUrl": "https://pay.payos.vn/web/...",
+      "amount": 150000,
+      "createdAt": "2024-10-07T10:30:00Z",
+      "updatedAt": "2024-10-07T10:31:00Z"
+    }
+  }
+}
+```
+</details>
 
-// 2. Redirect
-window.location.href = paymentUrl;
+---
 
-// 3. Khi quay về, check status
-const status = await fetch(`/api/payments/${paymentId}`, { headers: { 'Authorization': 'Bearer ' + token } });
+## Các Trạng thái Thanh toán
 
-## Cấu hình (env)
+| Trạng thái | Mô tả |
+| :--- | :--- |
+| `Pending` | Đang chờ người dùng thanh toán. |
+| `Completed` | Thanh toán thành công, đơn hàng đã được tạo. |
+| `Cancelled` | Người dùng đã hủy thanh toán. |
+| `Failed` | Thanh toán thất bại do lỗi. |
+| `Refunded` | Thanh toán đã được hoàn tiền. |
+
+---
+
+## Tích hợp Frontend
+
+<details>
+<summary><strong>Ví dụ: Tạo thanh toán và chuyển hướng</strong></summary>
+
+```javascript
+// 1. Gọi backend để tạo link thanh toán
+async function createPayment() {
+  try {
+    const response = await fetch('/api/payments/create-link', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${your_jwt_token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        shipAddress: '123 Đường ABC, Quận 1, TP.HCM',
+        paymentGateway: 0
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.isSuccess) {
+      // 2. Chuyển hướng người dùng đến URL của PayOS
+      window.location.href = result.value.data;
+    } else {
+      console.error('Tạo link thanh toán thất bại:', result.value.message);
+    }
+  } catch (error) {
+    console.error('Đã xảy ra lỗi:', error);
+  }
+}
+```
+</details>
+
+---
+
+## Lỗi Thường gặp & Cấu hình
+
+| Lỗi | Nguyên nhân có thể |
+| :--- | :--- |
+| `Customer not found` | Người dùng chưa đăng nhập (thiếu hoặc sai JWT token). |
+| `Cart not found` | Giỏ hàng của người dùng trống hoặc không tồn tại. |
+| `No items in cart` | Giỏ hàng có tồn tại nhưng không có sản phẩm nào. |
+| `PayOS error` | Sai API keys trong file cấu hình môi trường. |
+
+**Biến môi trường (`.env`):**
+```env
 PAYOS_CLIENT_ID=your_client_id
 PAYOS_API_KEY=your_api_key
 PAYOS_CHECKSUM_KEY=your_checksum_key
-
-## Lỗi thường gặp
-- "Customer not found" → Chưa login
-- "Cart not found" → Giỏ hàng trống
-- "No items in cart" → Chưa có sản phẩm
-- PayOS error → Kiểm tra API keys
+```
