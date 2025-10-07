@@ -54,6 +54,7 @@ public static class IocContainer
         services.AddHttpContextAccessor();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<ICartService, CartService>();
 
         return services;
     }
