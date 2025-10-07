@@ -12,6 +12,7 @@ public interface IPaymentService
 
     Task<string> ProcessPayment(Guid userId, CreateOrderDto createOrderDto);
     Task ProcessWebhook(WebhookType webhookData);
+    Task ProcessWebhookGet(long orderCode, string status, string code);
     Task<PaymentStatusDto> GetPaymentStatus(Guid paymentId);
     Task<PaymentStatusDto> GetPaymentStatusOnly(Guid paymentId);
     Task<PaymentStatusDto> GetPaymentByOrderCode(string orderCode);

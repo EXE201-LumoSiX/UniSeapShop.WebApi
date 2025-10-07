@@ -208,6 +208,55 @@ public class PaymentService : IPaymentService
         }
     }
 
+    public async Task ProcessWebhookGet(long orderCode, string status, string code)
+    {
+        _loggerService.Info($"[WEBHOOK-GET] Starting GET webhook processing - OrderCode: {orderCode}, Status: {status}, Code: {code}");
+        try
+        {
+            _loggerService.Info($"[WEBHOOK-GET] Phase 1: Finding payment record for OrderCode: {orderCode}");
+            var payment = await _unitOfWork.Payments.FirstOrDefaultAsync(p =>
+                p.GatewayTransactionId == orderCode.ToString());
+
+            if (payment == null)
+            {
+                _loggerService.Error($"[WEBHOOK-GET] Phase 1 FAILED: Payment not found for orderCode: {orderCode}");
+                return;
+            }
+            _loggerService.Info($"[WEBHOOK-GET] Phase 1 SUCCESS: Payment found - PaymentId: {payment.Id}, OrderId: {payment.OrderId}");
+
+            // Check if status indicates successful payment
+            if (status == "PAID" && code == "00")
+            {
+                _loggerService.Info($"[WEBHOOK-GET] Phase 2: Payment successful, updating status to Completed");
+                payment.Status = PaymentStatus.Completed;
+                payment.GatewayResponse = $"GET Webhook: code={code}, status={status}, orderCode={orderCode}";
+                await _unitOfWork.Payments.Update(payment);
+                _loggerService.Info($"[WEBHOOK-GET] Phase 2 SUCCESS: Payment status updated to Completed");
+
+                _loggerService.Info($"[WEBHOOK-GET] Phase 3: Updating order status to Completed for OrderId: {payment.OrderId}");
+                await UpdateOrderStatus(payment.OrderId, OrderStatus.Completed);
+                _loggerService.Info($"[WEBHOOK-GET] Phase 3 SUCCESS: Order status updated to Completed");
+            }
+            else
+            {
+                _loggerService.Info($"[WEBHOOK-GET] Payment not successful - Status: {status}, Code: {code}");
+                if (status == "CANCELLED" || code != "00")
+                {
+                    payment.Status = PaymentStatus.Cancelled;
+                    await _unitOfWork.Payments.Update(payment);
+                    await UpdateOrderStatus(payment.OrderId, OrderStatus.Cancelled);
+                    _loggerService.Info($"[WEBHOOK-GET] Payment cancelled");
+                }
+            }
+
+            _loggerService.Info($"[WEBHOOK-GET] PROCESSING COMPLETED SUCCESSFULLY - PaymentId: {payment.Id}, OrderId: {payment.OrderId}");
+        }
+        catch (Exception ex)
+        {
+            _loggerService.Error($"[WEBHOOK-GET] PROCESSING FAILED - OrderCode: {orderCode}, Error: {ex.Message}, StackTrace: {ex.StackTrace}");
+        }
+    }
+
     public async Task<PaymentStatusDto> GetPaymentStatus(Guid paymentId)
     {
         _loggerService.Info($"[GET_STATUS] Getting payment status for PaymentId: {paymentId}");
