@@ -113,7 +113,7 @@ public class PaymentService : IPaymentService
 
             // PayOS requires description max 25 chars, so use first 5 chars of order GUID
             var shortOrderId = order.Id.ToString().Substring(0, 5);
-            var paymentDescription = $"Order #{shortOrderId}";
+            var paymentDescription = $"Uniseap payment #{shortOrderId}";
 
             var paymentData = new PaymentData(
                 orderCode,
