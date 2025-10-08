@@ -128,6 +128,7 @@ public class AuthService : IAuthService
 
         var seller = new Supplier
         {
+            Id = user.Id,
             UserId = user.Id,
             Description = dto.Description,
             Rating = 0,

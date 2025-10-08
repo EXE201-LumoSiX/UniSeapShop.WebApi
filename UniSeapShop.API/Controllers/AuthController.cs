@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using UniSeapShop.Application.Interfaces;
 using UniSeapShop.Application.Utils;
 using UniSeapShop.Domain.DTOs.AuthenDTOs;
@@ -62,6 +63,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register-supplier")]
+    [Authorize]
     public async Task<IActionResult> RegisterSupplier([FromBody] SellerRegistrationDto registrationDto)
     {
         try
