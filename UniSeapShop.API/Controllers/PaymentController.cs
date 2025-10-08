@@ -160,8 +160,9 @@ public class PaymentController : ControllerBase
         try
         {
             // Log the webhook GET request
-            Console.WriteLine($"[WEBHOOK-GET] Received: code={code}, id={id}, cancel={cancel}, status={status}, orderCode={orderCode}");
-            
+            Console.WriteLine(
+                $"[WEBHOOK-GET] Received: code={code}, id={id}, cancel={cancel}, status={status}, orderCode={orderCode}");
+
             // Instead of creating WebhookType, directly process the webhook
             await _paymentService.ProcessWebhookGet(orderCode, status, code);
             return Ok("Webhook processed successfully");

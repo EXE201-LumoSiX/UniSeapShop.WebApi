@@ -20,139 +20,100 @@ public class CategoryService : ICategoryService
 
     public async Task<CategoryDto> CreateCategoryAsync(CreateCategoryDto createCategoryDto)
     {
-        try
+        var category = new Category
         {
-            var category = new Category
-            {
-                CategoryName = createCategoryDto.CategoryName,
-                CreatedAt = DateTime.UtcNow,
-                IsDeleted = false
-            };
+            CategoryName = createCategoryDto.CategoryName,
+            CreatedAt = DateTime.UtcNow,
+            IsDeleted = false
+        };
 
-            await _unitOfWork.Categories.AddAsync(category);
-            await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.Categories.AddAsync(category);
+        await _unitOfWork.SaveChangesAsync();
 
-            _loggerService.Success("Category created successfully.");
-            return new CategoryDto
-            {
-                Id = category.Id,
-                CategoryName = category.CategoryName,
-                ProductCount = 0
-            };
-        }
-        catch (Exception ex)
+        _loggerService.Success("Category created successfully.");
+        return new CategoryDto
         {
-            _loggerService.Error($"Error creating category: {ex.Message}");
-            throw;
-        }
+            Id = category.Id,
+            CategoryName = category.CategoryName,
+            ProductCount = 0
+        };
     }
 
     public async Task<bool> DeleteCategoryAsync(Guid categoryId)
     {
-        try
+        var category = await _unitOfWork.Categories.GetByIdAsync(categoryId);
+
+        if (category == null || category.IsDeleted)
         {
-            var category = await _unitOfWork.Categories.GetByIdAsync(categoryId);
-
-            if (category == null || category.IsDeleted)
-            {
-                _loggerService.Error("Category not found or already deleted.");
-                throw new KeyNotFoundException("Category not found.");
-            }
-
-            await _unitOfWork.Categories.SoftRemove(category);
-
-            _loggerService.Success("Category deleted successfully.");
-            return true;
+            _loggerService.Error("Category not found or already deleted.");
+            throw new KeyNotFoundException("Category not found.");
         }
-        catch (Exception ex)
-        {
-            _loggerService.Error($"Error deleting category: {ex.Message}");
-            throw;
-        }
+
+        await _unitOfWork.Categories.SoftRemove(category);
+        await _unitOfWork.SaveChangesAsync();
+
+        _loggerService.Success("Category deleted successfully.");
+        return true;
     }
 
     public async Task<List<CategoryDto>> GetAllCategoriesAsync()
     {
-        try
-        {
-            var categories = await _unitOfWork.Categories.GetQueryable()
-                .Where(c => !c.IsDeleted)
-                .ToListAsync();
+        var categories = await _unitOfWork.Categories.GetQueryable()
+            .Where(c => !c.IsDeleted)
+            .ToListAsync();
 
-            _loggerService.Info($"Retrieved {categories.Count} categories.");
-            return categories.Select(c => new CategoryDto
-            {
-                Id = c.Id,
-                CategoryName = c.CategoryName,
-                ProductCount = c.Products.Count
-            }).ToList();
-        }
-        catch (Exception ex)
+        _loggerService.Info($"Retrieved {categories.Count} categories.");
+        return categories.Select(c => new CategoryDto
         {
-            _loggerService.Error($"Error fetching categories: {ex.Message}");
-            throw;
-        }
+            Id = c.Id,
+            CategoryName = c.CategoryName,
+            ProductCount = c.Products.Count
+        }).ToList();
     }
 
     public async Task<CategoryDetailsDto> GetCategoryByIdAsync(Guid categoryId)
     {
-        try
+        var category = await _unitOfWork.Categories.GetQueryable()
+            .Include(c => c.Products)
+            .FirstOrDefaultAsync(c => c.Id == categoryId && !c.IsDeleted);
+
+        if (category == null)
+            throw new Exception("Category not found.");
+
+        _loggerService.Info($"Category retrieved successfully: {category.CategoryName}");
+        return new CategoryDetailsDto
         {
-            var category = await _unitOfWork.Categories.GetQueryable()
-                .Include(c => c.Products)
-                .FirstOrDefaultAsync(c => c.Id == categoryId && !c.IsDeleted);
-
-            if (category == null)
-                throw new Exception("Category not found.");
-
-            _loggerService.Info($"Category retrieved successfully: {category.CategoryName}");
-            return new CategoryDetailsDto
+            Id = category.Id,
+            CategoryName = category.CategoryName,
+            Products = category.Products.Select(p => new ProductDto
             {
-                Id = category.Id,
-                CategoryName = category.CategoryName,
-                Products = category.Products.Select(p => new ProductDto
-                {
-                    Id = p.Id,
-                    ProductName = p.ProductName,
-                    Price = p.Price
-                }).ToList()
-            };
-        }
-        catch (Exception ex)
-        {
-            _loggerService.Error($"Error in GetCategoryByIdAsync: {ex.Message}");
-            throw;
-        }
+                Id = p.Id,
+                ProductName = p.ProductName,
+                Price = p.Price
+            }).ToList()
+        };
     }
 
     public async Task<CategoryDto> UpdateCategoryAsync(Guid categoryId, UpdateCategoryDto updateCategoryDto)
     {
-        try
+        var category = await _unitOfWork.Categories.GetQueryable()
+            .FirstOrDefaultAsync(c => c.Id == categoryId && !c.IsDeleted);
+
+        if (category == null)
+            throw new Exception("Category not found.");
+
+        category.CategoryName = updateCategoryDto.CategoryName;
+        category.UpdatedAt = DateTime.UtcNow;
+
+        await _unitOfWork.Categories.Update(category);
+        await _unitOfWork.SaveChangesAsync();
+
+        _loggerService.Success($"Category updated successfully: {category.CategoryName}");
+        return new CategoryDto
         {
-            var category = await _unitOfWork.Categories.GetQueryable()
-                .FirstOrDefaultAsync(c => c.Id == categoryId && !c.IsDeleted);
-
-            if (category == null)
-                throw new Exception("Category not found.");
-
-            category.CategoryName = updateCategoryDto.CategoryName;
-            category.UpdatedAt = DateTime.UtcNow;
-
-            await _unitOfWork.Categories.Update(category);
-            await _unitOfWork.SaveChangesAsync();
-
-            _loggerService.Success($"Category updated successfully: {category.CategoryName}");
-            return new CategoryDto
-            {
-                Id = category.Id,
-                CategoryName = category.CategoryName,
-                ProductCount = category.Products.Count
-            };
-        }
-        catch (Exception ex)
-        {
-            _loggerService.Error($"Error in UpdateCategoryAsync: {ex.Message}");
-            throw;
-        }
+            Id = category.Id,
+            CategoryName = category.CategoryName,
+            ProductCount = category.Products.Count
+        };
     }
 }
