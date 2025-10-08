@@ -56,7 +56,7 @@ public class AuthService : IAuthService
             user.Email,
             roleName,
             configuration,
-            TimeSpan.FromMinutes(30)
+            TimeSpan.FromHours(2)
         );
 
         var refreshToken = Guid.NewGuid().ToString();

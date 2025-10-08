@@ -59,6 +59,7 @@ public class CategoryService : ICategoryService
     public async Task<List<CategoryDto>> GetAllCategoriesAsync()
     {
         var categories = await _unitOfWork.Categories.GetQueryable()
+            .Include(c => c.Products)
             .Where(c => !c.IsDeleted)
             .ToListAsync();
 
@@ -89,7 +90,9 @@ public class CategoryService : ICategoryService
             {
                 Id = p.Id,
                 ProductName = p.ProductName,
-                Price = p.Price
+                Price = p.Price,
+                Description = p.Description,
+                ProductImage = p.ProductImage
             }).ToList()
         };
     }
