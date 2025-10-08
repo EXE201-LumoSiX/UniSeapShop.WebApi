@@ -7,7 +7,7 @@ using UniSeapShop.Domain.DTOs.OrderDTOs;
 namespace UniSeapShop.API.Controllers;
 
 /// <summary>
-/// Controller for managing orders.
+///     Controller for managing orders.
 /// </summary>
 [Route("api/orders")]
 [ApiController]
@@ -22,7 +22,7 @@ public class OrderController : ControllerBase
     }
 
     /// <summary>
-    /// Get all paid orders for the current customer.
+    ///     Get all paid orders for the current customer.
     /// </summary>
     /// <returns>List of paid orders.</returns>
     /// <response code="200">Returns the list of paid orders.</response>
@@ -47,7 +47,7 @@ public class OrderController : ControllerBase
     }
 
     /// <summary>
-    /// Get all sold products for the current supplier.
+    ///     Get all sold products for the current supplier.
     /// </summary>
     /// <returns>List of sold products.</returns>
     /// <response code="200">Returns the list of sold products.</response>
@@ -61,7 +61,8 @@ public class OrderController : ControllerBase
         try
         {
             var soldProducts = await _orderService.GetSoldProductsForSupplier();
-            return Ok(ApiResult<List<OrderDetailDto>>.Success(soldProducts, "200", "Fetched sold products successfully."));
+            return Ok(ApiResult<List<OrderDetailDto>>.Success(soldProducts, "200",
+                "Fetched sold products successfully."));
         }
         catch (Exception ex)
         {
