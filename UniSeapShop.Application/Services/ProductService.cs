@@ -21,11 +21,23 @@ namespace UniSeapShop.Application.Services
 
         public async Task<ProductDto> CreateProductAsunc(CreateProductDto createProductDto)
         {
+            double Price = 0;
+            if (createProductDto.Discount == 0)
+            {
+                Price = createProductDto.OriginalPrice;
+            }
+            else
+            {
+                Price = (createProductDto.Discount / 100) * createProductDto.OriginalPrice;
+            }
             var product = new Product
             {
                 ProductName = createProductDto.ProductName,
                 Description = createProductDto.Description,
-                Price = createProductDto.Price,
+                OriginalPrice = createProductDto.OriginalPrice,
+                ProductImage = createProductDto.ProductImage,
+                UsageHistory = createProductDto.UsageHistory,
+                Price = Price,
                 CategoryId = createProductDto.CategoryId,
                 Quantity = createProductDto.Quantity,
                 Supplier = GetSupplierbyIdAsync(createProductDto.SupplierId).Result,
@@ -38,6 +50,7 @@ namespace UniSeapShop.Application.Services
             {
                 Id = product.Id,
                 ProductName = product.ProductName,
+                ProductImage = product.ProductImage,
                 Description = product.Description,
                 Price = product.Price,
                 CategoryId = product.CategoryId,
