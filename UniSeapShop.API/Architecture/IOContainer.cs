@@ -61,6 +61,7 @@ public static class IocContainer
         services.AddScoped<ICartService, CartService>();
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<IProductService, ProductService>();
+        services.AddScoped<IBlobService, BlobService>();
 
         return services;
     }

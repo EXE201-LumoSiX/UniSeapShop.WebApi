@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using UniSeapShop.Application.Interfaces;
 using UniSeapShop.Application.Interfaces.Commons;
+using UniSeapShop.Application.Utils;
 using UniSeapShop.Domain.DTOs.CategoryDTOs;
 using UniSeapShop.Domain.DTOs.ProductDTOs;
 using UniSeapShop.Domain.Entities;
@@ -12,32 +13,31 @@ namespace UniSeapShop.Application.Services
     {
         private readonly ILoggerService _loggerService;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IBlobService _blobService;
 
-        public ProductService(IUnitOfWork unitOfWork, ILoggerService loggerService)
+        public ProductService(IUnitOfWork unitOfWork, ILoggerService loggerService, IBlobService blobService)
         {
             _unitOfWork = unitOfWork;
             _loggerService = loggerService;
+            _blobService = blobService;
         }
 
         public async Task<ProductDto> CreateProductAsunc(CreateProductDto createProductDto)
         {
-            double Price = 0;
-            if (createProductDto.Discount == 0)
-            {
-                Price = createProductDto.OriginalPrice;
-            }
-            else
-            {
-                Price = (createProductDto.Discount / 100) * createProductDto.OriginalPrice;
-            }
+            var fileName = $"blindbox-thumbnails/thumbnails-{Guid.NewGuid()}{Path.GetExtension(createProductDto.ImageFile.FileName)}";
+            await using var stream = createProductDto.ImageFile.OpenReadStream();
+            await _blobService.UploadFileAsync(fileName, stream);
+
+            var imageUrl = await _blobService.GetPreviewUrlAsync(fileName);
+            if (string.IsNullOrEmpty(imageUrl))
+                throw ErrorHelper.Internal("Not found imageUrl");
             var product = new Product
             {
                 ProductName = createProductDto.ProductName,
                 Description = createProductDto.Description,
-                OriginalPrice = createProductDto.OriginalPrice,
-                ProductImage = createProductDto.ProductImage,
+                ProductImage = imageUrl,
                 UsageHistory = createProductDto.UsageHistory,
-                Price = Price,
+                Price = createProductDto.Price,
                 CategoryId = createProductDto.CategoryId,
                 Quantity = createProductDto.Quantity,
                 Supplier = GetSupplierbyIdAsync(createProductDto.SupplierId).Result,
@@ -122,15 +122,47 @@ namespace UniSeapShop.Application.Services
                 _loggerService.Error("Product not found or already deleted.");
                 throw new KeyNotFoundException("Product not found.");
             }
-            product.ProductName = updateProductDto.ProductName;
-            product.Description = updateProductDto.Description;
-            product.Price = updateProductDto.Price;
-            product.Quantity = updateProductDto.Quantity;
+            if (updateProductDto.Quantity != product.Quantity && updateProductDto.Quantity > 0)
+            {
+                product.Quantity = updateProductDto.Quantity;
+
+            }
+            if (updateProductDto.ProductName != null)
+            {
+                product.ProductName = updateProductDto.ProductName;
+            }
+            if (updateProductDto.Description != null)
+            {
+                product.Description = updateProductDto.Description;
+            }
+            if (updateProductDto.UsageHistory != null)
+            {
+                product.UsageHistory = updateProductDto.UsageHistory;
+            }
+            if (updateProductDto.Price > 0)
+            {
+                product.Price = updateProductDto.Price;
+            }
             if (product.CategoryId != updateProductDto.CategoryId)
             {
                 product.Category = await GetCategoryByIdAsync(updateProductDto.CategoryId);
                 product.CategoryId = updateProductDto.CategoryId;
             }
+            if (updateProductDto.ImageFile != null)
+                try
+                {
+                    product.ProductImage = await _blobService.ReplaceImageAsync(
+                        updateProductDto.ImageFile.OpenReadStream(),
+                        updateProductDto.ImageFile.FileName,
+                        product.ProductImage,
+                        "blindbox-thumbnails"
+                    );
+                }
+                catch (Exception ex)
+                {
+                    _loggerService.Error($"[UpdateBlindBoxAsync] ReplaceImageAsync failed: {ex.Message}");
+                    throw ErrorHelper.Internal("Upload fails");
+                }
             await _unitOfWork.Products.Update(product);
             await _unitOfWork.SaveChangesAsync();
             _loggerService.Success("Product updated successfully.");
