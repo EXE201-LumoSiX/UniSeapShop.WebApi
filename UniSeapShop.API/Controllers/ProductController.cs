@@ -18,7 +18,6 @@ public class ProductController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize]
     public async Task<IActionResult> CreateProduct([FromForm] CreateProductDto createProductDto)
     {
         try
