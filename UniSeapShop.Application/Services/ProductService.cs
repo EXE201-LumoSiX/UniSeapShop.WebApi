@@ -53,9 +53,9 @@ namespace UniSeapShop.Application.Services
                 ProductImage = product.ProductImage,
                 Description = product.Description,
                 Price = product.Price,
-                CategoryId = product.CategoryId,
+                Category = product.Category,
                 Quantity = product.Quantity,
-                SupplierId = product.SupplierId
+                Supplier = product.Supplier
             };
         }
 
@@ -85,9 +85,9 @@ namespace UniSeapShop.Application.Services
                 ProductName = p.ProductName,
                 Description = p.Description,
                 Price = p.Price,
-                CategoryId = p.CategoryId,
+                Category = p.Category,
                 Quantity = p.Quantity,
-                SupplierId = p.SupplierId
+                Supplier = p.Supplier,
             }).ToList();
         }
 
@@ -172,7 +172,7 @@ namespace UniSeapShop.Application.Services
                 ProductName = product.ProductName,
                 Description = product.Description,
                 Price = product.Price,
-                CategoryId = product.CategoryId,
+                Category = product.Category,
                 Quantity = product.Quantity
             };
         }
