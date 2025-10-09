@@ -36,11 +36,13 @@ public class PaymentController : ControllerBase
         try
         {
             var payments = await _paymentService.GetAllPayments(status, fromDate, toDate);
-            return Ok(ApiResult<List<PaymentInfoDto>>.Success(payments, "Payments retrieved successfully"));
+            return Ok(ApiResult<List<PaymentInfoDto>>.Success(payments, "200", "Payments retrieved successfully"));
         }
         catch (Exception ex)
         {
-            return BadRequest(ApiResult<object>.Failure("400", ex.Message));
+            var statusCode = ExceptionUtils.ExtractStatusCode(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<List<PaymentInfoDto>>(ex);
+            return StatusCode(statusCode, errorResponse);
         }
     }
 
@@ -55,7 +57,6 @@ public class PaymentController : ControllerBase
         {
             var userId = _claimsService.CurrentUserId;
 
-            // Convert CreatePaymentDto to CreateOrderDto
             var createOrderDto = new CreateOrderDto
             {
                 ShipAddress = createPaymentDto.ShipAddress,
@@ -64,11 +65,13 @@ public class PaymentController : ControllerBase
 
             var paymentUrl = await _paymentService.ProcessPayment(userId, createOrderDto);
 
-            return Ok(ApiResult<string>.Success(paymentUrl, "Payment link created successfully"));
+            return Ok(ApiResult<string>.Success(paymentUrl, "200", "Payment link created successfully"));
         }
         catch (Exception ex)
         {
-            return BadRequest(ApiResult<object>.Failure("400", ex.Message));
+            var statusCode = ExceptionUtils.ExtractStatusCode(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<string>(ex);
+            return StatusCode(statusCode, errorResponse);
         }
     }
 
@@ -82,11 +85,13 @@ public class PaymentController : ControllerBase
         try
         {
             var status = await _paymentService.GetPaymentStatus(paymentId);
-            return Ok(ApiResult<PaymentStatusDto>.Success(status, "Payment status retrieved successfully"));
+            return Ok(ApiResult<PaymentStatusDto>.Success(status, "200", "Payment status retrieved successfully"));
         }
         catch (Exception ex)
         {
-            return BadRequest(ApiResult<object>.Failure("400", ex.Message));
+            var statusCode = ExceptionUtils.ExtractStatusCode(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<PaymentStatusDto>(ex);
+            return StatusCode(statusCode, errorResponse);
         }
     }
 
@@ -100,11 +105,13 @@ public class PaymentController : ControllerBase
         try
         {
             var status = await _paymentService.GetPaymentByOrderCode(orderCode);
-            return Ok(ApiResult<PaymentStatusDto>.Success(status, "Payment found successfully"));
+            return Ok(ApiResult<PaymentStatusDto>.Success(status, "200", "Payment found successfully"));
         }
         catch (Exception ex)
         {
-            return BadRequest(ApiResult<object>.Failure("400", ex.Message));
+            var statusCode = ExceptionUtils.ExtractStatusCode(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<PaymentStatusDto>(ex);
+            return StatusCode(statusCode, errorResponse);
         }
     }
 
@@ -118,11 +125,13 @@ public class PaymentController : ControllerBase
         try
         {
             var status = await _paymentService.GetPaymentStatusOnly(paymentId);
-            return Ok(ApiResult<PaymentStatusDto>.Success(status, "Payment status retrieved successfully"));
+            return Ok(ApiResult<PaymentStatusDto>.Success(status, "200", "Payment status retrieved successfully"));
         }
         catch (Exception ex)
         {
-            return BadRequest(ApiResult<object>.Failure("400", ex.Message));
+            var statusCode = ExceptionUtils.ExtractStatusCode(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<PaymentStatusDto>(ex);
+            return StatusCode(statusCode, errorResponse);
         }
     }
 
@@ -140,7 +149,6 @@ public class PaymentController : ControllerBase
         }
         catch (Exception)
         {
-            // Return 200 OK to prevent PayOS from retrying
             return Ok();
         }
     }
@@ -159,18 +167,11 @@ public class PaymentController : ControllerBase
     {
         try
         {
-            // Log the webhook GET request
-            Console.WriteLine(
-                $"[WEBHOOK-GET] Received: code={code}, id={id}, cancel={cancel}, status={status}, orderCode={orderCode}");
-
-            // Instead of creating WebhookType, directly process the webhook
             await _paymentService.ProcessWebhookGet(orderCode, status, code);
             return Ok("Webhook processed successfully");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[WEBHOOK-GET] Error: {ex.Message}");
-            // Return 200 OK to prevent PayOS from retrying
             return Ok($"Webhook processing error: {ex.Message}");
         }
     }
@@ -185,11 +186,13 @@ public class PaymentController : ControllerBase
         try
         {
             var result = await _paymentService.CancelPayment(paymentId, cancelPaymentDto.Reason);
-            return Ok(ApiResult<bool>.Success(result, "Payment cancelled successfully"));
+            return Ok(ApiResult<bool>.Success(result, "200", "Payment cancelled successfully"));
         }
         catch (Exception ex)
         {
-            return BadRequest(ApiResult<object>.Failure("400", ex.Message));
+            var statusCode = ExceptionUtils.ExtractStatusCode(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<bool>(ex);
+            return StatusCode(statusCode, errorResponse);
         }
     }
 
@@ -203,11 +206,14 @@ public class PaymentController : ControllerBase
         try
         {
             var payments = await _paymentService.GetPaymentsByOrderId(orderId);
-            return Ok(ApiResult<List<PaymentStatusDto>>.Success(payments, "Order payments retrieved successfully"));
+            return Ok(ApiResult<List<PaymentStatusDto>>.Success(payments, "200",
+                "Order payments retrieved successfully"));
         }
         catch (Exception ex)
         {
-            return BadRequest(ApiResult<object>.Failure("400", ex.Message));
+            var statusCode = ExceptionUtils.ExtractStatusCode(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<List<PaymentStatusDto>>(ex);
+            return StatusCode(statusCode, errorResponse);
         }
     }
 
@@ -221,11 +227,13 @@ public class PaymentController : ControllerBase
         try
         {
             var order = await _paymentService.UpdateOrderStatus(orderId, status);
-            return Ok(ApiResult<OrderDto>.Success(order, "Order status updated successfully"));
+            return Ok(ApiResult<OrderDto>.Success(order, "200", "Order status updated successfully"));
         }
         catch (Exception ex)
         {
-            return BadRequest(ApiResult<object>.Failure("400", ex.Message));
+            var statusCode = ExceptionUtils.ExtractStatusCode(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<OrderDto>(ex);
+            return StatusCode(statusCode, errorResponse);
         }
     }
 }
