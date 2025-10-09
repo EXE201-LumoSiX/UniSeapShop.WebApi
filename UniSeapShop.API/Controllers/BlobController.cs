@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using UniSeapShop.Application.Interfaces.Commons;
-using System;
-using System.Threading.Tasks;
+using UniSeapShop.Application.Utils;
 
 namespace UniSeapShop.API.Controllers;
 
@@ -9,8 +8,8 @@ namespace UniSeapShop.API.Controllers;
 [Route("api/[controller]")]
 public class BlobController : ControllerBase
 {
-    private readonly ILoggerService _logger;
     private readonly IBlobService _blobService;
+    private readonly ILoggerService _logger;
 
     public BlobController(ILoggerService logger, IBlobService blobService)
     {
@@ -22,43 +21,39 @@ public class BlobController : ControllerBase
     public async Task<IActionResult> UploadFile(IFormFile file)
     {
         if (file == null || file.Length == 0)
-            return BadRequest("No file was uploaded");
+            return BadRequest(ApiResult<object>.Failure("400", "No file was uploaded"));
 
         try
         {
             if (_blobService == null)
-            {
-                return StatusCode(500, "BlobService is not properly initialized. Check MinIO configuration.");
-            }
+                return StatusCode(500,
+                    ApiResult<object>.Failure("500",
+                        "BlobService is not properly initialized. Check MinIO configuration."));
 
-            // Generate unique filename to avoid collisions
             var fileName = $"test-uploads/{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
-            
+
             _logger.Info($"Starting test upload of file: {file.FileName} as {fileName}");
-            
-            // Upload file to MinIO
+
             using (var stream = file.OpenReadStream())
             {
                 await _blobService.UploadFileAsync(fileName, stream);
             }
-            
-            // Get preview URL
+
             var previewUrl = await _blobService.GetPreviewUrlAsync(fileName);
-            
-            // Return success response with the file URL
-            return Ok(new
+
+            return Ok(ApiResult<object>.Success(new
             {
-                success = true,
-                message = "File uploaded successfully",
-                fileName = fileName,
-                previewUrl = previewUrl,
+                fileName,
+                previewUrl,
                 originalName = file.FileName
-            });
+            }, "200", "File uploaded successfully"));
         }
         catch (Exception ex)
         {
             _logger.Error($"Error uploading file: {ex.Message}");
-            return StatusCode(500, $"Internal server error: {ex.Message}");
+            var statusCode = ExceptionUtils.ExtractStatusCode(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<object>(ex);
+            return StatusCode(statusCode, errorResponse);
         }
     }
 
@@ -68,72 +63,69 @@ public class BlobController : ControllerBase
         try
         {
             if (_blobService == null)
-            {
-                return StatusCode(500, "BlobService is not properly initialized. Check MinIO configuration.");
-            }
+                return StatusCode(500,
+                    ApiResult<object>.Failure("500",
+                        "BlobService is not properly initialized. Check MinIO configuration."));
 
-            // Add test-uploads prefix to ensure we're looking in the right folder
             var prefixedFileName = $"test-uploads/{fileName}";
             var previewUrl = await _blobService.GetPreviewUrlAsync(prefixedFileName);
-            
-            return Ok(new
+
+            return Ok(ApiResult<object>.Success(new
             {
-                success = true,
-                fileName = prefixedFileName,
-                previewUrl = previewUrl
-            });
+                fileName = prefixedFileName, previewUrl
+            }));
         }
         catch (Exception ex)
         {
             _logger.Error($"Error getting preview URL: {ex.Message}");
-            return StatusCode(500, $"Internal server error: {ex.Message}");
+            var statusCode = ExceptionUtils.ExtractStatusCode(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<object>(ex);
+            return StatusCode(statusCode, errorResponse);
         }
     }
 
     [HttpGet("list")]
     public IActionResult GetEnvironmentInfo()
     {
-        // This endpoint returns MinIO connection info for debugging
         var endpoint = Environment.GetEnvironmentVariable("MINIO_ENDPOINT");
         var host = Environment.GetEnvironmentVariable("MINIO_HOST");
-        
-        // Check if the endpoint has protocol and suggest fix
+
         string suggestion = null;
         if (endpoint?.StartsWith("http://") == true || endpoint?.StartsWith("https://") == true)
-        {
-            try {
+            try
+            {
                 var uri = new Uri(endpoint);
-                suggestion = $"Current MINIO_ENDPOINT includes protocol which is invalid. Try using just the hostname: {uri.Host}";
-                if (uri.Port != 80 && uri.Port != 443) {
-                    suggestion += $":{uri.Port}";
-                }
+                suggestion =
+                    $"Current MINIO_ENDPOINT includes protocol which is invalid. Try using just the hostname: {uri.Host}";
+                if (uri.Port != 80 && uri.Port != 443) suggestion += $":{uri.Port}";
             }
-            catch {
-                suggestion = "MINIO_ENDPOINT should not include protocol (http:// or https://). Use just the hostname or IP and port.";
+            catch
+            {
+                suggestion =
+                    "MINIO_ENDPOINT should not include protocol (http:// or https://). Use just the hostname or IP and port.";
             }
-        }
-        
-        return Ok(new
+
+        return Ok(ApiResult<object>.Success(new
         {
             minioEndpoint = endpoint,
             minioHost = host,
             message = "This information is helpful for debugging connection issues",
             configurationIssue = suggestion
-        });
+        }));
     }
 
     [HttpGet("health")]
     public IActionResult HealthCheck()
     {
-        bool isBlobServiceAvailable = _blobService != null;
-        
-        return Ok(new
+        var isBlobServiceAvailable = _blobService != null;
+
+        return Ok(ApiResult<object>.Success(new
         {
             status = isBlobServiceAvailable ? "available" : "unavailable",
-            message = isBlobServiceAvailable 
-                ? "BlobService is properly initialized" 
+            message = isBlobServiceAvailable
+                ? "BlobService is properly initialized"
                 : "BlobService failed to initialize. Check your MinIO configuration.",
             timestamp = DateTime.UtcNow
-        });
+        }));
     }
 }

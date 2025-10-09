@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Minio;
 using Minio.DataModel.Args;
 using Minio.Exceptions;
@@ -7,13 +8,14 @@ using UniSeapShop.Application.Utils;
 namespace UniSeapShop.Application.Services.Commons;
 
 /// <summary>
-/// NOTE: This service can be reused in other projects.
-/// This service is used to interact with a MinIO server.
-/// It requires the following environment variables to be set:
-/// - MINIO_ENDPOINT (e.g., "localhost:9000" or "minio.example.com"). Port 9000 is the MinIO API, Port 9001 is the MinIO UI.
-/// - MINIO_ACCESS_KEY
-/// - MINIO_SECRET_KEY
-/// - MINIO_USE_SSL (optional, defaults to auto-detection based on endpoint)
+///     NOTE: This service can be reused in other projects.
+///     This service is used to interact with a MinIO server.
+///     It requires the following environment variables to be set:
+///     - MINIO_ENDPOINT (e.g., "localhost:9000" or "minio.example.com"). Port 9000 is the MinIO API, Port 9001 is the
+///     MinIO UI.
+///     - MINIO_ACCESS_KEY
+///     - MINIO_SECRET_KEY
+///     - MINIO_USE_SSL (optional, defaults to auto-detection based on endpoint)
 /// </summary>
 public class BlobService : IBlobService
 {
@@ -22,8 +24,8 @@ public class BlobService : IBlobService
     private readonly IMinioClient _minioClient;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="BlobService"/> class.
-    /// Configures the MinIO client using environment variables.
+    ///     Initializes a new instance of the <see cref="BlobService" /> class.
+    ///     Configures the MinIO client using environment variables.
     /// </summary>
     /// <param name="logger">The logger service for logging information and errors.</param>
     /// <exception cref="Exception">Throws if the MinIO client fails to initialize.</exception>
@@ -42,8 +44,8 @@ public class BlobService : IBlobService
         // Normalize endpoint and auto-detect SSL
         // Default to localhost:9000, which is the default MinIO API port.
         // The MinIO UI is typically on port 9001.
-        string endpoint = endpointRaw?.Trim() ?? "localhost:9000";
-        bool useSsl = false;
+        var endpoint = endpointRaw?.Trim() ?? "localhost:9000";
+        var useSsl = false;
 
         if (bool.TryParse(useSslEnv, out var parsedSsl))
         {
@@ -52,12 +54,12 @@ public class BlobService : IBlobService
         else
         {
             // Auto-detect SSL: use SSL for domain names, not for IP addresses or localhost
-            var isIpAddress = System.Text.RegularExpressions.Regex.IsMatch(
-                endpoint.Split(':')[0], 
+            var isIpAddress = Regex.IsMatch(
+                endpoint.Split(':')[0],
                 @"^\d{1,3}(\.\d{1,3}){3}$"
             );
             var isLocalhost = endpoint.StartsWith("localhost", StringComparison.OrdinalIgnoreCase);
-            
+
             useSsl = !isIpAddress && !isLocalhost;
         }
 
@@ -93,13 +95,13 @@ public class BlobService : IBlobService
     }
 
     /// <summary>
-    /// Uploads a file to the MinIO bucket.
-    /// If the bucket does not exist, it will be created automatically.
+    ///     Uploads a file to the MinIO bucket.
+    ///     If the bucket does not exist, it will be created automatically.
     /// </summary>
     /// <param name="fileName">The name of the file (object) to be created in the bucket.</param>
     /// <param name="fileStream">The stream containing the file data.</param>
     /// <example>
-    /// <code>
+    ///     <code>
     /// await _blobService.UploadFileAsync("my-image.jpg", fileStream);
     /// </code>
     /// </example>
@@ -144,8 +146,8 @@ public class BlobService : IBlobService
     }
 
     /// <summary>
-    /// Generates a temporary, presigned URL to preview a file.
-    /// This URL is valid for a limited time (e.g., 7 days).
+    ///     Generates a temporary, presigned URL to preview a file.
+    ///     This URL is valid for a limited time (e.g., 7 days).
     /// </summary>
     /// <param name="fileName">The name of the file in the bucket.</param>
     /// <returns>A string containing the presigned URL.</returns>
@@ -170,8 +172,8 @@ public class BlobService : IBlobService
     }
 
     /// <summary>
-    /// Generates a temporary, presigned URL to access or download a file.
-    /// This URL is valid for a limited time (e.g., 7 days).
+    ///     Generates a temporary, presigned URL to access or download a file.
+    ///     This URL is valid for a limited time (e.g., 7 days).
     /// </summary>
     /// <param name="fileName">The name of the file in the bucket.</param>
     /// <returns>A string containing the presigned URL.</returns>
@@ -196,7 +198,7 @@ public class BlobService : IBlobService
     }
 
     /// <summary>
-    /// Deletes a file from the MinIO bucket.
+    ///     Deletes a file from the MinIO bucket.
     /// </summary>
     /// <param name="fileName">The name of the file to delete.</param>
     public async Task DeleteFileAsync(string fileName)
@@ -225,13 +227,16 @@ public class BlobService : IBlobService
     }
 
     /// <summary>
-    /// Replaces an existing image with a new one. It first deletes the old image (if a URL is provided)
-    /// and then uploads the new image, returning its preview URL.
+    ///     Replaces an existing image with a new one. It first deletes the old image (if a URL is provided)
+    ///     and then uploads the new image, returning its preview URL.
     /// </summary>
     /// <param name="newImageStream">The stream of the new image to upload.</param>
     /// <param name="originalFileName">The original file name of the new image, used to determine the file extension.</param>
     /// <param name="oldImageUrl">The URL of the old image to delete. Can be null or empty if there is no old image.</param>
-    /// <param name="containerPrefix">A prefix for the file name, typically used to organize files (e.g., "avatars", "products").</param>
+    /// <param name="containerPrefix">
+    ///     A prefix for the file name, typically used to organize files (e.g., "avatars",
+    ///     "products").
+    /// </param>
     /// <returns>The presigned preview URL of the newly uploaded image.</returns>
     public async Task<string> ReplaceImageAsync(Stream newImageStream, string originalFileName, string? oldImageUrl,
         string containerPrefix)
@@ -239,7 +244,6 @@ public class BlobService : IBlobService
         try
         {
             if (!string.IsNullOrWhiteSpace(oldImageUrl))
-            {
                 try
                 {
                     var oldFileName = Path.GetFileName(new Uri(oldImageUrl).LocalPath);
@@ -251,7 +255,6 @@ public class BlobService : IBlobService
                 {
                     _logger.Warn($"[ReplaceImageAsync] Failed to delete old image: {ex.Message}");
                 }
-            }
 
             var newFileName = $"{containerPrefix}/{Guid.NewGuid()}{Path.GetExtension(originalFileName)}";
             _logger.Info($"[ReplaceImageAsync] Uploading new image: {newFileName}");
@@ -270,7 +273,7 @@ public class BlobService : IBlobService
     }
 
     /// <summary>
-    /// Determines the MIME content type based on the file extension.
+    ///     Determines the MIME content type based on the file extension.
     /// </summary>
     /// <param name="fileName">The name of the file.</param>
     /// <returns>A string representing the MIME type.</returns>

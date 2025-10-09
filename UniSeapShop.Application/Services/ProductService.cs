@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using UniSeapShop.Application.Interfaces;
 using UniSeapShop.Application.Interfaces.Commons;
+using UniSeapShop.Application.Utils;
 using UniSeapShop.Domain.DTOs.CategoryDTOs;
 using UniSeapShop.Domain.DTOs.ProductDTOs;
 using UniSeapShop.Domain.Entities;
@@ -10,28 +11,55 @@ namespace UniSeapShop.Application.Services;
 
 public class ProductService : IProductService
 {
+    private readonly IBlobService _blobService;
     private readonly ILoggerService _loggerService;
     private readonly IUnitOfWork _unitOfWork;
 
-    public ProductService(IUnitOfWork unitOfWork, ILoggerService loggerService)
+    public ProductService(IUnitOfWork unitOfWork, ILoggerService loggerService, IBlobService blobService)
     {
         _unitOfWork = unitOfWork;
         _loggerService = loggerService;
+        _blobService = blobService;
     }
 
     public async Task<ProductDto> CreateProductAsunc(CreateProductDto createProductDto)
     {
+        // Tính toán giá sau khi giảm giá
         double Price = 0;
         if (createProductDto.Discount == 0)
             Price = createProductDto.OriginalPrice;
         else
-            Price = createProductDto.Discount / 100 * createProductDto.OriginalPrice;
+            Price = createProductDto.OriginalPrice - createProductDto.Discount / 100 * createProductDto.OriginalPrice;
+
+        // Xử lý upload hình ảnh nếu có
+        var productImageUrl = string.Empty;
+        if (createProductDto.ProductImageFile != null && createProductDto.ProductImageFile.Length > 0)
+            try
+            {
+                // Tạo tên file duy nhất dựa trên guid
+                var fileExtension = Path.GetExtension(createProductDto.ProductImageFile.FileName);
+                var fileName = $"products/{Guid.NewGuid()}{fileExtension}";
+
+                // Upload ảnh lên MinIO
+                using var stream = createProductDto.ProductImageFile.OpenReadStream();
+                await _blobService.UploadFileAsync(fileName, stream);
+
+                // Lấy URL xem trước của ảnh
+                productImageUrl = await _blobService.GetPreviewUrlAsync(fileName);
+                _loggerService.Success($"Product image uploaded successfully: {fileName}");
+            }
+            catch (Exception ex)
+            {
+                _loggerService.Error($"Error uploading product image: {ex.Message}");
+                throw ErrorHelper.Internal("Không thể tải lên hình ảnh sản phẩm.");
+            }
+
         var product = new Product
         {
             ProductName = createProductDto.ProductName,
             Description = createProductDto.Description,
             OriginalPrice = createProductDto.OriginalPrice,
-            ProductImage = createProductDto.ProductImage,
+            ProductImage = productImageUrl, // Lưu URL hình ảnh
             UsageHistory = createProductDto.UsageHistory,
             Price = Price,
             CategoryId = createProductDto.CategoryId,
@@ -39,9 +67,11 @@ public class ProductService : IProductService
             Supplier = GetSupplierbyIdAsync(createProductDto.SupplierId).Result,
             Category = GetCategoryByIdAsync(createProductDto.CategoryId).Result
         };
+
         await _unitOfWork.Products.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
         _loggerService.Success("Product created successfully.");
+
         return new ProductDto
         {
             Id = product.Id,
