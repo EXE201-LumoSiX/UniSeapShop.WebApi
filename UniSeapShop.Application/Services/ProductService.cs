@@ -191,7 +191,7 @@ public class ProductService : IProductService
     private async Task<Supplier> GetSupplierbyIdAsync(Guid supplierId)
     {
         var supplier = await _unitOfWork.Suppliers.GetByIdAsync(supplierId);
-        if (supplier == null || supplier.User == null)
+        if (supplier == null)
         {
             //var user = await _unitOfWork.Users.GetByIdAsync(supplierId);
             //supplier.User = user;
