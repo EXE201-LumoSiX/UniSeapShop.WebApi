@@ -79,9 +79,9 @@ public class ProductService : IProductService
             ProductImage = product.ProductImage,
             Description = product.Description,
             Price = product.Price,
-            CategoryId = product.CategoryId,
+            CategoryName = GetCategoryByIdAsync(product.CategoryId).Result.CategoryName,
             Quantity = product.Quantity,
-            SupplierId = product.SupplierId
+            SupplierName = GetUserbySupplierIdAsync(product.SupplierId).Result
         };
     }
 
@@ -112,9 +112,9 @@ public class ProductService : IProductService
             ProductName = p.ProductName,
             Description = p.Description,
             Price = p.Price,
-            CategoryId = p.CategoryId,
+            CategoryName = GetCategoryByIdAsync(p.CategoryId).Result.CategoryName,
             Quantity = p.Quantity,
-            SupplierId = p.SupplierId
+            SupplierName = GetUserbySupplierIdAsync(p.SupplierId).Result
         }).ToList();
     }
 
@@ -171,7 +171,7 @@ public class ProductService : IProductService
             ProductName = product.ProductName,
             Description = product.Description,
             Price = product.Price,
-            CategoryId = product.CategoryId,
+            CategoryName = GetCategoryByIdAsync(product.CategoryId).Result.CategoryName,
             Quantity = product.Quantity
         };
     }
@@ -191,8 +191,10 @@ public class ProductService : IProductService
     private async Task<Supplier> GetSupplierbyIdAsync(Guid supplierId)
     {
         var supplier = await _unitOfWork.Suppliers.GetByIdAsync(supplierId);
-        if (supplier == null)
+        if (supplier == null || supplier.User == null)
         {
+            //var user = await _unitOfWork.Users.GetByIdAsync(supplierId);
+            //supplier.User = user;
             _loggerService.Error("Supplier not found.");
             throw new KeyNotFoundException("Supplier not found.");
         }

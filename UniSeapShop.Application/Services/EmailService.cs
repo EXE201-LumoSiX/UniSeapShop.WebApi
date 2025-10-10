@@ -28,11 +28,11 @@ public class EmailService : IEmailService
                         <h1 style=""color:#d02a2a;font-size:22px;"">Chào mừng {request.UserName}!</h1>
                         <p>Bạn đã đăng ký thành công tài khoản tại BlindTreasure.</p>
                         <p>Chúc bạn có trải nghiệm tuyệt vời.</p>
-                        <p style=""margin-top:30px;"">Trân trọng,<br/>Đội ngũ BlindTreasure</p>
+                        <p style=""margin-top:30px;"">Trân trọng,<br/>Đội ngũ Uniseap Shop</p>
                       </div>
                     </body>
                   </html>";
-        await SendEmailAsync(request.To, "Đăng ký thành công tại BlindTreasure", html);
+        await SendEmailAsync(request.To, "Đăng ký thành công tại Uniseap Shop!", html);
     }
 
     public async Task SendOtpVerificationEmailAsync(EmailRequestDto request)
@@ -45,11 +45,11 @@ public class EmailService : IEmailService
                         <p>Mã của bạn:</p>
                         <p style=""font-size:28px;color:#d02a2a;font-weight:bold;"">{request.Otp}</p>
                         <p style=""font-size:14px;"">Mã hết hạn sau 10 phút. Không chia sẻ với người khác.</p>
-                        <p style=""margin-top:30px;"">Trân trọng,<br/>Đội ngũ BlindTreasure</p>
+                        <p style=""margin-top:30px;"">Trân trọng,<br/>Đội ngũ Uniseap Shop</p>
                       </div>
                     </body>
                   </html>";
-        await SendEmailAsync(request.To, "Xác thực OTP tại BlindTreasure", html);
+        await SendEmailAsync(request.To, "Xác thực OTP tại Uniseap Shop", html);
     }
 
     public async Task SendForgotPasswordOtpEmailAsync(EmailRequestDto request)
@@ -62,11 +62,11 @@ public class EmailService : IEmailService
                           <p>Mã OTP của bạn:</p>
                           <p style=""font-size:28px;color:#d02a2a;font-weight:bold;"">{request.Otp}</p>
                           <p style=""font-size:14px;"">Mã hết hạn sau 10 phút. Không chia sẻ với người khác.</p>
-                          <p style=""margin-top:30px;"">Trân trọng,<br/>Đội ngũ BlindTreasure</p>
+                          <p style=""margin-top:30px;"">Trân trọng,<br/>Đội ngũ Uniseap Shop</p>
                         </div>
                       </body>
                     </html>";
-        await SendEmailAsync(request.To, "OTP lấy lại mật khẩu tại BlindTreasure", html);
+        await SendEmailAsync(request.To, "OTP lấy lại mật khẩu tại Uniseap Shop", html);
     }
 
     public async Task SendPasswordChangeEmailAsync(EmailRequestDto request)
@@ -78,11 +78,11 @@ public class EmailService : IEmailService
                         <h1 style=""color:#d02a2a;font-size:22px;"">Thay đổi mật khẩu thành công</h1>
                         <p>Mật khẩu của bạn đã được cập nhật.</p>
                         <p>Nếu không phải bạn thực hiện, vui lòng liên hệ ngay.</p>
-                        <p style=""margin-top:30px;"">Trân trọng,<br/>Đội ngũ BlindTreasure</p>
+                        <p style=""margin-top:30px;"">Trân trọng,<br/>Đội ngũ Uniseap Shop</p>
                       </div>
                     </body>
                   </html>";
-        await SendEmailAsync(request.To, "Mật khẩu đã được thay đổi tại BlindTreasure", html);
+        await SendEmailAsync(request.To, "Mật khẩu đã được thay đổi tại Uniseap Shop", html);
     }
 
     private async Task SendEmailAsync(string to, string subject, string htmlContent)
