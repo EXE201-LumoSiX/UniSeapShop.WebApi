@@ -34,4 +34,5 @@ public interface IGenericRepository<TEntity> where TEntity : BaseEntity
     Task<bool> HardRemove(Expression<Func<TEntity, bool>> predicate);
 
     Task<int> CountAsync(Expression<Func<TEntity, bool>> predicate);
+    Task<bool> HardRemoveAsyn(TEntity entity);
 }
