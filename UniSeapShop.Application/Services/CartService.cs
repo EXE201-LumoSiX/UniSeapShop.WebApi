@@ -44,7 +44,7 @@ public class CartService : ICartService
             throw ErrorHelper.NotFound("Cart not found.");
         }
 
-        var cartItems = await _unitOfWork.CartItems.GetAllAsync(ci => ci.CartId == cart.Id && !ci.IsDeleted);
+        var cartItems = await _unitOfWork.CartItems.GetAllAsync(ci => ci.CartId == cart.Id);
         var productIds = cartItems.Select(ci => ci.ProductId).Distinct().ToList();
         var products = await _unitOfWork.Products.GetAllAsync(p => productIds.Contains(p.Id));
         var productDict = products.ToDictionary(p => p.Id, p => p);
@@ -203,7 +203,7 @@ public class CartService : ICartService
             throw ErrorHelper.NotFound("Product not found in cart.");
         }
 
-        await _unitOfWork.CartItems.SoftRemove(cartItem);
+        await _unitOfWork.CartItems.HardRemoveAsyn(cartItem);
         await _unitOfWork.SaveChangesAsync();
 
         _loggerService.Success($"Product {productId} removed from cart for user {userId}");
@@ -253,7 +253,7 @@ public class CartService : ICartService
             return await MapToDto(cart, userId, new List<CartItem>(), new Dictionary<Guid, Product>());
         }
 
-        await _unitOfWork.CartItems.SoftRemoveRange(cart.CartItems);
+        await _unitOfWork.CartItems.HardRemoveRange(cart.CartItems);
         await _unitOfWork.SaveChangesAsync();
 
         _loggerService.Success($"All items removed from cart for user {userId}");
