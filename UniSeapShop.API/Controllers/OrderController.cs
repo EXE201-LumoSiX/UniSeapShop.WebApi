@@ -28,7 +28,7 @@ public class OrderController : ControllerBase
     /// <response code="200">Returns the list of paid orders.</response>
     /// <response code="401">Unauthorized if the user is not authenticated.</response>
     [HttpGet("customer/paid-orders")]
-    [Authorize(Roles = "Customer")] // Only accessible by customers
+    [Authorize(Roles = "User")] // Only accessible by customers
     [ProducesResponseType(typeof(ApiResult<List<OrderDto>>), 200)]
     [ProducesResponseType(401)]
     public async Task<IActionResult> GetPaidOrdersForCustomer()
@@ -53,7 +53,7 @@ public class OrderController : ControllerBase
     /// <response code="200">Returns the list of sold products.</response>
     /// <response code="401">Unauthorized if the user is not authenticated.</response>
     [HttpGet("supplier/sold-products")]
-    [Authorize(Roles = "Supplier")] // Only accessible by suppliers
+    [Authorize(Roles = "User")] // Only accessible by suppliers
     [ProducesResponseType(typeof(ApiResult<List<OrderDetailDto>>), 200)]
     [ProducesResponseType(401)]
     public async Task<IActionResult> GetSoldProductsForSupplier()

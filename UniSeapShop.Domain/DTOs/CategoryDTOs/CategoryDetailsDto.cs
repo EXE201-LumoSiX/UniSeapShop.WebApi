@@ -1,4 +1,4 @@
-﻿using UniSeapShop.Domain.Entities;
+﻿using UniSeapShop.Domain.Enums;
 
 namespace UniSeapShop.Domain.DTOs.CategoryDTOs;
 
@@ -21,4 +21,6 @@ public class ProductDto
     public string CategoryName { get; set; } = string.Empty;
     public int Quantity { get; set; }
     public string SupplierName { get; set; } = string.Empty;
+
+    public ProductCondition ProductCondition { get; set; }
 }

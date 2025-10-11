@@ -44,7 +44,7 @@ public class CartService : ICartService
             throw ErrorHelper.NotFound("Cart not found.");
         }
 
-        var cartItems = await _unitOfWork.CartItems.GetAllAsync(ci => ci.CartId == cart.Id);
+        var cartItems = await _unitOfWork.CartItems.GetAllAsync(ci => ci.CartId == cart.Id && !ci.IsDeleted);
         var productIds = cartItems.Select(ci => ci.ProductId).Distinct().ToList();
         var products = await _unitOfWork.Products.GetAllAsync(p => productIds.Contains(p.Id));
         var productDict = products.ToDictionary(p => p.Id, p => p);
@@ -209,7 +209,7 @@ public class CartService : ICartService
         _loggerService.Success($"Product {productId} removed from cart for user {userId}");
 
         // Lấy tất cả cart items sau khi xóa
-        var cartItems = await _unitOfWork.CartItems.GetAllAsync(ci => ci.CartId == cart.Id);
+        var cartItems = await _unitOfWork.CartItems.GetAllAsync(ci => ci.CartId == cart.Id && !cartItem.IsDeleted);
 
         // Chuẩn bị Dictionary sản phẩm nếu còn sản phẩm trong giỏ hàng
         Dictionary<Guid, Product> productDict = new();
