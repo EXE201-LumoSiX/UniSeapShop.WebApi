@@ -78,6 +78,7 @@ public class ProductService : IProductService
             ProductName = product.ProductName,
             ProductImage = product.ProductImage,
             Description = product.Description,
+            ProductCondition = product.Condition,
             Price = product.Price,
             CategoryName = GetCategoryByIdAsync(product.CategoryId).Result.CategoryName,
             Quantity = product.Quantity,
@@ -114,7 +115,8 @@ public class ProductService : IProductService
             Price = p.Price,
             CategoryName = GetCategoryByIdAsync(p.CategoryId).Result.CategoryName,
             Quantity = p.Quantity,
-            SupplierName = GetUserbySupplierIdAsync(p.SupplierId).Result
+            SupplierName = GetUserbySupplierIdAsync(p.SupplierId).Result,
+            ProductCondition = p.Condition,
         }).ToList();
     }
 
@@ -139,7 +141,8 @@ public class ProductService : IProductService
             Price = product.Price,
             Quantity = product.Quantity,
             CategoryName = product.Category.CategoryName,
-            SupplierName = GetUserbySupplierIdAsync(product.SupplierId).Result
+            SupplierName = GetUserbySupplierIdAsync(product.SupplierId).Result,
+            ProductCondition = product.Condition,
         };
     }
 
@@ -156,6 +159,7 @@ public class ProductService : IProductService
         product.Description = updateProductDto.Description;
         product.Price = updateProductDto.Price;
         product.Quantity = updateProductDto.Quantity;
+        product.Condition = updateProductDto.Condition;
         if (product.CategoryId != updateProductDto.CategoryId)
         {
             product.Category = await GetCategoryByIdAsync(updateProductDto.CategoryId);
@@ -171,6 +175,7 @@ public class ProductService : IProductService
             ProductName = product.ProductName,
             Description = product.Description,
             Price = product.Price,
+            ProductCondition = product.Condition,
             CategoryName = GetCategoryByIdAsync(product.CategoryId).Result.CategoryName,
             Quantity = product.Quantity
         };
@@ -191,7 +196,7 @@ public class ProductService : IProductService
     private async Task<Supplier> GetSupplierbyIdAsync(Guid supplierId)
     {
         var supplier = await _unitOfWork.Suppliers.GetByIdAsync(supplierId);
-        if (supplier == null || supplier.User == null)
+        if (supplier == null)
         {
             //var user = await _unitOfWork.Users.GetByIdAsync(supplierId);
             //supplier.User = user;

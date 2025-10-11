@@ -1,4 +1,4 @@
-namespace UniSeapShop.Domain.Enums;
+﻿namespace UniSeapShop.Domain.Enums;
 
 public enum ProductCondition
 {
