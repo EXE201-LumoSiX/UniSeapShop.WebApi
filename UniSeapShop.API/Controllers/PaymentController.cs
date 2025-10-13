@@ -24,7 +24,7 @@ public class PaymentController : ControllerBase
     }
 
     /// <summary>
-    ///     Get all payments with optional filtering
+    ///     Xem danh sách thanh toán
     /// </summary>
     [HttpGet]
     [Authorize]
@@ -47,38 +47,8 @@ public class PaymentController : ControllerBase
     }
 
     /// <summary>
-    ///     Create payment link from current user's cart
+    ///     Tạo link thanh toán cho đơn hàng có sẵn
     /// </summary>
-    [HttpPost("create-link")]
-    [Authorize]
-    public async Task<IActionResult> CreatePaymentLink([FromBody] CreatePaymentDto createPaymentDto)
-    {
-        try
-        {
-            var userId = _claimsService.CurrentUserId;
-
-            var createOrderDto = new CreateOrderDto
-            {
-                ShipAddress = createPaymentDto.ShipAddress,
-                PaymentGateway = createPaymentDto.PaymentGateway
-            };
-
-            var paymentUrl = await _paymentService.ProcessPayment(userId, createOrderDto);
-
-            return Ok(ApiResult<string>.Success(paymentUrl, "200", "Payment link created successfully"));
-        }
-        catch (Exception ex)
-        {
-            var statusCode = ExceptionUtils.ExtractStatusCode(ex);
-            var errorResponse = ExceptionUtils.CreateErrorResponse<string>(ex);
-            return StatusCode(statusCode, errorResponse);
-        }
-    }
-
-    /// <summary>
-    ///     Create payment link for an existing order
-    /// </summary>
-    /// <param name="orderId">The ID of the order to create payment for</param>
     [HttpPost("create-link/{orderId:guid}")]
     [Authorize]
     public async Task<IActionResult> CreatePaymentLinkForOrder(Guid orderId)
@@ -97,7 +67,7 @@ public class PaymentController : ControllerBase
     }
 
     /// <summary>
-    ///     Get payment status by payment ID
+    ///     Kiểm tra trạng thái thanh toán
     /// </summary>
     [HttpGet("{paymentId}")]
     [Authorize]

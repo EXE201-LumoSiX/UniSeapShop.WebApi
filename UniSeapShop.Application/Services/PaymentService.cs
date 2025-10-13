@@ -208,7 +208,8 @@ public class PaymentService : IPaymentService
             // Check if order is in correct status for payment
             if (order.Status != OrderStatus.Pending)
             {
-                _loggerService.Error($"[PAYMENT_FOR_ORDER] Order status is not Pending. Current status: {order.Status}");
+                _loggerService.Error(
+                    $"[PAYMENT_FOR_ORDER] Order status is not Pending. Current status: {order.Status}");
                 throw ErrorHelper.BadRequest("Order is not available for payment");
             }
 
@@ -249,10 +250,8 @@ public class PaymentService : IPaymentService
             _loggerService.Info("[PAYMENT_FOR_ORDER] Phase 3: Preparing PayOS payment data");
             var itemList = new List<ItemData>();
             foreach (var detail in order.OrderDetails)
-            {
                 itemList.Add(new ItemData($"{detail.Product.ProductName} x{detail.Quantity}", detail.Quantity,
                     (int)detail.UnitPrice));
-            }
             _loggerService.Info($"[PAYMENT_FOR_ORDER] Phase 3: Item list prepared - {itemList.Count} items");
 
             var orderCode = DateTime.Now.Ticks % 1000000000; // Simple order code generation

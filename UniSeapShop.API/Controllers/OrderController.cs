@@ -6,12 +6,9 @@ using UniSeapShop.Domain.DTOs.OrderDTOs;
 
 namespace UniSeapShop.API.Controllers;
 
-/// <summary>
-///     Controller for managing orders.
-/// </summary>
 [Route("api/orders")]
 [ApiController]
-[Authorize] // Require authentication for all endpoints
+[Authorize]
 public class OrderController : ControllerBase
 {
     private readonly IOrderService _orderService;
@@ -22,13 +19,11 @@ public class OrderController : ControllerBase
     }
 
     /// <summary>
-    ///     Get all paid orders for the current customer.
+    ///     Xem danh sách đơn hàng đã thanh toán
     /// </summary>
-    /// <returns>List of paid orders.</returns>
-    /// <response code="200">Returns the list of paid orders.</response>
-    /// <response code="401">Unauthorized if the user is not authenticated.</response>
+    /// <returns>Danh sách đơn hàng đã thanh toán</returns>
     [HttpGet("customer/paid-orders")]
-    [Authorize(Roles = "User")] // Only accessible by customers
+    [Authorize(Roles = "Customer")] // Only accessible by customers
     [ProducesResponseType(typeof(ApiResult<List<OrderDto>>), 200)]
     [ProducesResponseType(401)]
     public async Task<IActionResult> GetPaidOrdersForCustomer()
@@ -47,13 +42,10 @@ public class OrderController : ControllerBase
     }
 
     /// <summary>
-    ///     Get all sold products for the current supplier.
+    ///     Xem sản phẩm đã bán (dành cho nhà cung cấp)
     /// </summary>
-    /// <returns>List of sold products.</returns>
-    /// <response code="200">Returns the list of sold products.</response>
-    /// <response code="401">Unauthorized if the user is not authenticated.</response>
     [HttpGet("supplier/sold-products")]
-    [Authorize(Roles = "User")] // Only accessible by suppliers
+    [Authorize(Roles = "Supplier")] // Only accessible by suppliers
     [ProducesResponseType(typeof(ApiResult<List<OrderDetailDto>>), 200)]
     [ProducesResponseType(401)]
     public async Task<IActionResult> GetSoldProductsForSupplier()
@@ -73,16 +65,12 @@ public class OrderController : ControllerBase
     }
 
     /// <summary>
-    ///     Create an order from the current user's cart.
+    ///     Tạo đơn hàng từ giỏ hàng
     /// </summary>
-    /// <param name="createOrderDto">Order creation data including ship address.</param>
-    /// <returns>Created order information.</returns>
-    /// <response code="200">Returns the created order.</response>
-    /// <response code="400">Bad request if cart is empty or insufficient stock.</response>
-    /// <response code="401">Unauthorized if the user is not authenticated.</response>
-    /// <response code="404">Not found if customer or cart not found.</response>
+    /// <param name="createOrderDto">Thông tin đơn hàng bao gồm địa chỉ giao hàng</param>
+    /// <returns>Thông tin đơn hàng vừa tạo</returns>
     [HttpPost]
-    [Authorize(Roles = "User")] // Only accessible by customers
+    [Authorize(Roles = "Customer")] // Only accessible by customers
     [ProducesResponseType(typeof(ApiResult<OrderDto>), 200)]
     [ProducesResponseType(400)]
     [ProducesResponseType(401)]

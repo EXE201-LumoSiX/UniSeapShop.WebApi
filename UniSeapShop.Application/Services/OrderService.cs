@@ -80,7 +80,7 @@ public class OrderService : IOrderService
     {
         var customerId = _claimsService.CurrentUserId;
         _loggerService.Info($"Creating order from cart for customer with ID: {customerId}");
-        
+
         try
         {
             var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == customerId);
@@ -121,7 +121,8 @@ public class OrderService : IOrderService
                     throw ErrorHelper.NotFound($"Product with ID {cartItem.ProductId} not found");
 
                 if (product.Quantity < cartItem.Quantity)
-                    throw ErrorHelper.BadRequest($"Insufficient stock for product {product.ProductName}. Available: {product.Quantity}, Requested: {cartItem.Quantity}");
+                    throw ErrorHelper.BadRequest(
+                        $"Insufficient stock for product {product.ProductName}. Available: {product.Quantity}, Requested: {cartItem.Quantity}");
 
                 var totalPrice = (decimal)product.Price * cartItem.Quantity;
                 totalAmount += totalPrice;
@@ -169,10 +170,7 @@ public class OrderService : IOrderService
             }
 
             // Remove checked items from cart
-            foreach (var checkedItem in checkedItems)
-            {
-                await _unitOfWork.CartItems.HardRemoveAsyn(checkedItem);
-            }
+            foreach (var checkedItem in checkedItems) await _unitOfWork.CartItems.HardRemoveAsyn(checkedItem);
 
             await _unitOfWork.SaveChangesAsync();
 

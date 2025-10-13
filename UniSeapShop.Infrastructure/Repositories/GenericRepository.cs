@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore;
 using UniSeapShop.Domain;
 using UniSeapShop.Domain.Entities;
 using UniSeapShop.Infrastructure.Interfaces;

@@ -120,10 +120,8 @@ public class AuthService : IAuthService
             };
             return userDto;
         }
-        else
-        {
-            return null;
-        }
+
+        return null;
     }
 
     public async Task<UserDto?> RegisterSupplierAsync(SellerRegistrationDto dto)

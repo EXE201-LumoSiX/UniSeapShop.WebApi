@@ -81,6 +81,7 @@
 <summary><strong>POST /api/payments/create-link/{orderId} (Tạo link thanh toán)</strong></summary>
 
 **URL Path Parameter:**
+
 - `orderId`: ID của đơn hàng đã tạo (ví dụ: 550e8400-e29b-41d4-a716-446655440000)
 
 **Success Response (Phản hồi thành công):**
@@ -206,15 +207,15 @@ createOrder();
 
 ## Lỗi Thường gặp & Cấu hình
 
-| Lỗi                                   | Nguyên nhân có thể                                                   |
-|:--------------------------------------|:---------------------------------------------------------------------|
-| `Customer not found`                  | Người dùng chưa đăng nhập (thiếu hoặc sai JWT token).               |
-| `Cart not found`                      | Giỏ hàng của người dùng trống hoặc không tồn tại.                   |
-| `No items in cart`                    | Giỏ hàng có tồn tại nhưng không có sản phẩm nào.                    |
-| `Order not found`                     | ID đơn hàng không tồn tại hoặc không phải của người dùng.           |
-| `Order is not available for payment` | Đơn hàng không ở trạng thái Pending (có thể đã thanh toán).         |
-| `Insufficient stock`                  | Không đủ hàng trong kho cho một hoặc nhiều sản phẩm.                |
-| `PayOS error`                         | Sai API keys trong file cấu hình môi trường.                        |
+| Lỗi                                  | Nguyên nhân có thể                                          |
+|:-------------------------------------|:------------------------------------------------------------|
+| `Customer not found`                 | Người dùng chưa đăng nhập (thiếu hoặc sai JWT token).       |
+| `Cart not found`                     | Giỏ hàng của người dùng trống hoặc không tồn tại.           |
+| `No items in cart`                   | Giỏ hàng có tồn tại nhưng không có sản phẩm nào.            |
+| `Order not found`                    | ID đơn hàng không tồn tại hoặc không phải của người dùng.   |
+| `Order is not available for payment` | Đơn hàng không ở trạng thái Pending (có thể đã thanh toán). |
+| `Insufficient stock`                 | Không đủ hàng trong kho cho một hoặc nhiều sản phẩm.        |
+| `PayOS error`                        | Sai API keys trong file cấu hình môi trường.                |
 
 ## Ưu điểm của Luồng Thanh toán
 
