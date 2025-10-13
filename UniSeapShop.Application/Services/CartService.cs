@@ -152,7 +152,7 @@ public class CartService : ICartService
 
         if (updateItemDto.Quantity <= 0)
         {
-            await _unitOfWork.CartItems.SoftRemove(cartItem);
+            await _unitOfWork.CartItems.HardRemoveAsyn(cartItem);
         }
         else
         {
