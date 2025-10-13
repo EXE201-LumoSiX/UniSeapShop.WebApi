@@ -37,6 +37,9 @@ public static class IocContainer
         //Add business services
         services.SetupBusinessServicesLayer();
         services.SetupPayOSService();
+        
+        //Add HttpContextAccessor for role-based checks
+        services.AddHttpContextAccessor();
 
         services.SetupJwt();
         // services.SetupGraphQl();

@@ -81,20 +81,19 @@ public class AuthController : ControllerBase
 
     [HttpPost("check-exist-supplier")]
     [Authorize]
-    public async Task<IActionResult> CheckExistSupplier([FromBody]string email)
+    public async Task<IActionResult> CheckExistSupplier([FromBody] string email)
     {
         try
         {
             var result = await _authService.CheckExistSupplier(email);
             return Ok(ApiResult<object>.Success(result!, "200", ""));
         }
-        catch(Exception ex) 
-        { 
+        catch (Exception ex)
+        {
             var statusCode = ExceptionUtils.ExtractStatusCode(ex);
             var errorResponse = ExceptionUtils.CreateErrorResponse<UserDto>(ex);
             return StatusCode(statusCode, errorResponse);
         }
-
     }
 
     [HttpPost("verify-otp")]
