@@ -12,5 +12,5 @@ public class CreateProductDto
     public Guid CategoryId { get; set; }
     public int Quantity { get; set; }
     public Guid SupplierId { get; set; }
-    public double Discount { get; set; } = 0; 
+    public double Discount { get; set; } = 0;
 }

@@ -116,7 +116,7 @@ public class ProductService : IProductService
             CategoryName = GetCategoryByIdAsync(p.CategoryId).Result.CategoryName,
             Quantity = p.Quantity,
             SupplierName = GetUserbySupplierIdAsync(p.SupplierId).Result,
-            ProductCondition = p.Condition,
+            ProductCondition = p.Condition
         }).ToList();
     }
 
@@ -142,7 +142,7 @@ public class ProductService : IProductService
             Quantity = product.Quantity,
             CategoryName = product.Category.CategoryName,
             SupplierName = GetUserbySupplierIdAsync(product.SupplierId).Result,
-            ProductCondition = product.Condition,
+            ProductCondition = product.Condition
         };
     }
 
