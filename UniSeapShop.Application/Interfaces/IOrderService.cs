@@ -7,4 +7,6 @@ public interface IOrderService
     Task<List<OrderDto>> GetPaidOrdersForCustomer();
     Task<List<OrderDetailDto>> GetSoldProductsForSupplier();
     Task<OrderDto> CreateOrderFromCart(CreateOrderDto createOrderDto);
+    Task<List<OrderDto>> GetOrders();
+    Task<OrderDto> GetOrderById(Guid id);
 }

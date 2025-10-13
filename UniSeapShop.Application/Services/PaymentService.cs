@@ -194,23 +194,82 @@ public class PaymentService : IPaymentService
         _loggerService.Info($"[PAYMENT_FOR_ORDER] Starting payment process for OrderId: {orderId}");
         try
         {
+            // Validation: Check if orderId is valid GUID
+            if (orderId == Guid.Empty)
+            {
+                _loggerService.Error("[PAYMENT_FOR_ORDER] Invalid OrderId: Empty GUID");
+                throw ErrorHelper.BadRequest("Invalid order ID");
+            }
+            
             _loggerService.Info($"[PAYMENT_FOR_ORDER] Phase 1: Finding order with OrderId: {orderId}");
-            var order = await _unitOfWork.Orders.GetByIdAsync(orderId, o => o.Customer, o => o.OrderDetails);
+            
+            // Load the order using the repository
+            var order = await _unitOfWork.Orders.GetByIdAsync(orderId, o => o.Customer);
             if (order == null)
             {
                 _loggerService.Error($"[PAYMENT_FOR_ORDER] Phase 1 FAILED: Order not found for OrderId: {orderId}");
                 throw ErrorHelper.NotFound("Order not found");
             }
+            
+            // Validation: Check if order already has a completed or pending payment
+            var existingPayments = await _unitOfWork.Payments.GetAllAsync(p => p.OrderId == orderId);
+            if (existingPayments != null && existingPayments.Any())
+            {
+                var completedPayment = existingPayments.FirstOrDefault(p => p.Status == PaymentStatus.Completed);
+                if (completedPayment != null)
+                {
+                    _loggerService.Error($"[PAYMENT_FOR_ORDER] Order {orderId} already has a completed payment - PaymentId: {completedPayment.Id}");
+                    throw ErrorHelper.BadRequest("This order has already been paid");
+                }
+                
+                var pendingPayment = existingPayments.FirstOrDefault(p => p.Status == PaymentStatus.Pending);
+                if (pendingPayment != null)
+                {
+                    _loggerService.Warn($"[PAYMENT_FOR_ORDER] Order {orderId} already has a pending payment - PaymentId: {pendingPayment.Id}");
+                    throw ErrorHelper.BadRequest($"This order already has a pending payment. Please complete or cancel the existing payment first.");
+                }
+            }
+            
+            // Load order details separately with product information
+            var orderDetails = await _unitOfWork.OrderDetails.GetAllAsync(
+                od => od.OrderId == orderId,
+                od => od.Product);
+                
+            if (orderDetails != null && orderDetails.Any())
+            {
+                // Assign the loaded order details to the order
+                order.OrderDetails = orderDetails;
+                _loggerService.Info($"[PAYMENT_FOR_ORDER] Loaded {orderDetails.Count} order details with products");
+            }
+            else 
+            {
+                _loggerService.Error($"[PAYMENT_FOR_ORDER] No order details found for OrderId: {orderId}");
+                throw ErrorHelper.BadRequest("Order has no items");
+            }
 
             _loggerService.Info(
                 $"[PAYMENT_FOR_ORDER] Phase 1 SUCCESS: Order found - OrderId: {order.Id}, TotalAmount: {order.TotalAmount}");
 
-            // Check if order is in correct status for payment
+            // Validation: Check if order is in correct status for payment
             if (order.Status != OrderStatus.Pending)
             {
                 _loggerService.Error(
                     $"[PAYMENT_FOR_ORDER] Order status is not Pending. Current status: {order.Status}");
-                throw ErrorHelper.BadRequest("Order is not available for payment");
+                throw ErrorHelper.BadRequest($"Order is not available for payment. Current status: {order.Status}");
+            }
+            
+            // Validation: Check if order has valid total amount
+            if (order.TotalAmount <= 0)
+            {
+                _loggerService.Error($"[PAYMENT_FOR_ORDER] Invalid order total amount: {order.TotalAmount}");
+                throw ErrorHelper.BadRequest("Order total amount must be greater than zero");
+            }
+            
+            // Validation: Check if customer exists
+            if (order.Customer == null)
+            {
+                _loggerService.Error($"[PAYMENT_FOR_ORDER] Customer not found for order {orderId}");
+                throw ErrorHelper.BadRequest("Customer information is missing");
             }
 
             // Get redirect URL from configuration or use default
@@ -249,9 +308,41 @@ public class PaymentService : IPaymentService
 
             _loggerService.Info("[PAYMENT_FOR_ORDER] Phase 3: Preparing PayOS payment data");
             var itemList = new List<ItemData>();
-            foreach (var detail in order.OrderDetails)
-                itemList.Add(new ItemData($"{detail.Product.ProductName} x{detail.Quantity}", detail.Quantity,
-                    (int)detail.UnitPrice));
+            
+            // Safely process OrderDetails with proper null checks
+            if (order.OrderDetails != null && order.OrderDetails.Any())
+            {
+                _loggerService.Info($"[PAYMENT_FOR_ORDER] Processing {order.OrderDetails.Count} items for payment");
+                
+                foreach (var detail in order.OrderDetails)
+                {
+                    if (detail == null)
+                    {
+                        _loggerService.Error("[PAYMENT_FOR_ORDER] Skipping null order detail");
+                        continue;
+                    }
+                    
+                    if (detail.Product != null)
+                    {
+                        _loggerService.Info($"[PAYMENT_FOR_ORDER] Adding product to payment: {detail.Product.ProductName}, Quantity: {detail.Quantity}");
+                        itemList.Add(new ItemData($"{detail.Product.ProductName} x{detail.Quantity}", detail.Quantity,
+                            (int)detail.UnitPrice));
+                    }
+                    else
+                    {
+                        // If product is null, use a generic name
+                        _loggerService.Warn($"[PAYMENT_FOR_ORDER] Product data missing for detail with ProductId: {detail.ProductId}, using fallback name");
+                        itemList.Add(new ItemData($"Product ID: {detail.ProductId} x{detail.Quantity}", detail.Quantity,
+                            (int)detail.UnitPrice));
+                    }
+                }
+            }
+            else
+            {
+                // If no order details, create a single generic item
+                _loggerService.Warn($"[PAYMENT_FOR_ORDER] No order details available, creating generic payment item");
+                itemList.Add(new ItemData("Order Payment", 1, (int)order.TotalAmount));
+            }
             _loggerService.Info($"[PAYMENT_FOR_ORDER] Phase 3: Item list prepared - {itemList.Count} items");
 
             var orderCode = DateTime.Now.Ticks % 1000000000; // Simple order code generation

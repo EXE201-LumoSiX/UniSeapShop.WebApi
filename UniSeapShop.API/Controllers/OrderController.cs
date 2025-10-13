@@ -40,6 +40,56 @@ public class OrderController : ControllerBase
             return StatusCode(statusCode, errorResponse);
         }
     }
+    
+    /// <summary>
+    ///     Xem tất cả đơn hàng của người dùng hiện tại
+    /// </summary>
+    /// <returns>Danh sách tất cả đơn hàng</returns>
+    [HttpGet]
+    [Authorize(Roles = "Customer")]
+    [ProducesResponseType(typeof(ApiResult<List<OrderDto>>), 200)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> GetOrders()
+    {
+        try
+        {
+            var orders = await _orderService.GetOrders();
+            return Ok(ApiResult<List<OrderDto>>.Success(orders, "200", "Fetched orders successfully."));
+        }
+        catch (Exception ex)
+        {
+            var statusCode = ExceptionUtils.ExtractStatusCode(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<List<OrderDto>>(ex);
+            return StatusCode(statusCode, errorResponse);
+        }
+    }
+    
+    /// <summary>
+    ///     Xem chi tiết đơn hàng theo ID
+    /// </summary>
+    /// <param name="id">ID của đơn hàng cần xem</param>
+    /// <returns>Chi tiết đơn hàng</returns>
+    [HttpGet("{id}")]
+    [Authorize]
+    [ProducesResponseType(typeof(ApiResult<OrderDto>), 200)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> GetOrderById(Guid id)
+    {
+        try
+        {
+            var order = await _orderService.GetOrderById(id);
+            return Ok(ApiResult<OrderDto>.Success(order, "200", "Fetched order successfully."));
+        }
+        catch (Exception ex)
+        {
+            var statusCode = ExceptionUtils.ExtractStatusCode(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<OrderDto>(ex);
+            return StatusCode(statusCode, errorResponse);
+        }
+    }
 
     /// <summary>
     ///     Xem sản phẩm đã bán (dành cho nhà cung cấp)
