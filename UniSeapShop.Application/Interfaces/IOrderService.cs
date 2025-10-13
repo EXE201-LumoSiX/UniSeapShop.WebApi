@@ -6,4 +6,5 @@ public interface IOrderService
 {
     Task<List<OrderDto>> GetPaidOrdersForCustomer();
     Task<List<OrderDetailDto>> GetSoldProductsForSupplier();
+    Task<OrderDto> CreateOrderFromCart(CreateOrderDto createOrderDto);
 }

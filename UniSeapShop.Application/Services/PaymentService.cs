@@ -189,6 +189,123 @@ public class PaymentService : IPaymentService
         }
     }
 
+    public async Task<string> ProcessPaymentForOrder(Guid orderId)
+    {
+        _loggerService.Info($"[PAYMENT_FOR_ORDER] Starting payment process for OrderId: {orderId}");
+        try
+        {
+            _loggerService.Info($"[PAYMENT_FOR_ORDER] Phase 1: Finding order with OrderId: {orderId}");
+            var order = await _unitOfWork.Orders.GetByIdAsync(orderId, o => o.Customer, o => o.OrderDetails);
+            if (order == null)
+            {
+                _loggerService.Error($"[PAYMENT_FOR_ORDER] Phase 1 FAILED: Order not found for OrderId: {orderId}");
+                throw ErrorHelper.NotFound("Order not found");
+            }
+
+            _loggerService.Info(
+                $"[PAYMENT_FOR_ORDER] Phase 1 SUCCESS: Order found - OrderId: {order.Id}, TotalAmount: {order.TotalAmount}");
+
+            // Check if order is in correct status for payment
+            if (order.Status != OrderStatus.Pending)
+            {
+                _loggerService.Error($"[PAYMENT_FOR_ORDER] Order status is not Pending. Current status: {order.Status}");
+                throw ErrorHelper.BadRequest("Order is not available for payment");
+            }
+
+            // Get redirect URL from configuration or use default
+            _loggerService.Info("[PAYMENT_FOR_ORDER] Phase 2: Configuring URLs and creating payment record");
+            var defaultRedirectUrl = _configuration["PaymentSettings:SuccessUrl"]
+                                     ?? Environment.GetEnvironmentVariable("PAYMENT_SUCCESS_URL")
+                                     ?? "https://uniseapshop.vercel.app/payment-success";
+
+            var cancelUrl = _configuration["PaymentSettings:CancelUrl"]
+                            ?? Environment.GetEnvironmentVariable("PAYMENT_CANCEL_URL")
+                            ?? "https://uniseapshop.vercel.app/payment-cancel";
+
+            // Get webhook URL from configuration  
+            var webhookUrl = _configuration["PaymentSettings:WebhookUrl"]
+                             ?? Environment.GetEnvironmentVariable("PAYMENT_WEBHOOK_URL")
+                             ?? "https://uniseapshop.fpt-devteam.fun/api/payments/webhook";
+
+            _loggerService.Info(
+                $"[PAYMENT_FOR_ORDER] Phase 2: URLs configured - RedirectUrl: {defaultRedirectUrl}, CancelUrl: {cancelUrl}, WebhookUrl: {webhookUrl}");
+
+            var payment = new Payment
+            {
+                OrderId = order.Id,
+                Amount = order.TotalAmount,
+                PaymentGateway = PaymentGateway.PayOS,
+                Status = PaymentStatus.Pending,
+                RedirectUrl = defaultRedirectUrl,
+                Order = order
+            };
+
+            _loggerService.Info($"[PAYMENT_FOR_ORDER] Phase 2: Payment record created - Amount: {payment.Amount}");
+            await _unitOfWork.Payments.AddAsync(payment);
+            await _unitOfWork.SaveChangesAsync();
+            _loggerService.Info(
+                $"[PAYMENT_FOR_ORDER] Phase 2 SUCCESS: Payment record saved to database - PaymentId: {payment.Id}");
+
+            _loggerService.Info("[PAYMENT_FOR_ORDER] Phase 3: Preparing PayOS payment data");
+            var itemList = new List<ItemData>();
+            foreach (var detail in order.OrderDetails)
+            {
+                itemList.Add(new ItemData($"{detail.Product.ProductName} x{detail.Quantity}", detail.Quantity,
+                    (int)detail.UnitPrice));
+            }
+            _loggerService.Info($"[PAYMENT_FOR_ORDER] Phase 3: Item list prepared - {itemList.Count} items");
+
+            var orderCode = DateTime.Now.Ticks % 1000000000; // Simple order code generation
+
+            // PayOS requires description max 25 chars, so use first 5 chars of order GUID
+            var shortOrderId = order.Id.ToString().Substring(0, 5);
+            var paymentDescription = $"Uniseap payment #{shortOrderId}";
+
+            _loggerService.Info(
+                $"[PAYMENT_FOR_ORDER] Phase 3: PayOS data configured - OrderCode: {orderCode}, Description: {paymentDescription}");
+
+            var paymentData = new PaymentData(
+                orderCode,
+                (int)order.TotalAmount,
+                paymentDescription,
+                itemList,
+                defaultRedirectUrl,
+                cancelUrl
+            );
+
+            _loggerService.Info(
+                $"[PAYMENT_FOR_ORDER] Phase 3: PaymentData created with Return URLs - Success: {defaultRedirectUrl}, Cancel: {cancelUrl}");
+            _loggerService.Info(
+                $"[PAYMENT_FOR_ORDER] Phase 3: Webhook URL for server notifications: {webhookUrl} (configured in PayOS merchant settings)");
+
+            _loggerService.Info("[PAYMENT_FOR_ORDER] Phase 4: Calling PayOS createPaymentLink API");
+            var paymentResult = await _payOs.createPaymentLink(paymentData);
+            _loggerService.Info(
+                $"[PAYMENT_FOR_ORDER] Phase 4 SUCCESS: PayOS API response received - CheckoutUrl: {paymentResult.checkoutUrl}");
+
+            _loggerService.Info("[PAYMENT_FOR_ORDER] Phase 5: Updating payment record with PayOS response");
+            payment.GatewayTransactionId = paymentResult.orderCode.ToString();
+            payment.PaymentUrl = paymentResult.checkoutUrl;
+            payment.GatewayResponse = JsonConvert.SerializeObject(paymentResult);
+
+            await _unitOfWork.Payments.Update(payment);
+            await _unitOfWork.SaveChangesAsync();
+            _loggerService.Info(
+                $"[PAYMENT_FOR_ORDER] Phase 5 SUCCESS: Payment record updated with GatewayTransactionId: {payment.GatewayTransactionId}");
+
+            _loggerService.Info(
+                $"[PAYMENT_FOR_ORDER] PROCESS COMPLETED SUCCESSFULLY - OrderId: {order.Id}, PaymentId: {payment.Id}, CheckoutUrl: {paymentResult.checkoutUrl}");
+
+            return paymentResult.checkoutUrl;
+        }
+        catch (Exception ex)
+        {
+            _loggerService.Error(
+                $"[PAYMENT_FOR_ORDER] PROCESS FAILED - OrderId: {orderId}, Error: {ex.Message}, StackTrace: {ex.StackTrace}");
+            throw ErrorHelper.BadRequest("Unable to create payment link. Please try again later.");
+        }
+    }
+
     public async Task ProcessWebhook(WebhookType webhookData)
     {
         _loggerService.Info(
@@ -491,7 +608,6 @@ public class PaymentService : IPaymentService
                 _loggerService.Info($"Using {checkedItems.Count} pre-selected items for payment");
             }
 
-            // Use the checked items for order creation
             cartItems = checkedItems;
 
             var order = new Order

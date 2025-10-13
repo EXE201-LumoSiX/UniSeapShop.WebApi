@@ -76,6 +76,27 @@ public class PaymentController : ControllerBase
     }
 
     /// <summary>
+    ///     Create payment link for an existing order
+    /// </summary>
+    /// <param name="orderId">The ID of the order to create payment for</param>
+    [HttpPost("create-link/{orderId:guid}")]
+    [Authorize]
+    public async Task<IActionResult> CreatePaymentLinkForOrder(Guid orderId)
+    {
+        try
+        {
+            var paymentUrl = await _paymentService.ProcessPaymentForOrder(orderId);
+            return Ok(ApiResult<string>.Success(paymentUrl, "200", "Payment link created successfully"));
+        }
+        catch (Exception ex)
+        {
+            var statusCode = ExceptionUtils.ExtractStatusCode(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<string>(ex);
+            return StatusCode(statusCode, errorResponse);
+        }
+    }
+
+    /// <summary>
     ///     Get payment status by payment ID
     /// </summary>
     [HttpGet("{paymentId}")]
