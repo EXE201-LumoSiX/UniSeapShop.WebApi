@@ -56,7 +56,7 @@ public class AuthService : IAuthService
             user.Email,
             roleName,
             configuration,
-            TimeSpan.FromHours(2)
+            TimeSpan.FromDays(7)
         );
 
         var refreshToken = Guid.NewGuid().ToString();
@@ -110,18 +110,26 @@ public class AuthService : IAuthService
         return ToUserDto(user);
     }
 
+    public async Task<UserDto> CheckExistSupplier(string email)
+    {
+        if (await GetSupplierByEmailAsync(email))
+        {
+            var userDto = new UserDto
+            {
+                Email = email
+            };
+            return userDto;
+        }
+        else
+        {
+            return null;
+        }
+    }
+
     public async Task<UserDto?> RegisterSupplierAsync(SellerRegistrationDto dto)
     {
         if (!await UserExistsAsync(dto.Email))
             throw ErrorHelper.NotFound(ErrorMessages.AccountNotFound);
-        if (await GetSupplierByEmailAsync(dto.Email))
-        {
-            var userDto = new UserDto
-            {
-                Email = dto.Email
-            };
-            return userDto;
-        }
 
 
         var user = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);

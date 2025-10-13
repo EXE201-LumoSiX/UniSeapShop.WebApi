@@ -1,4 +1,6 @@
-﻿namespace UniSeapShop.Domain.DTOs.CategoryDTOs;
+﻿using UniSeapShop.Domain.Enums;
+
+namespace UniSeapShop.Domain.DTOs.CategoryDTOs;
 
 public class CategoryDetailsDto
 {
@@ -15,8 +17,10 @@ public class ProductDto
     public string ProductImage { get; set; } = string.Empty;
     public double OriginalPrice { get; set; } = 0;
     public string UsageHistory { get; set; } = string.Empty;
-    public double Price { get; set; }
-    public Guid CategoryId { get; set; }
+    public double Price { get; set; } = 0;
+    public string CategoryName { get; set; } = string.Empty;
     public int Quantity { get; set; }
-    public Guid SupplierId { get; set; }
+    public string SupplierName { get; set; } = string.Empty;
+
+    public ProductCondition ProductCondition { get; set; }
 }

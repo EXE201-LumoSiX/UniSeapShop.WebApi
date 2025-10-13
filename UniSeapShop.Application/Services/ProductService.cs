@@ -78,10 +78,11 @@ public class ProductService : IProductService
             ProductName = product.ProductName,
             ProductImage = product.ProductImage,
             Description = product.Description,
+            ProductCondition = product.Condition,
             Price = product.Price,
-            CategoryId = product.CategoryId,
+            CategoryName = GetCategoryByIdAsync(product.CategoryId).Result.CategoryName,
             Quantity = product.Quantity,
-            SupplierId = product.SupplierId
+            SupplierName = GetUserbySupplierIdAsync(product.SupplierId).Result
         };
     }
 
@@ -112,9 +113,10 @@ public class ProductService : IProductService
             ProductName = p.ProductName,
             Description = p.Description,
             Price = p.Price,
-            CategoryId = p.CategoryId,
+            CategoryName = GetCategoryByIdAsync(p.CategoryId).Result.CategoryName,
             Quantity = p.Quantity,
-            SupplierId = p.SupplierId
+            SupplierName = GetUserbySupplierIdAsync(p.SupplierId).Result,
+            ProductCondition = p.Condition,
         }).ToList();
     }
 
@@ -139,7 +141,8 @@ public class ProductService : IProductService
             Price = product.Price,
             Quantity = product.Quantity,
             CategoryName = product.Category.CategoryName,
-            SupplierName = GetUserbySupplierIdAsync(product.SupplierId).Result
+            SupplierName = GetUserbySupplierIdAsync(product.SupplierId).Result,
+            ProductCondition = product.Condition,
         };
     }
 
@@ -156,6 +159,7 @@ public class ProductService : IProductService
         product.Description = updateProductDto.Description;
         product.Price = updateProductDto.Price;
         product.Quantity = updateProductDto.Quantity;
+        product.Condition = updateProductDto.Condition;
         if (product.CategoryId != updateProductDto.CategoryId)
         {
             product.Category = await GetCategoryByIdAsync(updateProductDto.CategoryId);
@@ -171,7 +175,8 @@ public class ProductService : IProductService
             ProductName = product.ProductName,
             Description = product.Description,
             Price = product.Price,
-            CategoryId = product.CategoryId,
+            ProductCondition = product.Condition,
+            CategoryName = GetCategoryByIdAsync(product.CategoryId).Result.CategoryName,
             Quantity = product.Quantity
         };
     }
@@ -193,6 +198,8 @@ public class ProductService : IProductService
         var supplier = await _unitOfWork.Suppliers.GetByIdAsync(supplierId);
         if (supplier == null)
         {
+            //var user = await _unitOfWork.Users.GetByIdAsync(supplierId);
+            //supplier.User = user;
             _loggerService.Error("Supplier not found.");
             throw new KeyNotFoundException("Supplier not found.");
         }

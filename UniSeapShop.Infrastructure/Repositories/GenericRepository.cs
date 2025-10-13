@@ -1,5 +1,5 @@
-﻿using System.Linq.Expressions;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 using UniSeapShop.Domain;
 using UniSeapShop.Domain.Entities;
 using UniSeapShop.Infrastructure.Interfaces;
@@ -79,6 +79,12 @@ public class GenericRepository<TEntity> : IGenericRepository<TEntity> where TEnt
         entity.UpdatedAt = _timeService.GetCurrentTime().ToUniversalTime();
 
         _dbSet.Update(entity);
+        return true;
+    }
+
+    public async Task<bool> HardRemoveAsyn(TEntity entitiy)
+    {
+        _dbSet.RemoveRange(entitiy);
         return true;
     }
 

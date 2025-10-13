@@ -1,4 +1,6 @@
-﻿namespace UniSeapShop.Domain.DTOs.ProductDTOs;
+﻿using UniSeapShop.Domain.Enums;
+
+namespace UniSeapShop.Domain.DTOs.ProductDTOs;
 
 public class UpdateProductDto
 {
@@ -7,4 +9,5 @@ public class UpdateProductDto
     public double Price { get; set; }
     public Guid CategoryId { get; set; }
     public int Quantity { get; set; }
+    public ProductCondition Condition { get; set; }
 }
