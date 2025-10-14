@@ -2,6 +2,7 @@
 using UniSeapShop.Application.Interfaces;
 using UniSeapShop.Application.Interfaces.Commons;
 using UniSeapShop.Application.Utils;
+using UniSeapShop.Domain.DTOs.CategoryDTOs;
 using UniSeapShop.Domain.DTOs.OrderDTOs;
 using UniSeapShop.Domain.Entities;
 using UniSeapShop.Domain.Enums;
@@ -162,12 +163,23 @@ public class OrderService : IOrderService
         {
             Id = od.Id,
             ProductId = od.ProductId,
-            ProductName = od.Product?.ProductName ?? "Unknown Product",
-            ProductImage = od.Product?.ProductImage,
+            ProductName = GetProductDtoAsync(od.ProductId).Result.ProductName ?? string.Empty,
+            ProductImage = GetProductDtoAsync(od.ProductId).Result.ProductImage ?? string.Empty,
             Quantity = od.Quantity,
             UnitPrice = od.UnitPrice,
             TotalPrice = od.TotalPrice
         }).ToList();
+    }
+
+    private async Task<ProductDto?> GetProductDtoAsync(Guid id)
+    {
+        var product = await _unitOfWork.Products.GetByIdAsync(id);
+        return new ProductDto
+        {
+            Id = id,
+            ProductName = product.ProductName,
+            ProductImage = product.ProductImage,
+        };
     }
 
     public async Task<List<OrderDetailDto>> GetSoldProductsForSupplier()
