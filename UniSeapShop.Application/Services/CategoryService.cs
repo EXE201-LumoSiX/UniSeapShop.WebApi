@@ -92,7 +92,8 @@ public class CategoryService : ICategoryService
                 ProductName = p.ProductName,
                 Price = p.Price,
                 Description = p.Description,
-                ProductImage = p.ProductImage
+                ProductImage = p.ProductImage,
+                ProductCondition = p.Condition
             }).ToList()
         };
     }
