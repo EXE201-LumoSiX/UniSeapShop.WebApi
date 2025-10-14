@@ -101,4 +101,21 @@ public class UserController : ControllerBase
             return StatusCode(statusCode, errorResponse);
         }
     }
+
+    [HttpGet("supplier/{id}")]
+    [Authorize]
+    public async Task<IActionResult> GetSupplierById(Guid id)
+    {
+        try
+        {
+            var result = await _userService.GetSupplierByIdAsync(id);
+            return Ok(ApiResult<SupplierDetailsDto>.Success(result!, "200", "Get supplier by id successful"));
+        }
+        catch (Exception ex)
+        {
+            var statusCode = ExceptionUtils.ExtractStatusCode(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<SupplierDetailsDto>(ex);
+            return StatusCode(statusCode, errorResponse);
+        }
+    }
 }
