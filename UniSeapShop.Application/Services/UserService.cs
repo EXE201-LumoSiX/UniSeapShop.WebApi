@@ -64,6 +64,17 @@ public class UserService : IUserService
             throw ErrorHelper.NotFound("User not found.");
         return ToUserDto(user);
     }
+    public async Task<SupplierDetailsDto?> GetSupplierByIdAsync(Guid supplierId)
+    {
+        var supplier = await _unitOfWork.Suppliers.GetQueryable().FirstOrDefaultAsync(u => u.Id == supplierId);
+        if (supplier == null)
+            throw ErrorHelper.NotFound("User not found.");
+        return new SupplierDetailsDto
+        {
+            Description = supplier.Description,
+            Rating = supplier.Rating
+        };
+    }
 
     public async Task<List<UserDto>> GetAllUsersAsync()
     {
