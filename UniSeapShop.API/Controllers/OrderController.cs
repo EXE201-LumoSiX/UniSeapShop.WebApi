@@ -45,7 +45,7 @@ public class OrderController : ControllerBase
     ///     Xem tất cả đơn hàng của người dùng hiện tại
     /// </summary>
     /// <returns>Danh sách tất cả đơn hàng</returns>
-    [HttpGet]
+    [HttpGet("user")]
     [Authorize(Roles = "User")]
     [ProducesResponseType(typeof(ApiResult<List<OrderDto>>), 200)]
     [ProducesResponseType(401)]
@@ -136,6 +136,23 @@ public class OrderController : ControllerBase
         {
             var statusCode = ExceptionUtils.ExtractStatusCode(ex);
             var errorResponse = ExceptionUtils.CreateErrorResponse<OrderDto>(ex);
+            return StatusCode(statusCode, errorResponse);
+        }
+    }
+
+    [HttpGet]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetAllOrders()
+    {
+        try
+        {
+            var orders = await _orderService.GetAllOrderDetails();
+            return Ok(ApiResult<List<OrderDetailDto>>.Success(orders, "200", "Fetched all orders successfully."));
+        }
+        catch (Exception ex)
+        {
+            var statusCode = ExceptionUtils.ExtractStatusCode(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<List<OrderDto>>(ex);
             return StatusCode(statusCode, errorResponse);
         }
     }
