@@ -7,6 +7,5 @@ public class SellerRegistrationDto
     [DefaultValue("test@gmail.com")] public required string Email { get; set; }
 
     public string? Description { get; set; }
-    public float Rating { get; set; } = 0;
-    public bool IsActive { get; set; } = false;
+    public string? Location { get; set; }
 }

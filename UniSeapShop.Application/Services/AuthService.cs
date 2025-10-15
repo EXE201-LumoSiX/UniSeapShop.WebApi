@@ -137,7 +137,8 @@ public class AuthService : IAuthService
             Id = user.Id,
             UserId = user.Id,
             Description = dto.Description,
-            Rating = 0,
+            Location = dto.Location,
+            Rating = 5,
             IsActive = user.IsActive,
             User = user
         };

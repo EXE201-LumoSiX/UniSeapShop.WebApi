@@ -7,6 +7,7 @@ public class ProductDetailsDto
     public Guid Id { get; set; }
     public string ProductName { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
+    public string ProductImage { get; set; } = string.Empty;
     public double Price { get; set; }
     public ProductCondition ProductCondition { get; set; }
     public string CategoryName { get; set; }

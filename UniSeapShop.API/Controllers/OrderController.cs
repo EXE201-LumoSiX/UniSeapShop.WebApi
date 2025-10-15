@@ -23,7 +23,7 @@ public class OrderController : ControllerBase
     /// </summary>
     /// <returns>Danh sách đơn hàng đã thanh toán</returns>
     [HttpGet("customer/paid-orders")]
-    [Authorize(Roles = "Customer")] // Only accessible by customers
+    [Authorize(Roles = "User")] // Only accessible by customers
     [ProducesResponseType(typeof(ApiResult<List<OrderDto>>), 200)]
     [ProducesResponseType(401)]
     public async Task<IActionResult> GetPaidOrdersForCustomer()
@@ -40,13 +40,13 @@ public class OrderController : ControllerBase
             return StatusCode(statusCode, errorResponse);
         }
     }
-    
+
     /// <summary>
     ///     Xem tất cả đơn hàng của người dùng hiện tại
     /// </summary>
     /// <returns>Danh sách tất cả đơn hàng</returns>
-    [HttpGet]
-    [Authorize(Roles = "Customer")]
+    [HttpGet("user")]
+    [Authorize(Roles = "User")]
     [ProducesResponseType(typeof(ApiResult<List<OrderDto>>), 200)]
     [ProducesResponseType(401)]
     [ProducesResponseType(404)]
@@ -64,7 +64,7 @@ public class OrderController : ControllerBase
             return StatusCode(statusCode, errorResponse);
         }
     }
-    
+
     /// <summary>
     ///     Xem chi tiết đơn hàng theo ID
     /// </summary>
@@ -95,7 +95,7 @@ public class OrderController : ControllerBase
     ///     Xem sản phẩm đã bán (dành cho nhà cung cấp)
     /// </summary>
     [HttpGet("supplier/sold-products")]
-    [Authorize(Roles = "Supplier")] // Only accessible by suppliers
+    [Authorize(Roles = "User")] // Only accessible by suppliers
     [ProducesResponseType(typeof(ApiResult<List<OrderDetailDto>>), 200)]
     [ProducesResponseType(401)]
     public async Task<IActionResult> GetSoldProductsForSupplier()
@@ -120,7 +120,7 @@ public class OrderController : ControllerBase
     /// <param name="createOrderDto">Thông tin đơn hàng bao gồm địa chỉ giao hàng</param>
     /// <returns>Thông tin đơn hàng vừa tạo</returns>
     [HttpPost]
-    [Authorize(Roles = "Customer")] // Only accessible by customers
+    [Authorize(Roles = "User")] // Only accessible by customers
     [ProducesResponseType(typeof(ApiResult<OrderDto>), 200)]
     [ProducesResponseType(400)]
     [ProducesResponseType(401)]
@@ -136,6 +136,23 @@ public class OrderController : ControllerBase
         {
             var statusCode = ExceptionUtils.ExtractStatusCode(ex);
             var errorResponse = ExceptionUtils.CreateErrorResponse<OrderDto>(ex);
+            return StatusCode(statusCode, errorResponse);
+        }
+    }
+
+    [HttpGet]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetAllOrders()
+    {
+        try
+        {
+            var orders = await _orderService.GetAllOrderDetails();
+            return Ok(ApiResult<List<OrderDto>>.Success(orders, "200", "Fetched all orders successfully."));
+        }
+        catch (Exception ex)
+        {
+            var statusCode = ExceptionUtils.ExtractStatusCode(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<List<OrderDto>>(ex);
             return StatusCode(statusCode, errorResponse);
         }
     }

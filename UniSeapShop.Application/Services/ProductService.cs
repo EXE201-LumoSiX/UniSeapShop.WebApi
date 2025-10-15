@@ -104,7 +104,7 @@ public class ProductService : IProductService
     public async Task<List<ProductDto>> GetAllProductsAsync()
     {
         var products = await _unitOfWork.Products.GetQueryable()
-            .Where(p => !p.IsDeleted)
+            .Where(p => !p.IsDeleted && p.Quantity > 0)
             .ToListAsync();
         _loggerService.Info($"Retrieved {products.Count} products.");
         return products.Select(p => new ProductDto
@@ -113,6 +113,7 @@ public class ProductService : IProductService
             ProductName = p.ProductName,
             Description = p.Description,
             Price = p.Price,
+            ProductImage = p.ProductImage,
             CategoryName = GetCategoryByIdAsync(p.CategoryId).Result.CategoryName,
             Quantity = p.Quantity,
             SupplierName = GetUserbySupplierIdAsync(p.SupplierId).Result,
@@ -125,7 +126,7 @@ public class ProductService : IProductService
         var product = await _unitOfWork.Products.GetQueryable()
             .Include(p => p.Category)
             .Include(p => p.Supplier)
-            .FirstOrDefaultAsync(p => p.Id == productId && !p.IsDeleted);
+            .FirstOrDefaultAsync(p => p.Id == productId && !p.IsDeleted && p.Quantity > 0);
         if (product == null)
         {
             _loggerService.Error("Product not found.");
@@ -139,6 +140,7 @@ public class ProductService : IProductService
             ProductName = product.ProductName,
             Description = product.Description,
             Price = product.Price,
+            ProductImage = product.ProductImage,
             Quantity = product.Quantity,
             CategoryName = product.Category.CategoryName,
             SupplierName = GetUserbySupplierIdAsync(product.SupplierId).Result,
