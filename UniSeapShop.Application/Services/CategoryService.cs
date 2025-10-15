@@ -86,7 +86,7 @@ public class CategoryService : ICategoryService
         {
             Id = category.Id,
             CategoryName = category.CategoryName,
-            Products = category.Products.Select(p => new ProductDto
+            Products = category.Products.Where(p => !p.IsDeleted).Select(p => new ProductDto
             {
                 Id = p.Id,
                 ProductName = p.ProductName,
