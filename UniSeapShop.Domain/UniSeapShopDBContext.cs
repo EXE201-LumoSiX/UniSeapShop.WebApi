@@ -101,6 +101,9 @@ public class UniSeapShopDBContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.UserId).IsRequired();
+            entity.Property(e => e.Description);
+            entity.Property(e => e.Rating).HasDefaultValue(0);
+            entity.Property(e => e.Location);
 
             // One-to-Many relationship with Products
             entity.HasMany(s => s.Products)
