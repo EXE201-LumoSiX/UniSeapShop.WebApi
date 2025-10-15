@@ -147,7 +147,7 @@ public class OrderController : ControllerBase
         try
         {
             var orders = await _orderService.GetAllOrderDetails();
-            return Ok(ApiResult<List<OrderDetailDto>>.Success(orders, "200", "Fetched all orders successfully."));
+            return Ok(ApiResult<List<OrderDto>>.Success(orders, "200", "Fetched all orders successfully."));
         }
         catch (Exception ex)
         {

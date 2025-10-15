@@ -155,20 +155,63 @@ public class OrderService : IOrderService
             }).ToList()
         };
     }
-    public async Task<List<OrderDetailDto>> GetAllOrderDetails()
+    public async Task<List<OrderDto>> GetAllOrderDetails()
     {
-
+        var orders = await _unitOfWork.Orders.GetAllAsync();
         var orderDetails = await _unitOfWork.OrderDetails.GetAllAsync();
-        return orderDetails.Select(od => new OrderDetailDto
+
+        var result = new List<OrderDto>();
+
+        foreach (var order in orders)
         {
-            Id = od.Id,
-            ProductId = od.ProductId,
-            ProductName = GetProductDtoAsync(od.ProductId).Result.ProductName ?? string.Empty,
-            ProductImage = GetProductDtoAsync(od.ProductId).Result.ProductImage ?? string.Empty,
-            Quantity = od.Quantity,
-            UnitPrice = od.UnitPrice,
-            TotalPrice = od.TotalPrice
-        }).ToList();
+            var detailsForOrder = orderDetails
+                .Where(od => od.OrderId == order.Id)
+                .ToList();
+
+            var detailDtos = new List<OrderDetailDto>();
+
+            foreach (var od in detailsForOrder)
+            {
+                var productDto = await GetProductDtoAsync(od.ProductId);
+
+                detailDtos.Add(new OrderDetailDto
+                {
+                    Id = od.Id,
+                    ProductId = od.ProductId,
+                    ProductName = productDto?.ProductName ?? string.Empty,
+                    ProductImage = productDto?.ProductImage ?? string.Empty,
+                    Quantity = od.Quantity,
+                    UnitPrice = od.UnitPrice,
+                    TotalPrice = od.TotalPrice
+                });
+            }
+
+            result.Add(new OrderDto
+            {
+                Id = order.Id,
+                CustomerId = order.CustomerId,
+                OrderDate = order.OrderDate,
+                ShipAddress = order.ShipAddress,
+                PaymentMethod = order.PaymentMethod,
+                Status = order.Status,
+                CompletedDate = order.CompletedDate,
+                TotalAmount = order.TotalAmount,
+                OrderDetails = detailDtos
+            });
+        }
+
+        return result;
+
+        //return orderDetails.Select(od => new OrderDetailDto
+        //{
+        //    Id = od.Id,
+        //    ProductId = od.ProductId,
+        //    ProductName = GetProductDtoAsync(od.ProductId).Result.ProductName ?? string.Empty,
+        //    ProductImage = GetProductDtoAsync(od.ProductId).Result.ProductImage ?? string.Empty,
+        //    Quantity = od.Quantity,
+        //    UnitPrice = od.UnitPrice,
+        //    TotalPrice = od.TotalPrice
+        //}).ToList();
     }
 
     private async Task<ProductDto?> GetProductDtoAsync(Guid id)
