@@ -72,6 +72,7 @@ public class UserService : IUserService
         return new SupplierDetailsDto
         {
             Description = supplier.Description,
+            Location = supplier.Location,
             Rating = supplier.Rating
         };
     }
