@@ -47,7 +47,6 @@ public class CategoryController : ControllerBase
     /// </summary>
     /// <returns>A list of categories.</returns>
     [HttpGet]
-    [Authorize]
     public async Task<IActionResult> GetAllCategories()
     {
         try
