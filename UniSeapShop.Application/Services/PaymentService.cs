@@ -143,21 +143,28 @@ public class PaymentService : IPaymentService
             var shortOrderId = order.Id.ToString().Substring(0, 5);
             var paymentDescription = $"Uniseap payment #{shortOrderId}";
 
+            // Add payment parameters to redirect URLs
+            var successUrlWithParams =
+                $"{defaultRedirectUrl}?orderCode={orderCode}&paymentId={payment.Id}&orderId={order.Id}";
+            var cancelUrlWithParams = $"{cancelUrl}?orderCode={orderCode}&paymentId={payment.Id}&orderId={order.Id}";
+
             _loggerService.Info(
                 $"[PAYMENT] Phase 4: PayOS data configured - OrderCode: {orderCode}, Description: {paymentDescription}");
+            _loggerService.Info(
+                $"[PAYMENT] Phase 4: Enhanced URLs - Success: {successUrlWithParams}, Cancel: {cancelUrlWithParams}");
 
             var paymentData = new PaymentData(
                 orderCode,
                 (int)order.TotalAmount,
                 paymentDescription,
                 itemList,
-                defaultRedirectUrl, // Success return URL
-                cancelUrl // Cancel return URL
+                cancelUrlWithParams,
+                successUrlWithParams
             );
 
             // PayOS sẽ gọi webhook URL sau khi payment thành công
             _loggerService.Info(
-                $"[PAYMENT] Phase 4: PaymentData created with Return URLs - Success: {defaultRedirectUrl}, Cancel: {cancelUrl}");
+                $"[PAYMENT] Phase 4: PaymentData created with Enhanced URLs - Success: {successUrlWithParams}, Cancel: {cancelUrlWithParams}");
             _loggerService.Info(
                 $"[PAYMENT] Phase 4: Webhook URL for server notifications: {webhookUrl} (configured in PayOS merchant settings)");
 
@@ -218,15 +225,18 @@ public class PaymentService : IPaymentService
                 var completedPayment = existingPayments.FirstOrDefault(p => p.Status == PaymentStatus.Completed);
                 if (completedPayment != null)
                 {
-                    _loggerService.Error($"[PAYMENT_FOR_ORDER] Order {orderId} already has a completed payment - PaymentId: {completedPayment.Id}");
+                    _loggerService.Error(
+                        $"[PAYMENT_FOR_ORDER] Order {orderId} already has a completed payment - PaymentId: {completedPayment.Id}");
                     throw ErrorHelper.BadRequest("This order has already been paid");
                 }
 
                 var pendingPayment = existingPayments.FirstOrDefault(p => p.Status == PaymentStatus.Pending);
                 if (pendingPayment != null)
                 {
-                    _loggerService.Warn($"[PAYMENT_FOR_ORDER] Order {orderId} already has a pending payment - PaymentId: {pendingPayment.Id}");
-                    throw ErrorHelper.BadRequest($"This order already has a pending payment. Please complete or cancel the existing payment first.");
+                    _loggerService.Warn(
+                        $"[PAYMENT_FOR_ORDER] Order {orderId} already has a pending payment - PaymentId: {pendingPayment.Id}");
+                    throw ErrorHelper.BadRequest(
+                        $"This order already has a pending payment. Please complete or cancel the existing payment first.");
                 }
             }
 
@@ -324,14 +334,16 @@ public class PaymentService : IPaymentService
 
                     if (detail.Product != null)
                     {
-                        _loggerService.Info($"[PAYMENT_FOR_ORDER] Adding product to payment: {detail.Product.ProductName}, Quantity: {detail.Quantity}");
+                        _loggerService.Info(
+                            $"[PAYMENT_FOR_ORDER] Adding product to payment: {detail.Product.ProductName}, Quantity: {detail.Quantity}");
                         itemList.Add(new ItemData($"{detail.Product.ProductName} x{detail.Quantity}", detail.Quantity,
                             (int)detail.UnitPrice));
                     }
                     else
                     {
                         // If product is null, use a generic name
-                        _loggerService.Warn($"[PAYMENT_FOR_ORDER] Product data missing for detail with ProductId: {detail.ProductId}, using fallback name");
+                        _loggerService.Warn(
+                            $"[PAYMENT_FOR_ORDER] Product data missing for detail with ProductId: {detail.ProductId}, using fallback name");
                         itemList.Add(new ItemData($"Product ID: {detail.ProductId} x{detail.Quantity}", detail.Quantity,
                             (int)detail.UnitPrice));
                     }
@@ -343,6 +355,7 @@ public class PaymentService : IPaymentService
                 _loggerService.Warn($"[PAYMENT_FOR_ORDER] No order details available, creating generic payment item");
                 itemList.Add(new ItemData("Order Payment", 1, (int)order.TotalAmount));
             }
+
             _loggerService.Info($"[PAYMENT_FOR_ORDER] Phase 3: Item list prepared - {itemList.Count} items");
 
             var orderCode = DateTime.Now.Ticks % 1000000000; // Simple order code generation
@@ -351,20 +364,27 @@ public class PaymentService : IPaymentService
             var shortOrderId = order.Id.ToString().Substring(0, 5);
             var paymentDescription = $"Uniseap payment #{shortOrderId}";
 
+            // Add payment parameters to redirect URLs
+            var successUrlWithParams =
+                $"{defaultRedirectUrl}?orderCode={orderCode}&paymentId={payment.Id}&orderId={order.Id}";
+            var cancelUrlWithParams = $"{cancelUrl}?orderCode={orderCode}&paymentId={payment.Id}&orderId={order.Id}";
+
             _loggerService.Info(
                 $"[PAYMENT_FOR_ORDER] Phase 3: PayOS data configured - OrderCode: {orderCode}, Description: {paymentDescription}");
+            _loggerService.Info(
+                $"[PAYMENT_FOR_ORDER] Phase 3: Enhanced URLs - Success: {successUrlWithParams}, Cancel: {cancelUrlWithParams}");
 
             var paymentData = new PaymentData(
                 orderCode,
                 (int)order.TotalAmount,
                 paymentDescription,
                 itemList,
-                defaultRedirectUrl,
-                cancelUrl
+                cancelUrlWithParams,
+                successUrlWithParams
             );
 
             _loggerService.Info(
-                $"[PAYMENT_FOR_ORDER] Phase 3: PaymentData created with Return URLs - Success: {defaultRedirectUrl}, Cancel: {cancelUrl}");
+                $"[PAYMENT_FOR_ORDER] Phase 3: PaymentData created with Enhanced URLs - Success: {successUrlWithParams}, Cancel: {cancelUrlWithParams}");
             _loggerService.Info(
                 $"[PAYMENT_FOR_ORDER] Phase 3: Webhook URL for server notifications: {webhookUrl} (configured in PayOS merchant settings)");
 

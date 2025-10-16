@@ -120,7 +120,7 @@ public class OrderController : ControllerBase
     /// <param name="createOrderDto">Thông tin đơn hàng bao gồm địa chỉ giao hàng</param>
     /// <returns>Thông tin đơn hàng vừa tạo</returns>
     [HttpPost]
-    [Authorize(Roles = "User")] // Only accessible by customers
+    [Authorize(Roles = "Customer")] // Only accessible by customers
     [ProducesResponseType(typeof(ApiResult<OrderDto>), 200)]
     [ProducesResponseType(400)]
     [ProducesResponseType(401)]
