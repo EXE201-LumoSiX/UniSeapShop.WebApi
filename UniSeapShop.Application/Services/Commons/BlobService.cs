@@ -53,14 +53,11 @@ public class BlobService : IBlobService
         }
         else
         {
-            // Auto-detect SSL: use SSL for domain names, not for IP addresses or localhost
-            var isIpAddress = Regex.IsMatch(
-                endpoint.Split(':')[0],
-                @"^\d{1,3}(\.\d{1,3}){3}$"
-            );
+            // Auto-detect SSL: use SSL by default for production MinIO endpoints
             var isLocalhost = endpoint.StartsWith("localhost", StringComparison.OrdinalIgnoreCase);
-
-            useSsl = !isIpAddress && !isLocalhost;
+            
+            // Use SSL for all endpoints except localhost
+            useSsl = !isLocalhost;
         }
 
         if (endpoint.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
