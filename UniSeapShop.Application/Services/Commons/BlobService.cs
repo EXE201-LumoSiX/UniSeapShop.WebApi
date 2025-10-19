@@ -11,11 +11,11 @@ namespace UniSeapShop.Application.Services.Commons;
 ///     NOTE: This service can be reused in other projects.
 ///     This service is used to interact with a MinIO server.
 ///     It requires the following environment variables to be set:
-///     - MINIO_ENDPOINT (e.g., "localhost:9000" or "minio.example.com"). Port 9000 is the MinIO API, Port 9001 is the
-///     MinIO UI.
-///     - MINIO_ACCESS_KEY
-///     - MINIO_SECRET_KEY
-///     - MINIO_USE_SSL (optional, defaults to auto-detection based on endpoint)
+///     - MINIO_API_ENDPOINT: The S3-compatible API endpoint (e.g., "cdn.fpt-devteam.fun"). Used by MinioClient SDK.
+///     - MINIO_CONSOLE_URL: The web console UI URL (e.g., "minio.fpt-devteam.fun"). For UI integration only, not used by SDK.
+///     - MINIO_ACCESS_KEY: Access key for MinIO authentication
+///     - MINIO_SECRET_KEY: Secret key for MinIO authentication
+///     - MINIO_USE_SSL: Whether to use SSL (defaults to true for production)
 /// </summary>
 public class BlobService : IBlobService
 {
@@ -23,66 +23,28 @@ public class BlobService : IBlobService
     private readonly ILoggerService _logger;
     private readonly IMinioClient _minioClient;
 
-    /// <summary>
-    ///     Initializes a new instance of the <see cref="BlobService" /> class.
-    ///     Configures the MinIO client using environment variables.
-    /// </summary>
-    /// <param name="logger">The logger service for logging information and errors.</param>
-    /// <exception cref="Exception">Throws if the MinIO client fails to initialize.</exception>
     public BlobService(ILoggerService logger)
     {
         _logger = logger;
 
-        var endpointRaw = Environment.GetEnvironmentVariable("MINIO_ENDPOINT");
+        // Cần cấu hình các biến môi trường sau:
+        // - MINIO_ENDPOINT (vd: 103.211.201.162:9000)
+        // - MINIO_ACCESS_KEY
+        // - MINIO_SECRET_KEY
+        var endpoint = Environment.GetEnvironmentVariable("MINIO_ENDPOINT") ?? "103.211.201.162:9000";
         var accessKey = Environment.GetEnvironmentVariable("MINIO_ACCESS_KEY");
         var secretKey = Environment.GetEnvironmentVariable("MINIO_SECRET_KEY");
-        var useSslEnv = Environment.GetEnvironmentVariable("MINIO_USE_SSL");
 
         _logger.Info("Initializing BlobService...");
-        _logger.Info($"Raw MINIO_ENDPOINT: {endpointRaw}");
-
-        // Normalize endpoint and auto-detect SSL
-        // Default to localhost:9000, which is the default MinIO API port.
-        // The MinIO UI is typically on port 9001.
-        var endpoint = endpointRaw?.Trim() ?? "localhost:9000";
-        var useSsl = false;
-
-        if (bool.TryParse(useSslEnv, out var parsedSsl))
-        {
-            useSsl = parsedSsl;
-        }
-        else
-        {
-            // Auto-detect SSL: use SSL for domain names, not for IP addresses or localhost
-            var isIpAddress = Regex.IsMatch(
-                endpoint.Split(':')[0],
-                @"^\d{1,3}(\.\d{1,3}){3}$"
-            );
-            var isLocalhost = endpoint.StartsWith("localhost", StringComparison.OrdinalIgnoreCase);
-
-            useSsl = !isIpAddress && !isLocalhost;
-        }
-
-        if (endpoint.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
-        {
-            endpoint = endpoint.Substring(7);
-            useSsl = false;
-        }
-        else if (endpoint.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-        {
-            endpoint = endpoint.Substring(8);
-            useSsl = true;
-        }
-
-        _logger.Info($"Normalized endpoint: {endpoint}");
-        _logger.Info($"Using SSL: {useSsl}");
+        _logger.Info($"Connecting to MinIO at: {endpoint}");
 
         try
         {
+            // Kết nối MinIO không dùng SSL (vì đang dùng IP:port hoặc HTTP)
             _minioClient = new MinioClient()
                 .WithEndpoint(endpoint)
                 .WithCredentials(accessKey, secretKey)
-                .WithSSL(useSsl)
+                .WithSSL(false)
                 .Build();
 
             _logger.Success("MinIO client initialized successfully.");
@@ -94,25 +56,17 @@ public class BlobService : IBlobService
         }
     }
 
-    /// <summary>
-    ///     Uploads a file to the MinIO bucket.
-    ///     If the bucket does not exist, it will be created automatically.
-    /// </summary>
-    /// <param name="fileName">The name of the file (object) to be created in the bucket.</param>
-    /// <param name="fileStream">The stream containing the file data.</param>
-    /// <example>
-    ///     <code>
-    /// await _blobService.UploadFileAsync("my-image.jpg", fileStream);
-    /// </code>
-    /// </example>
     public async Task UploadFileAsync(string fileName, Stream fileStream)
     {
         _logger.Info($"Starting file upload: {fileName}");
 
         try
         {
+            // Kiểm tra bucket tồn tại, nếu chưa thì tạo mới
             var beArgs = new BucketExistsArgs().WithBucket(_bucketName);
             var found = await _minioClient.BucketExistsAsync(beArgs);
+            _logger.Info($"Checking if bucket '{_bucketName}' exists: {found}");
+
             if (!found)
             {
                 _logger.Warn($"Bucket '{_bucketName}' not found. Creating a new one...");
@@ -121,6 +75,7 @@ public class BlobService : IBlobService
                 _logger.Success($"Bucket '{_bucketName}' created successfully.");
             }
 
+            // Lấy content type dựa trên phần mở rộng của file
             var contentType = GetContentType(fileName);
 
             var putObjectArgs = new PutObjectArgs()
@@ -145,38 +100,22 @@ public class BlobService : IBlobService
         }
     }
 
-    /// <summary>
-    ///     Generates a temporary, presigned URL to preview a file.
-    ///     This URL is valid for a limited time (e.g., 7 days).
-    /// </summary>
-    /// <param name="fileName">The name of the file in the bucket.</param>
-    /// <returns>A string containing the presigned URL.</returns>
     public async Task<string> GetPreviewUrlAsync(string fileName)
     {
-        try
-        {
-            var args = new PresignedGetObjectArgs()
-                .WithBucket(_bucketName)
-                .WithObject(fileName)
-                .WithExpiry(7 * 24 * 60 * 60); // 7 days
+        // Biến MINIO_HOST phải trỏ tới reverse proxy HTTPS, vd: https://minio.fpt-devteam.fun
+        var minioHost = Environment.GetEnvironmentVariable("MINIO_HOST") ?? "https://minio.fpt-devteam.fun";
 
-            var previewUrl = await _minioClient.PresignedGetObjectAsync(args);
-            _logger.Success($"Preview URL generated: {previewUrl}");
-            return previewUrl;
-        }
-        catch (Exception ex)
-        {
-            _logger.Error($"Error generating preview URL: {ex.Message}");
-            throw;
-        }
+        // Sử dụng Base64 encoding thay vì URL encoding để phù hợp với định dạng API
+        var base64File = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(fileName));
+
+        // URL được định dạng đúng với API reverse proxy
+        var previewUrl =
+            $"{minioHost}/api/v1/buckets/{_bucketName}/objects/download?preview=true&prefix={base64File}&version_id=null";
+        _logger.Info($"Preview URL generated: {previewUrl}");
+
+        return previewUrl;
     }
 
-    /// <summary>
-    ///     Generates a temporary, presigned URL to access or download a file.
-    ///     This URL is valid for a limited time (e.g., 7 days).
-    /// </summary>
-    /// <param name="fileName">The name of the file in the bucket.</param>
-    /// <returns>A string containing the presigned URL.</returns>
     public async Task<string> GetFileUrlAsync(string fileName)
     {
         try
@@ -184,7 +123,7 @@ public class BlobService : IBlobService
             var args = new PresignedGetObjectArgs()
                 .WithBucket(_bucketName)
                 .WithObject(fileName)
-                .WithExpiry(7 * 24 * 60 * 60); // 7 days
+                .WithExpiry(7 * 24 * 60 * 60);
 
             var fileUrl = await _minioClient.PresignedGetObjectAsync(args);
             _logger.Success($"Presigned file URL generated: {fileUrl}");
@@ -193,14 +132,10 @@ public class BlobService : IBlobService
         catch (Exception ex)
         {
             _logger.Error($"Error generating file URL: {ex.Message}");
-            throw;
+            return null;
         }
     }
 
-    /// <summary>
-    ///     Deletes a file from the MinIO bucket.
-    /// </summary>
-    /// <param name="fileName">The name of the file to delete.</param>
     public async Task DeleteFileAsync(string fileName)
     {
         _logger.Info($"Deleting file: {fileName}");
@@ -226,23 +161,12 @@ public class BlobService : IBlobService
         }
     }
 
-    /// <summary>
-    ///     Replaces an existing image with a new one. It first deletes the old image (if a URL is provided)
-    ///     and then uploads the new image, returning its preview URL.
-    /// </summary>
-    /// <param name="newImageStream">The stream of the new image to upload.</param>
-    /// <param name="originalFileName">The original file name of the new image, used to determine the file extension.</param>
-    /// <param name="oldImageUrl">The URL of the old image to delete. Can be null or empty if there is no old image.</param>
-    /// <param name="containerPrefix">
-    ///     A prefix for the file name, typically used to organize files (e.g., "avatars",
-    ///     "products").
-    /// </param>
-    /// <returns>The presigned preview URL of the newly uploaded image.</returns>
     public async Task<string> ReplaceImageAsync(Stream newImageStream, string originalFileName, string? oldImageUrl,
         string containerPrefix)
     {
         try
         {
+            // Xóa ảnh cũ nếu có
             if (!string.IsNullOrWhiteSpace(oldImageUrl))
                 try
                 {
@@ -256,6 +180,7 @@ public class BlobService : IBlobService
                     _logger.Warn($"[ReplaceImageAsync] Failed to delete old image: {ex.Message}");
                 }
 
+            // Upload ảnh mới
             var newFileName = $"{containerPrefix}/{Guid.NewGuid()}{Path.GetExtension(originalFileName)}";
             _logger.Info($"[ReplaceImageAsync] Uploading new image: {newFileName}");
 
@@ -272,11 +197,7 @@ public class BlobService : IBlobService
         }
     }
 
-    /// <summary>
-    ///     Determines the MIME content type based on the file extension.
-    /// </summary>
-    /// <param name="fileName">The name of the file.</param>
-    /// <returns>A string representing the MIME type.</returns>
+
     private string GetContentType(string fileName)
     {
         _logger.Info($"Determining content type for file: {fileName}");
@@ -288,7 +209,7 @@ public class BlobService : IBlobService
             ".png" => "image/png",
             ".pdf" => "application/pdf",
             ".mp4" => "video/mp4",
-            _ => "application/octet-stream" // Fallback for unknown types
+            _ => "application/octet-stream" // fallback nếu định dạng không rõ
         };
     }
 }
