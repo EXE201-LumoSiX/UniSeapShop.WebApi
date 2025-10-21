@@ -28,24 +28,45 @@ public class BlobService : IBlobService
         _logger = logger;
 
         // Cần cấu hình các biến môi trường sau:
-        // - MINIO_ENDPOINT (vd: 103.211.201.162:9000)
+        // - MINIO_ENDPOINT (vd: 103.211.201.162:9000 cho local, cdn.fpt-devteam.fun cho production)
         // - MINIO_ACCESS_KEY
         // - MINIO_SECRET_KEY
+        // - MINIO_USE_SSL (true/false, mặc định là false cho local)
         var endpoint = Environment.GetEnvironmentVariable("MINIO_ENDPOINT") ?? "103.211.201.162:9000";
         var accessKey = Environment.GetEnvironmentVariable("MINIO_ACCESS_KEY");
         var secretKey = Environment.GetEnvironmentVariable("MINIO_SECRET_KEY");
+        var useSSL = bool.Parse(Environment.GetEnvironmentVariable("MINIO_USE_SSL") ?? "false");
 
         _logger.Info("Initializing BlobService...");
         _logger.Info($"Connecting to MinIO at: {endpoint}");
+        _logger.Info($"Using SSL: {useSSL}");
 
         try
         {
-            // Kết nối MinIO không dùng SSL (vì đang dùng IP:port hoặc HTTP)
-            _minioClient = new MinioClient()
-                .WithEndpoint(endpoint)
-                .WithCredentials(accessKey, secretKey)
-                .WithSSL(false)
-                .Build();
+            // Xác định endpoint và SSL dựa trên môi trường
+            // Nếu endpoint là domain (không phải IP:port), sử dụng SSL
+            var isDirectIpEndpoint = Regex.IsMatch(endpoint, @"^\d+\.\d+\.\d+\.\d+:\d+$");
+            
+            if (isDirectIpEndpoint)
+            {
+                // Kết nối trực tiếp tới IP:port (local development)
+                _minioClient = new MinioClient()
+                    .WithEndpoint(endpoint)
+                    .WithCredentials(accessKey, secretKey)
+                    .WithSSL(false)
+                    .Build();
+                _logger.Info("Using direct IP connection without SSL");
+            }
+            else
+            {
+                // Kết nối qua domain/reverse proxy (production)
+                _minioClient = new MinioClient()
+                    .WithEndpoint(endpoint)
+                    .WithCredentials(accessKey, secretKey)
+                    .WithSSL(useSSL)
+                    .Build();
+                _logger.Info($"Using domain connection with SSL={useSSL}");
+            }
 
             _logger.Success("MinIO client initialized successfully.");
         }

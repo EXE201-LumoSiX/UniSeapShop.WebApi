@@ -22,7 +22,7 @@ services:
       - PaymentSettings__SuccessUrl=https://uniseap.vercel.app/success-payment
       - PaymentSettings__CancelUrl=https://uniseap.vercel.app/failed-payment
       - PaymentSettings__WebhookUrl=https://uniseapshop.fpt-devteam.fun/api/payments/webhook
-      - MINIO_ENDPOINT=103.211.201.141:9000
+      - MINIO_ENDPOINT=cdn.fpt-devteam.fun
       - MINIO_HOST=https://minio.fpt-devteam.fun
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minioadmin
