@@ -28,10 +28,10 @@ public class BlobService : IBlobService
         _logger = logger;
 
         // Cần cấu hình các biến môi trường sau:
-        // - MINIO_ENDPOINT (vd: 103.211.201.162:9000)
+        // - MINIO_ENDPOINT (vd: 103.211.201.141:9000)
         // - MINIO_ACCESS_KEY
         // - MINIO_SECRET_KEY
-        var endpoint = Environment.GetEnvironmentVariable("MINIO_ENDPOINT") ?? "103.211.201.162:9000";
+        var endpoint = Environment.GetEnvironmentVariable("MINIO_ENDPOINT") ?? "103.211.201.141:9000";
         var accessKey = Environment.GetEnvironmentVariable("MINIO_ACCESS_KEY");
         var secretKey = Environment.GetEnvironmentVariable("MINIO_SECRET_KEY");
 
