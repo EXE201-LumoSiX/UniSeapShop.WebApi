@@ -108,6 +108,8 @@ public class OrderService : IOrderService
         // Get the current user's ID
         var userId = _claimsService.CurrentUserId;
 
+        //
+        var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
         // Load the order with its details and customer
         var order = await _unitOfWork.Orders.GetByIdAsync(id, o => o.Customer);
 
@@ -126,6 +128,66 @@ public class OrderService : IOrderService
             throw ErrorHelper.Forbidden("You do not have permission to view this order");
         }
 
+        // Load order details with products
+        var orderDetails = await _unitOfWork.OrderDetails.GetAllAsync(
+            od => od.OrderId == id,
+            od => od.Product);
+
+        _loggerService.Info($"Fetched order {id} with {orderDetails.Count} details");
+
+        return new OrderDto
+        {
+            Id = order.Id,
+            CustomerId = order.CustomerId,
+            OrderDate = order.OrderDate,
+            ShipAddress = order.ShipAddress,
+            PaymentMethod = order.PaymentMethod,
+            Status = order.Status,
+            CompletedDate = order.CompletedDate,
+            TotalAmount = order.TotalAmount,
+            OrderDetails = orderDetails.Select(od => new OrderDetailDto
+            {
+                Id = od.Id,
+                ProductId = od.ProductId,
+                ProductName = od.Product?.ProductName ?? "Unknown Product",
+                ProductImage = od.Product?.ProductImage,
+                Quantity = od.Quantity,
+                UnitPrice = od.UnitPrice,
+                TotalPrice = od.TotalPrice
+            }).ToList()
+        };
+    }
+    public async Task<OrderDto> UpdateOrderStatus(Guid id)
+    {
+        _loggerService.Info($"Fetching order with ID: {id}");
+
+        // Get the current user's ID
+        var userId = _claimsService.CurrentUserId;
+
+        //
+        var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
+        // Load the order with its details and customer
+        var order = await _unitOfWork.Orders.GetByIdAsync(id, o => o.Customer);
+
+        if (order == null)
+        {
+            _loggerService.Error($"Order with ID {id} not found");
+            throw ErrorHelper.NotFound($"Order with ID {id} not found");
+        }
+
+        // Security check: ensure current user owns this order or is an admin
+        var isAdmin = _httpContextAccessor.HttpContext?.User?.IsInRole("Admin") ?? false;
+
+        if (!isAdmin && order.Customer.UserId != userId)
+        {
+            _loggerService.Error($"User {userId} attempted to access order {id} belonging to another user");
+            throw ErrorHelper.Forbidden("You do not have permission to view this order");
+        }
+        //
+        order.CompletedDate = DateTime.Now;
+        order.Status = OrderStatus.Completed;
+        await _unitOfWork.Orders.Update(order);
+        await _unitOfWork.SaveChangesAsync();
         // Load order details with products
         var orderDetails = await _unitOfWork.OrderDetails.GetAllAsync(
             od => od.OrderId == id,
@@ -246,6 +308,7 @@ public class OrderService : IOrderService
             TotalPrice = od.TotalPrice
         }).ToList();
     }
+
 
     public async Task<OrderDto> CreateOrderFromCart(CreateOrderDto createOrderDto)
     {
