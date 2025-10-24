@@ -19,8 +19,8 @@ services:
       - Payment__PayOS__ClientId=c822a81c-dd46-421c-8a43-7551e175130b
       - Payment__PayOS__ApiKey=9ec9866c-f853-4e29-9a8f-773ae1d9891a
       - Payment__PayOS__ChecksumKey=0e6a8e155bfb9fa69ccf7e252f121f0d31852e8c0157caa0a0aa85638b740890
-      - PaymentSettings__SuccessUrl=https://uniseap.vercel.app/success-payment
-      - PaymentSettings__CancelUrl=https://uniseap.vercel.app/failed-payment
+      - PaymentSettings__SuccessUrl=https://uniseap.vercel.app/payment-success
+      - PaymentSettings__CancelUrl=https://uniseap.vercel.app/payment-cancel
       - PaymentSettings__WebhookUrl=https://uniseapshop.fpt-devteam.fun/api/payments/webhook
       - MINIO_ENDPOINT=103.211.201.141:9000
       - MINIO_HOST=https://minio.fpt-devteam.fun
