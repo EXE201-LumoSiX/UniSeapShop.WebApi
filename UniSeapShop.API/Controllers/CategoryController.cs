@@ -47,7 +47,6 @@ public class CategoryController : ControllerBase
     /// </summary>
     /// <returns>A list of categories.</returns>
     [HttpGet]
-    [Authorize]
     public async Task<IActionResult> GetAllCategories()
     {
         try
@@ -69,7 +68,6 @@ public class CategoryController : ControllerBase
     /// <param name="id">The ID of the category.</param>
     /// <returns>The category details.</returns>
     [HttpGet("{id:guid}")]
-    [Authorize]
     public async Task<IActionResult> GetCategoryById(Guid id)
     {
         try

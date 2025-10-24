@@ -143,6 +143,7 @@ public class ProductService : IProductService
             ProductImage = product.ProductImage,
             Quantity = product.Quantity,
             CategoryName = product.Category.CategoryName,
+            SupplierId = product.SupplierId,
             SupplierName = GetUserbySupplierIdAsync(product.SupplierId).Result,
             ProductCondition = product.Condition
         };

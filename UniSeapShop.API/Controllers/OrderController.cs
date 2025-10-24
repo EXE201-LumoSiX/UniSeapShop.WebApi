@@ -23,7 +23,7 @@ public class OrderController : ControllerBase
     /// </summary>
     /// <returns>Danh sách đơn hàng đã thanh toán</returns>
     [HttpGet("customer/paid-orders")]
-    [Authorize(Roles = "User")] // Only accessible by customers
+    [Authorize] // Only accessible by customers
     [ProducesResponseType(typeof(ApiResult<List<OrderDto>>), 200)]
     [ProducesResponseType(401)]
     public async Task<IActionResult> GetPaidOrdersForCustomer()
@@ -46,7 +46,7 @@ public class OrderController : ControllerBase
     /// </summary>
     /// <returns>Danh sách tất cả đơn hàng</returns>
     [HttpGet("user")]
-    [Authorize(Roles = "User")]
+    [Authorize]
     [ProducesResponseType(typeof(ApiResult<List<OrderDto>>), 200)]
     [ProducesResponseType(401)]
     [ProducesResponseType(404)]
@@ -95,7 +95,7 @@ public class OrderController : ControllerBase
     ///     Xem sản phẩm đã bán (dành cho nhà cung cấp)
     /// </summary>
     [HttpGet("supplier/sold-products")]
-    [Authorize(Roles = "User")] // Only accessible by suppliers
+    [Authorize] // Only accessible by suppliers
     [ProducesResponseType(typeof(ApiResult<List<OrderDetailDto>>), 200)]
     [ProducesResponseType(401)]
     public async Task<IActionResult> GetSoldProductsForSupplier()
@@ -120,7 +120,7 @@ public class OrderController : ControllerBase
     /// <param name="createOrderDto">Thông tin đơn hàng bao gồm địa chỉ giao hàng</param>
     /// <returns>Thông tin đơn hàng vừa tạo</returns>
     [HttpPost]
-    [Authorize(Roles = "Customer")] // Only accessible by customers
+    [Authorize] // Only accessible by customers
     [ProducesResponseType(typeof(ApiResult<OrderDto>), 200)]
     [ProducesResponseType(400)]
     [ProducesResponseType(401)]

@@ -69,8 +69,12 @@ public class UserService : IUserService
         var supplier = await _unitOfWork.Suppliers.GetQueryable().FirstOrDefaultAsync(u => u.Id == supplierId);
         if (supplier == null)
             throw ErrorHelper.NotFound("User not found.");
+        var user = await _unitOfWork.Users.GetQueryable().FirstOrDefaultAsync(u => u.Id == supplier.UserId);
         return new SupplierDetailsDto
         {
+            FullName = supplier.User.FullName,
+            Email = supplier.User.Email,
+            Phone = supplier.User.PhoneNumber,
             Description = supplier.Description,
             Location = supplier.Location,
             Rating = supplier.Rating
