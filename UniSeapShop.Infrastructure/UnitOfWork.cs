@@ -24,7 +24,8 @@ public class UnitOfWork : IUnitOfWork
         IGenericRepository<CartItem> cartItems,
         IGenericRepository<Cart> carts,
         IGenericRepository<Payment> payments,
-        IGenericRepository<OrderDetail> orderDetails
+        IGenericRepository<OrderDetail> orderDetails,
+        IGenericRepository<PayoutDetail> payoutDetails
     )
     {
         _dbContext = dbContext;
@@ -41,6 +42,8 @@ public class UnitOfWork : IUnitOfWork
         Carts = carts;
         Payments = payments;
         OrderDetails = orderDetails;
+        PayoutDetails = payoutDetails;
+
     }
 
     public IGenericRepository<User> Users { get; }
@@ -56,6 +59,7 @@ public class UnitOfWork : IUnitOfWork
     public IGenericRepository<Cart> Carts { get; }
     public IGenericRepository<Payment> Payments { get; }
     public IGenericRepository<OrderDetail> OrderDetails { get; }
+    public IGenericRepository<PayoutDetail> PayoutDetails { get; }
 
     public void Dispose()
     {
