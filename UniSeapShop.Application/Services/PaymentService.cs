@@ -290,7 +290,7 @@ public class PaymentService : IPaymentService
 
             var cancelUrl = _configuration["PaymentSettings:CancelUrl"]
                             ?? Environment.GetEnvironmentVariable("PAYMENT_CANCEL_URL")
-                            ?? "https://uniseap.vercel.app/payment-cancel";
+                            ?? "https://uniseap.vercel.app/failed-payment";
 
             // Get webhook URL from configuration  
             var webhookUrl = _configuration["PaymentSettings:WebhookUrl"]
