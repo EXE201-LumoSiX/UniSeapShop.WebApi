@@ -286,11 +286,11 @@ public class PaymentService : IPaymentService
             _loggerService.Info("[PAYMENT_FOR_ORDER] Phase 2: Configuring URLs and creating payment record");
             var defaultRedirectUrl = _configuration["PaymentSettings:SuccessUrl"]
                                      ?? Environment.GetEnvironmentVariable("PAYMENT_SUCCESS_URL")
-                                     ?? "https://uniseapshop.vercel.app/payment-success";
+                                     ?? "https://uniseap.vercel.app/success-payment";
 
             var cancelUrl = _configuration["PaymentSettings:CancelUrl"]
                             ?? Environment.GetEnvironmentVariable("PAYMENT_CANCEL_URL")
-                            ?? "https://uniseapshop.vercel.app/payment-cancel";
+                            ?? "https://uniseap.vercel.app/payment-cancel";
 
             // Get webhook URL from configuration  
             var webhookUrl = _configuration["PaymentSettings:WebhookUrl"]
