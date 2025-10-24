@@ -292,8 +292,11 @@ public class OrderService : IOrderService
         var supplierId = _claimsService.CurrentUserId;
         _loggerService.Info($"Fetching sold products for supplier with ID: {supplierId}");
 
-        var orderDetails = await _unitOfWork.OrderDetails
-            .GetAllAsync(od => od.Product.SupplierId == supplierId && od.Order.Status == OrderStatus.Completed);
+        var orderDetails = await _unitOfWork.OrderDetails.GetAllAsync(
+            od => od.Product.SupplierId == supplierId,
+            od => od.Product,
+            od => od.Order
+        );
 
         _loggerService.Info($"Fetched {orderDetails.Count} sold products for supplier with ID: {supplierId}");
 
