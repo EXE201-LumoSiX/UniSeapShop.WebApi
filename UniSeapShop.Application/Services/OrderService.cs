@@ -308,7 +308,8 @@ public class OrderService : IOrderService
             ProductImage = od.Product.ProductImage,
             Quantity = od.Quantity,
             UnitPrice = od.UnitPrice,
-            TotalPrice = od.TotalPrice
+            TotalPrice = od.TotalPrice,
+            Status = od.Order.Status.ToString()
         }).ToList();
     }
 
