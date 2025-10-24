@@ -12,5 +12,6 @@ public class ProductDetailsDto
     public ProductCondition ProductCondition { get; set; }
     public string CategoryName { get; set; }
     public int Quantity { get; set; }
+    public Guid SupplierId { get; set; }
     public string SupplierName { get; set; }
 }
