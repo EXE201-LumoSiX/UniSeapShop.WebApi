@@ -39,6 +39,12 @@ namespace UniSeapShop.Application.Services
                 throw ErrorHelper.NotFound($"Supplier with ID {supplier.Id} not found");
                 throw ErrorHelper.NotFound($"Supplier with ID {supplier.Id} not found");
             }
+            var existPayout = await _unitOfWork.PayoutDetails.FirstOrDefaultAsync(x => x.OrderId == OrderId);
+            if (existPayout != null)
+            {
+                _loggerService.Error($"Payout has exist");
+                throw ErrorHelper.BadRequest($"Payout has exist");
+            }
             var order = await _unitOfWork.Orders.FirstOrDefaultAsync(o => o.Id == OrderId);
             var orderDetail = await _unitOfWork.OrdersDetail.FirstOrDefaultAsync(o => o.OrderId == OrderId);
             if (order == null || orderDetail == null)
@@ -126,6 +132,25 @@ namespace UniSeapShop.Application.Services
                 RecieverId = payout.ReceiverId,
                 TotalPrice = payout.TotalPrice
             };
+        }
+        public async Task<List<PayoutDetailsDto>> GetPayoutForSupplier()
+        {
+            // Get the current user's ID
+            var userId = _claimsService.CurrentUserId;
+
+            // Load the order with its details and customer
+            var payout = await _unitOfWork.PayoutDetails.GetAllAsync(p => p.ReceiverId == userId);
+
+            // Security check: ensure current user owns this order or is an admin
+
+            return payout.Select(p => new PayoutDetailsDto
+            {
+                Id = p.Id,
+                OrderID = p.OrderId,
+                Status = p.Status,
+                RecieverId = p.ReceiverId,
+                TotalPrice = p.TotalPrice
+            }).ToList();
         }
         public async Task<PayoutDetailsDto> UpdatePayout(Guid payoutId, string status)
         {

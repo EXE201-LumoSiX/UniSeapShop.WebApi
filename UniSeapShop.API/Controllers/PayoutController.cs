@@ -49,7 +49,23 @@ namespace UniSeapShop.API.Controllers
                 return StatusCode(statusCode, errorResponse);
             }
         }
-        [HttpPost]
+        [HttpGet("supplier")]
+        [Authorize]
+        public async Task<IActionResult> GetPaymentForSupplier()
+        {
+            try
+            {
+                var payout = await _payoutService.GetPayoutForSupplier();
+                return Ok(ApiResult<List<PayoutDetailsDto>>.Success(payout, "200", "Payments retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                var statusCode = ExceptionUtils.ExtractStatusCode(ex);
+                var errorResponse = ExceptionUtils.CreateErrorResponse<List<PaymentInfoDto>>(ex);
+                return StatusCode(statusCode, errorResponse);
+            }
+        }
+        [HttpPost("{orderId}")]
         [Authorize]
         public async Task<IActionResult> CreatePayout([FromBody] Guid orderId)
         {

@@ -8,5 +8,6 @@ namespace UniSeapShop.Application.Interfaces
         Task<List<PayoutDetailsDto>> GetAllPayout();
         Task<PayoutDetailsDto> GetPayoutById(Guid payoutId);
         Task<PayoutDetailsDto> UpdatePayout(Guid payoutId, string status);
+        Task<List<PayoutDetailsDto>> GetPayoutForSupplier();
     }
 }
