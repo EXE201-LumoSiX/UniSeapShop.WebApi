@@ -303,6 +303,7 @@ public class OrderService : IOrderService
         return orderDetails.Select(od => new OrderDetailDto
         {
             Id = od.Id,
+            OrderId = od.OrderId,
             ProductId = od.ProductId,
             ProductName = od.Product.ProductName,
             ProductImage = od.Product.ProductImage,
