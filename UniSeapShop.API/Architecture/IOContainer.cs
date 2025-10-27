@@ -1,14 +1,14 @@
-﻿using System.Reflection;
-using System.Security.Claims;
-using System.Text;
-using System.Text.Json;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Net.payOS;
 using Resend;
 using StackExchange.Redis;
+using System.Reflection;
+using System.Security.Claims;
+using System.Text;
+using System.Text.Json;
 using UniSeapShop.Application.Interfaces;
 using UniSeapShop.Application.Interfaces.Commons;
 using UniSeapShop.Application.Services;
@@ -37,7 +37,7 @@ public static class IocContainer
         //Add business services
         services.SetupBusinessServicesLayer();
         services.SetupPayOSService();
-        
+
         //Add HttpContextAccessor for role-based checks
         services.AddHttpContextAccessor();
 
@@ -65,6 +65,7 @@ public static class IocContainer
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<IProductService, ProductService>();
         services.AddScoped<IBlobService, BlobService>();
+        services.AddScoped<IPayoutService, PayoutService>();
 
         return services;
     }

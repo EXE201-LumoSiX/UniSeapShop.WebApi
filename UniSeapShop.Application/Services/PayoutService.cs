@@ -32,15 +32,15 @@ namespace UniSeapShop.Application.Services
 
             // Get the current user's ID
             var userId = _claimsService.CurrentUserId;
-            var supplier = _unitOfWork.Suppliers.FirstOrDefaultAsync(x => x.UserId == userId);
+            var supplier = await _unitOfWork.Suppliers.FirstOrDefaultAsync(x => x.UserId == userId);
             if (supplier == null)
             {
-                _loggerService.Error($"Supplier with ID {supplier.Result.Id} not found");
-                throw ErrorHelper.NotFound($"Supplier with ID {supplier.Result.Id} not found");
-                throw ErrorHelper.NotFound($"Supplier with ID {supplier.Result.Id} not found");
+                _loggerService.Error($"Supplier with ID {supplier.Id} not found");
+                throw ErrorHelper.NotFound($"Supplier with ID {supplier.Id} not found");
+                throw ErrorHelper.NotFound($"Supplier with ID {supplier.Id} not found");
             }
-            var order = _unitOfWork.Orders.FirstOrDefaultAsync(o => o.Id == OrderId);
-            var orderDetail = _unitOfWork.OrdersDetail.FirstOrDefaultAsync(o => o.OrderId == OrderId);
+            var order = await _unitOfWork.Orders.FirstOrDefaultAsync(o => o.Id == OrderId);
+            var orderDetail = await _unitOfWork.OrdersDetail.FirstOrDefaultAsync(o => o.OrderId == OrderId);
             if (order == null || orderDetail == null)
             {
                 _loggerService.Error($"Order with ID {OrderId} not found");
@@ -51,12 +51,12 @@ namespace UniSeapShop.Application.Services
                 ReceiverId = userId,
                 OrderId = OrderId,
                 Status = "Pending",
-                TotalPrice = orderDetail.Result.TotalPrice,
-                Order = order.Result,
+                TotalPrice = orderDetail.TotalPrice,
+                Order = order,
                 Id = new Guid(),
                 CreatedAt = DateTime.Now,
                 CreatedBy = userId,
-                ActualReceipt = orderDetail.Result.TotalPrice
+                ActualReceipt = orderDetail.TotalPrice
             };
             await _unitOfWork.PayoutDetails.AddAsync(payout);
             await _unitOfWork.SaveChangesAsync();
