@@ -71,12 +71,18 @@ namespace UniSeapShop.Application.Services
             };
             await _unitOfWork.PayoutDetails.AddAsync(payout);
             await _unitOfWork.SaveChangesAsync();
+            var user = await _unitOfWork.Users.FirstOrDefaultAsync(x => x.Id == payout.ReceiverId);
+            if (user == null)
+            {
+                _loggerService.Error($"User with ID {payout.ReceiverId} not found");
+                throw ErrorHelper.NotFound($"User with ID {payout.ReceiverId} not found");
+            }
             return new PayoutDetailsDto
             {
                 Id = payout.Id,
                 OrderID = payout.OrderId,
                 Status = payout.Status,
-                RecieverId = payout.ReceiverId,
+                RecieverName = user.FullName,
                 TotalPrice = payout.TotalPrice,
             };
         }
@@ -92,13 +98,14 @@ namespace UniSeapShop.Application.Services
                 _loggerService.Error($"User {userId} do not have permission to view");
                 throw ErrorHelper.Forbidden("You do not have permission to view this");
             }
+            var users = await _unitOfWork.Users.GetAllAsync();
             var payoutDetails = await _unitOfWork.PayoutDetails.GetAllAsync();
             return payoutDetails.Select(p => new PayoutDetailsDto
             {
                 Id = p.Id,
                 OrderID = p.OrderId,
                 Status = p.Status,
-                RecieverId = p.ReceiverId,
+                RecieverName = users.FirstOrDefault(u => u.Id == p.ReceiverId)?.FullName ?? "Unknown",
                 TotalPrice = p.TotalPrice
             }).ToList();
         }
@@ -129,12 +136,13 @@ namespace UniSeapShop.Application.Services
                 _loggerService.Error($"User {userId} attempted to access payout {payoutId} belonging to another user");
                 throw ErrorHelper.Forbidden("You do not have permission to view this order");
             }
+            var user = await _unitOfWork.Users.FirstOrDefaultAsync(x => x.Id == payout.ReceiverId);
             return new PayoutDetailsDto
             {
                 Id = payoutId,
                 OrderID = payout.OrderId,
                 Status = payout.Status,
-                RecieverId = payout.ReceiverId,
+                RecieverName = user.FullName,
                 AccountName = supplier.AccountName,
                 AccountNumber = supplier.AccountNumber,
                 AccountBank = supplier.AccountBank,
@@ -156,7 +164,6 @@ namespace UniSeapShop.Application.Services
                 Id = p.Id,
                 OrderID = p.OrderId,
                 Status = p.Status,
-                RecieverId = p.ReceiverId,
                 TotalPrice = p.TotalPrice
             }).ToList();
         }
@@ -176,6 +183,7 @@ namespace UniSeapShop.Application.Services
                 _loggerService.Error($"User {userId} attempted to access payout {payoutId} belonging to another user");
                 throw ErrorHelper.Forbidden("You do not have permission to view this order");
             }
+            var user = await _unitOfWork.Users.FirstOrDefaultAsync(x => x.Id == payout.ReceiverId);
             payout.Status = status;
             await _unitOfWork.PayoutDetails.Update(payout);
             await _unitOfWork.SaveChangesAsync();
@@ -184,7 +192,7 @@ namespace UniSeapShop.Application.Services
                 Id = payout.Id,
                 OrderID = payout.OrderId,
                 Status = payout.Status,
-                RecieverId = payout.ReceiverId,
+                RecieverName = user.FullName,
                 TotalPrice = payout.TotalPrice,
             };
         }
