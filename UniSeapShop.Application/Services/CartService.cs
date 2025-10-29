@@ -380,6 +380,7 @@ public class CartService : ICartService
                 {
                     ProductId = ci.ProductId,
                     ProductName = product?.ProductName ?? "Unknown",
+                    ProductImage = product?.ProductImage ?? "Unknown",
                     Price = product?.Price ?? 0,
                     Quantity = ci.Quantity,
                     IsCheck = ci.IsCheck
