@@ -103,7 +103,6 @@ public class UserController : ControllerBase
     }
 
     [HttpGet("supplier/{id}")]
-    [Authorize]
     public async Task<IActionResult> GetSupplierById(Guid id)
     {
         try
