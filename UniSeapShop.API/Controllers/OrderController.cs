@@ -156,4 +156,19 @@ public class OrderController : ControllerBase
             return StatusCode(statusCode, errorResponse);
         }
     }
+    [HttpPut("status/orderId")]
+    public async Task<IActionResult> UpdateOrderStatus(Guid id)
+    {
+        try
+        {
+            var orders = await _orderService.UpdateOrderStatus(id);
+            return Ok(ApiResult<OrderDto>.Success(orders, "200", "Fetched all orders successfully."));
+        }
+        catch (Exception ex)
+        {
+            var statusCode = ExceptionUtils.ExtractStatusCode(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<List<OrderDto>>(ex);
+            return StatusCode(statusCode, errorResponse);
+        }
+    }
 }

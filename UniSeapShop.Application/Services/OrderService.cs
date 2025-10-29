@@ -120,9 +120,8 @@ public class OrderService : IOrderService
         }
 
         // Security check: ensure current user owns this order or is an admin
-        var isAdmin = _httpContextAccessor.HttpContext?.User?.IsInRole("Admin") ?? false;
 
-        if (!isAdmin && order.Customer.UserId != userId)
+        if (order.Customer.UserId != userId)
         {
             _loggerService.Error($"User {userId} attempted to access order {id} belonging to another user");
             throw ErrorHelper.Forbidden("You do not have permission to view this order");
@@ -176,9 +175,8 @@ public class OrderService : IOrderService
         }
 
         // Security check: ensure current user owns this order or is an admin
-        var isAdmin = _httpContextAccessor.HttpContext?.User?.IsInRole("Admin") ?? false;
 
-        if (!isAdmin && order.Customer.UserId != userId)
+        if (order.Customer.UserId != userId)
         {
             _loggerService.Error($"User {userId} attempted to access order {id} belonging to another user");
             throw ErrorHelper.Forbidden("You do not have permission to view this order");

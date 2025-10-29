@@ -12,4 +12,5 @@ public interface IUserService
     Task<bool> DeleteUserAsync(Guid userId);
     Task<UserDto?> GetCurrentUserProfileAsync();
     Task<SupplierDetailsDto?> GetSupplierByIdAsync(Guid supplierId);
+    Task<SupplierDetailsDto?> UpdateSupplierBank(SupplierUpdate dto);
 }

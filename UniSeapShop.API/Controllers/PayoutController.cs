@@ -65,7 +65,7 @@ namespace UniSeapShop.API.Controllers
                 return StatusCode(statusCode, errorResponse);
             }
         }
-        [HttpPost("{orderId}")]
+        [HttpPost("orderId")]
         [Authorize]
         public async Task<IActionResult> CreatePayout([FromBody] Guid orderId)
         {

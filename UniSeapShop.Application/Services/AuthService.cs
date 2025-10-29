@@ -38,6 +38,10 @@ public class AuthService : IAuthService
 
         if (user == null)
             throw ErrorHelper.NotFound(ErrorMessages.AccountNotFound);
+        var isValidPassword = new PasswordHasher().VerifyPassword(loginDto.Password, user.Password);
+
+        if (!isValidPassword)
+            throw ErrorHelper.BadRequest("Invalid password.");
 
         if (user.Role == null)
             throw ErrorHelper.NotFound("User role not found. Please contact admin.");
@@ -140,6 +144,9 @@ public class AuthService : IAuthService
             Location = dto.Location,
             Rating = 5,
             IsActive = user.IsActive,
+            AccountBank = dto.AccountBank,
+            AccountNumber = dto.AccountNumber,
+            AccountName = dto.AccountName,
             User = user
         };
 

@@ -104,6 +104,38 @@ public class UserService : IUserService
         return ToUserDto(user);
     }
 
+    public async Task<SupplierDetailsDto?> UpdateSupplierBank(SupplierUpdate dto)
+    {
+        var currentUserId = _claimService.CurrentUserId;
+        var supplier = await _unitOfWork.Suppliers.GetQueryable().FirstOrDefaultAsync(u => u.User.Id == currentUserId);
+        if (supplier == null)
+            throw ErrorHelper.NotFound("User not found.");
+
+        supplier.AccountNumber = dto.AccountNumber ?? supplier.AccountNumber;
+        supplier.AccountName = dto.AccountName ?? supplier.AccountName;
+        supplier.AccountBank = dto.AccountBank ?? supplier.AccountBank;
+        supplier.Location = dto.Location ?? supplier.Location;
+        supplier.Description = dto.Description ?? supplier.Description;
+        supplier.User = await _unitOfWork.Users.GetQueryable().FirstOrDefaultAsync(u => u.Id == currentUserId) ?? null;
+        supplier.UpdatedAt = DateTime.UtcNow;
+        supplier.UpdatedBy = currentUserId;
+        await _unitOfWork.Suppliers.Update(supplier);
+        await _unitOfWork.SaveChangesAsync();
+
+        return new SupplierDetailsDto
+        {
+            FullName = supplier.User.FullName ?? string.Empty,
+            Email = supplier.User.Email ?? string.Empty,
+            Phone = supplier.User.PhoneNumber ?? string.Empty,
+            Description = supplier.Description,
+            AccountName = supplier.AccountName,
+            AccountNumber = supplier.AccountNumber,
+            AccountBank = supplier.AccountBank,
+            Location = supplier.Location,
+            Rating = supplier.Rating
+        };
+    }
+
     public async Task<bool> DeleteUserAsync(Guid userId)
     {
         var user = await _unitOfWork.Users.GetQueryable().FirstOrDefaultAsync(u => u.Id == userId && !u.IsDeleted);

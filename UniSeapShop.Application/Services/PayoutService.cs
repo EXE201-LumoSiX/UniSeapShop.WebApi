@@ -39,6 +39,11 @@ namespace UniSeapShop.Application.Services
                 throw ErrorHelper.NotFound($"Supplier with ID {supplier.Id} not found");
                 throw ErrorHelper.NotFound($"Supplier with ID {supplier.Id} not found");
             }
+            if (string.IsNullOrEmpty(supplier.AccountNumber) || string.IsNullOrEmpty(supplier.AccountName) || string.IsNullOrEmpty(supplier.AccountBank))
+            {
+                _loggerService.Error($"Supplier with ID {supplier.Id} has not set up payment information");
+                throw ErrorHelper.BadRequest($"Please set up payment information before creating a payout");
+            }
             var existPayout = await _unitOfWork.PayoutDetails.FirstOrDefaultAsync(x => x.OrderId == OrderId);
             if (existPayout != null)
             {
@@ -106,16 +111,16 @@ namespace UniSeapShop.Application.Services
             var userId = _claimsService.CurrentUserId;
 
             //
-            var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
+
             // Load the order with its details and customer
-            var payout = await _unitOfWork.PayoutDetails.GetByIdAsync(payoutId, o => o.ReceiverId);
+            var payout = await _unitOfWork.PayoutDetails.FirstOrDefaultAsync(p => p.Id == payoutId);
 
             if (payout == null)
             {
                 _loggerService.Error($"Payout with ID {payoutId} not found");
                 throw ErrorHelper.NotFound($"Payout with ID {payoutId} not found");
             }
-
+            var supplier = await _unitOfWork.Suppliers.FirstOrDefaultAsync(c => c.Id == payout.ReceiverId);
             // Security check: ensure current user owns this order or is an admin
             var isAdmin = _httpContextAccessor.HttpContext?.User?.IsInRole("Admin") ?? false;
 
@@ -130,6 +135,9 @@ namespace UniSeapShop.Application.Services
                 OrderID = payout.OrderId,
                 Status = payout.Status,
                 RecieverId = payout.ReceiverId,
+                AccountName = supplier.AccountName,
+                AccountNumber = supplier.AccountNumber,
+                AccountBank = supplier.AccountBank,
                 TotalPrice = payout.TotalPrice
             };
         }
@@ -159,7 +167,7 @@ namespace UniSeapShop.Application.Services
 
             //
             var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
-            var payout = await _unitOfWork.PayoutDetails.GetByIdAsync(payoutId, o => o.ReceiverId);
+            var payout = await _unitOfWork.PayoutDetails.FirstOrDefaultAsync(p => p.Id == payoutId);
             // Get the current user's ID
             var isAdmin = _httpContextAccessor.HttpContext?.User?.IsInRole("Admin") ?? false;
 

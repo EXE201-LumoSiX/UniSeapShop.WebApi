@@ -104,6 +104,9 @@ public class UniSeapShopDBContext : DbContext
             entity.Property(e => e.Description);
             entity.Property(e => e.Rating).HasDefaultValue(0);
             entity.Property(e => e.Location);
+            entity.Property(e => e.AccountBank);
+            entity.Property(e => e.AccountNumber);
+            entity.Property(e => e.AccountName);
 
             // One-to-Many relationship with Products
             entity.HasMany(s => s.Products)
