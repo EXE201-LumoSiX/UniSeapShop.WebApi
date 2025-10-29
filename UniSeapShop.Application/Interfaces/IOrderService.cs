@@ -10,4 +10,5 @@ public interface IOrderService
     Task<List<OrderDto>> GetOrders();
     Task<List<OrderDto>> GetAllOrderDetails();
     Task<OrderDto> GetOrderById(Guid id);
+    Task<OrderDto> UpdateOrderStatus(Guid id);
 }

@@ -118,4 +118,20 @@ public class UserController : ControllerBase
             return StatusCode(statusCode, errorResponse);
         }
     }
+    [HttpPut("supplier")]
+    [Authorize]
+    public async Task<IActionResult> UpdateSupplierById([FromBody] SupplierUpdate dto)
+    {
+        try
+        {
+            var result = await _userService.UpdateSupplierBank(dto);
+            return Ok(ApiResult<SupplierDetailsDto>.Success(result!, "200", "Get supplier by id successful"));
+        }
+        catch (Exception ex)
+        {
+            var statusCode = ExceptionUtils.ExtractStatusCode(ex);
+            var errorResponse = ExceptionUtils.CreateErrorResponse<SupplierDetailsDto>(ex);
+            return StatusCode(statusCode, errorResponse);
+        }
+    }
 }
