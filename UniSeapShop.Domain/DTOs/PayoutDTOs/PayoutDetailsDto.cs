@@ -3,7 +3,7 @@
     public class PayoutDetailsDto
     {
         public Guid Id { get; set; }
-        public Guid RecieverId { get; set; }
+        public string RecieverName { get; set; }
         public double TotalPrice { get; set; }
         public string Status { get; set; }
         public string? AccountBank { get; set; } = string.Empty;
