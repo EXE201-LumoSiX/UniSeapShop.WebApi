@@ -79,7 +79,7 @@ namespace UniSeapShop.Application.Services
         public async Task<List<PayoutDetailsDto>> GetAllPayout()
         {
             var userId = _claimsService.CurrentUserId;
-            var supplier = _unitOfWork.Users.FirstOrDefaultAsync(x => x.Id == userId);
+            var supplier = await _unitOfWork.Users.FirstOrDefaultAsync(x => x.Id == userId);
             var isAdmin = _httpContextAccessor.HttpContext?.User?.IsInRole("Admin") ?? false;
 
             if (!isAdmin)
