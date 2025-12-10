@@ -15,7 +15,7 @@ public interface IBlobService
     /// <summary>
     ///     Lấy URL tải file có thời hạn từ MinIO (Presigned URL).
     /// </summary>
-    Task<string> GetFileUrlAsync(string fileName);
+    string GetPresignedUrl(string fileName, int expiryInSeconds = 7 * 24 * 60 * 60);
 
     /// <summary>
     ///     Xóa file khỏi MinIO theo tên file.
