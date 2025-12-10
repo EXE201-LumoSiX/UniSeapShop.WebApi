@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using UniSeapShop.Application.Interfaces.Commons;
-using UniSeapShop.Application.Utils;
 
 namespace UniSeapShop.API.Controllers;
 
@@ -41,9 +40,9 @@ public class BlobStorageTestController : ControllerBase
 
             // Lấy URL xem trước
             string previewUrl = await _blobService.GetPreviewUrlAsync(fileName);
-
+            int expiryInSeconds = 7 * 24 * 60 * 60;
             // Lấy URL download có thời hạn
-            string downloadUrl = await _blobService.GetFileUrlAsync(fileName);
+            string downloadUrl = _blobService.GetPresignedUrl(fileName, expiryInSeconds);
 
             return Ok(new
             {
@@ -67,7 +66,9 @@ public class BlobStorageTestController : ControllerBase
     {
         try
         {
-            var downloadUrl = await _blobService.GetFileUrlAsync(fileName);
+            int expiryInSeconds = 7 * 24 * 60 * 60;
+            // Lấy URL download có thời hạn
+            string downloadUrl = _blobService.GetPresignedUrl(fileName, expiryInSeconds);
             if (string.IsNullOrEmpty(downloadUrl))
             {
                 return NotFound($"Không tìm thấy file: {fileName}");
@@ -116,14 +117,14 @@ public class BlobStorageTestController : ControllerBase
         try
         {
             string containerPrefix = "test-replacements";
-            
+
             using (var stream = file.OpenReadStream())
             {
                 // Thay thế ảnh cũ bằng ảnh mới
                 string previewUrl = await _blobService.ReplaceImageAsync(
-                    stream, 
-                    file.FileName, 
-                    oldImageUrl, 
+                    stream,
+                    file.FileName,
+                    oldImageUrl,
                     containerPrefix
                 );
 

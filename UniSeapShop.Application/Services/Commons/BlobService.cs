@@ -1,7 +1,8 @@
-using System.Text.RegularExpressions;
-using Minio;
-using Minio.DataModel.Args;
-using Minio.Exceptions;
+using Amazon;
+using Amazon.S3;
+using Amazon.S3.Model;
+using Amazon.S3.Util;
+using Microsoft.Extensions.Configuration;
 using UniSeapShop.Application.Interfaces.Commons;
 using UniSeapShop.Application.Utils;
 
@@ -19,197 +20,169 @@ namespace UniSeapShop.Application.Services.Commons;
 /// </summary>
 public class BlobService : IBlobService
 {
-    private readonly string _bucketName = "uniseapshop-bucket";
-    private readonly ILoggerService _logger;
-    private readonly IMinioClient _minioClient;
+    private readonly string _bucketName;
+    private readonly IAmazonS3 _s3Client;
 
-    public BlobService(ILoggerService logger)
+    public BlobService(IConfiguration configuration)
     {
-        _logger = logger;
+        var regionName = configuration["AWS:Region"];
+        var accessKey = configuration["AWS:AccessKey"];
+        var secretKey = configuration["AWS:SecretKey"];
+        _bucketName = configuration["AWS:BucketName"] ?? "default-bucket";
 
-        // Cần cấu hình các biến môi trường sau:
-        // - MINIO_ENDPOINT (vd: 103.211.201.141:9000)
-        // - MINIO_ACCESS_KEY
-        // - MINIO_SECRET_KEY
-        var endpoint = Environment.GetEnvironmentVariable("MINIO_ENDPOINT") ?? "103.211.201.141:9000";
-        var accessKey = Environment.GetEnvironmentVariable("MINIO_ACCESS_KEY");
-        var secretKey = Environment.GetEnvironmentVariable("MINIO_SECRET_KEY");
+        if (string.IsNullOrEmpty(accessKey) || string.IsNullOrEmpty(secretKey))
+            throw new Exception("AWS credentials are missing.");
 
-        _logger.Info("Initializing BlobService...");
-        _logger.Info($"Connecting to MinIO at: {endpoint}");
+        var region = RegionEndpoint.GetBySystemName(regionName ?? "ap-southeast-1");
 
-        try
-        {
-            // Kết nối MinIO không dùng SSL (vì đang dùng IP:port hoặc HTTP)
-            _minioClient = new MinioClient()
-                .WithEndpoint(endpoint)
-                .WithCredentials(accessKey, secretKey)
-                .WithSSL(false)
-                .Build();
-
-            _logger.Success("MinIO client initialized successfully.");
-        }
-        catch (Exception ex)
-        {
-            _logger.Error($"Failed to initialize MinIO client: {ex.Message}");
-            throw;
-        }
+        _s3Client = new AmazonS3Client(accessKey, secretKey, region);
     }
 
+    /// <summary>
+    /// Upload file to S3 bucket.
+    /// Automatically creates the bucket if not exists.
+    /// </summary>
     public async Task UploadFileAsync(string fileName, Stream fileStream)
     {
-        _logger.Info($"Starting file upload: {fileName}");
-
         try
         {
-            // Kiểm tra bucket tồn tại, nếu chưa thì tạo mới
-            var beArgs = new BucketExistsArgs().WithBucket(_bucketName);
-            var found = await _minioClient.BucketExistsAsync(beArgs);
-            _logger.Info($"Checking if bucket '{_bucketName}' exists: {found}");
-
-            if (!found)
+            if (!await AmazonS3Util.DoesS3BucketExistV2Async(_s3Client, _bucketName))
             {
-                _logger.Warn($"Bucket '{_bucketName}' not found. Creating a new one...");
-                var mbArgs = new MakeBucketArgs().WithBucket(_bucketName);
-                await _minioClient.MakeBucketAsync(mbArgs);
-                _logger.Success($"Bucket '{_bucketName}' created successfully.");
+                await _s3Client.PutBucketAsync(new PutBucketRequest
+                {
+                    BucketName = _bucketName,
+                    UseClientRegion = true
+                });
             }
 
-            // Lấy content type dựa trên phần mở rộng của file
             var contentType = GetContentType(fileName);
 
-            var putObjectArgs = new PutObjectArgs()
-                .WithBucket(_bucketName)
-                .WithObject(fileName)
-                .WithStreamData(fileStream)
-                .WithObjectSize(fileStream.Length)
-                .WithContentType(contentType);
+            var putRequest = new PutObjectRequest
+            {
+                BucketName = _bucketName,
+                Key = fileName,
+                InputStream = fileStream,
+                ContentType = contentType
+            };
 
-            await _minioClient.PutObjectAsync(putObjectArgs);
-            _logger.Success($"File '{fileName}' uploaded successfully.");
+            await _s3Client.PutObjectAsync(putRequest);
         }
-        catch (MinioException minioEx)
+        catch (AmazonS3Exception ex)
         {
-            _logger.Error($"MinIO Error during upload: {minioEx.Message}");
-            throw;
+            throw new Exception($"S3 Error: {ex.Message}", ex);
         }
         catch (Exception ex)
         {
-            _logger.Error($"Unexpected error during file upload: {ex.Message}");
-            throw;
+            throw new Exception($"Upload error: {ex.Message}", ex);
         }
     }
 
+    /// <summary>
+    /// Get public URL for file (if ACL is public-read)
+    /// </summary>
     public async Task<string> GetPreviewUrlAsync(string fileName)
     {
-        // Biến MINIO_HOST phải trỏ tới reverse proxy HTTPS, vd: https://minio.fpt-devteam.fun
-        var minioHost = Environment.GetEnvironmentVariable("MINIO_HOST") ?? "https://minio.fpt-devteam.fun";
-
-        // Sử dụng Base64 encoding thay vì URL encoding để phù hợp với định dạng API
-        var base64File = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(fileName));
-
-        // URL được định dạng đúng với API reverse proxy
-        var previewUrl =
-            $"{minioHost}/api/v1/buckets/{_bucketName}/objects/download?preview=true&prefix={base64File}&version_id=null";
-        _logger.Info($"Preview URL generated: {previewUrl}");
-
-        return previewUrl;
-    }
-
-    public async Task<string> GetFileUrlAsync(string fileName)
-    {
         try
         {
-            var args = new PresignedGetObjectArgs()
-                .WithBucket(_bucketName)
-                .WithObject(fileName)
-                .WithExpiry(7 * 24 * 60 * 60);
+            // Tạo request cho AWS S3 Presigned URL
+            var request = new GetPreSignedUrlRequest
+            {
+                BucketName = _bucketName,
+                Key = fileName,
+                Expires = DateTime.UtcNow.AddDays(7), // 7 ngày
+                Verb = HttpVerb.GET
+            };
 
-            var fileUrl = await _minioClient.PresignedGetObjectAsync(args);
-            _logger.Success($"Presigned file URL generated: {fileUrl}");
-            return fileUrl;
+            // AWS SDK không cần await, vì là hàm sync
+            var previewUrl = _s3Client.GetPreSignedURL(request);
+
+            return await Task.FromResult(previewUrl);
         }
         catch (Exception ex)
         {
-            _logger.Error($"Error generating file URL: {ex.Message}");
-            return null;
+            throw new Exception($"Error generating preview URL: {ex.Message}", ex);
         }
     }
 
+
+    /// <summary>
+    /// Generate presigned URL valid for limited time (default 7 days)
+    /// </summary>
+    public string GetPresignedUrl(string fileName, int expiryInSeconds = 7 * 24 * 60 * 60)
+    {
+        var request = new GetPreSignedUrlRequest
+        {
+            BucketName = _bucketName,
+            Key = fileName,
+            Expires = DateTime.UtcNow.AddSeconds(expiryInSeconds)
+        };
+
+        return _s3Client.GetPreSignedURL(request);
+    }
+
+    /// <summary>
+    /// Delete file from S3
+    /// </summary>
     public async Task DeleteFileAsync(string fileName)
     {
-        _logger.Info($"Deleting file: {fileName}");
-
         try
         {
-            var removeObjectArgs = new RemoveObjectArgs()
-                .WithBucket(_bucketName)
-                .WithObject(fileName);
-
-            await _minioClient.RemoveObjectAsync(removeObjectArgs);
-            _logger.Success($"File '{fileName}' deleted successfully.");
+            await _s3Client.DeleteObjectAsync(new DeleteObjectRequest
+            {
+                BucketName = _bucketName,
+                Key = fileName
+            });
         }
-        catch (MinioException minioEx)
+        catch (AmazonS3Exception ex)
         {
-            _logger.Error($"MinIO Error during delete: {minioEx.Message}");
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.Error($"Unexpected error during file delete: {ex.Message}");
-            throw;
+            throw new Exception($"S3 Delete Error: {ex.Message}", ex);
         }
     }
 
-    public async Task<string> ReplaceImageAsync(Stream newImageStream, string originalFileName, string? oldImageUrl,
-        string containerPrefix)
+    /// <summary>
+    /// Replace old image with a new one.
+    /// </summary>
+    public async Task<string> ReplaceImageAsync(Stream newImageStream, string originalFileName, string? oldImageUrl, string containerPrefix)
     {
         try
         {
-            // Xóa ảnh cũ nếu có
             if (!string.IsNullOrWhiteSpace(oldImageUrl))
+            {
                 try
                 {
                     var oldFileName = Path.GetFileName(new Uri(oldImageUrl).LocalPath);
                     var fullOldPath = $"{containerPrefix}/{oldFileName}";
                     await DeleteFileAsync(fullOldPath);
-                    _logger.Info($"[ReplaceImageAsync] Deleted old image: {fullOldPath}");
                 }
                 catch (Exception ex)
                 {
-                    _logger.Warn($"[ReplaceImageAsync] Failed to delete old image: {ex.Message}");
+                    Console.WriteLine($"Failed to delete old image: {ex.Message}");
                 }
+            }
 
-            // Upload ảnh mới
             var newFileName = $"{containerPrefix}/{Guid.NewGuid()}{Path.GetExtension(originalFileName)}";
-            _logger.Info($"[ReplaceImageAsync] Uploading new image: {newFileName}");
 
             await UploadFileAsync(newFileName, newImageStream);
 
-            var previewUrl = await GetPreviewUrlAsync(newFileName);
-            _logger.Success($"[ReplaceImageAsync] Uploaded and generated preview URL: {previewUrl}");
-            return previewUrl;
+            // Return presigned URL (valid 7 days)
+            return GetPresignedUrl(newFileName);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _logger.Error($"[ReplaceImageAsync] Error occurred: {ex.Message}");
             throw ErrorHelper.Internal("Lỗi khi xử lý ảnh.");
         }
     }
 
-
     private string GetContentType(string fileName)
     {
-        _logger.Info($"Determining content type for file: {fileName}");
         var extension = Path.GetExtension(fileName)?.ToLower();
-
         return extension switch
         {
             ".jpg" or ".jpeg" => "image/jpeg",
             ".png" => "image/png",
             ".pdf" => "application/pdf",
             ".mp4" => "video/mp4",
-            _ => "application/octet-stream" // fallback nếu định dạng không rõ
+            _ => "application/octet-stream"
         };
     }
 }
