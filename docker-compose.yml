@@ -10,7 +10,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ConnectionStrings__DefaultConnection=Server=uniseapshop.database.windows.net;Database=UniSeapShopDB;User Id=sqladmin;Password=YourStrong!Passw0rd;TrustServerCertificate=True
-      - ConnectionStrings__Redis=redis-17928.c10.us-east-1-2.ec2.redns.redis-cloud.com:17928,user=default,password=qQU5XpmSUbLzI7uTzmGvi5ZXOLrFUVjY,ssl=True,abortConnect=False
+      - ConnectionStrings__Redis=redis-19003.c82.us-east-1-2.ec2.cloud.redislabs.com:19003,user=default,password=9zaCwuX9kltrzHuEay4wMvDMbzB1lNqK,ssl=True,abortConnect=False
       - JWT__SecretKey=UniSeapShop_SECRETKEY_SIEUCAPBAOMAT_VAYMACHUADU16KYTU
       - JWT__Issuer=UniSeapShop_Issuer
       - JWT__Audience=UniSeapShop_Audience
