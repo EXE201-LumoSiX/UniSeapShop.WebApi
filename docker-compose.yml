@@ -26,13 +26,6 @@ services:
       - MINIO_HOST=https://minio.fpt-devteam.fun
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minioadmin
-      - AWS__AccessKey=AKIAZAI4HAZUEAD4U7NX
-      - AWS__SecretKey=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
-      - AWS__Region=ap-southeast-2
-      - AWS__BucketName=scorelens
-      - AWS__PrefixUrl=https://scorelens.s3.ap-southeast-2.amazonaws.com/
-      - AWS__FolderPrefix=qr
-      - AWS__AvatarFolderPrefix=avt
 
     ports:
       - "5000:5000"
